@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/epub"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const DEFAULT_TIMEOUT_SECONDS = 30
@@ -21,34 +22,53 @@ var (
 	verbose    bool
 	extractor  *content.Extractor
 	generator  *epub.Generator
-)
 
-func init() {
-	extractor = content.NewExtractor()
-	generator = epub.NewGenerator()
-}
+	sendEmail    bool
+	emailSubject string
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "free2kindle",
 	Short: "Convert web articles to EPUB format",
 	Long:  `A CLI tool to fetch web articles and convert them to EPUB format for Kindle devices.`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		viper.SetEnvPrefix("F2K")
+		viper.AutomaticEnv()
+		viper.BindEnv("kindle-email", "F2K_KINDLE_EMAIL")
+		viper.BindEnv("sender-email", "F2K_SENDER_EMAIL")
+		viper.BindEnv("api-key", "MAILJET_API_KEY", "MJ_APIKEY_PUBLIC")
+		viper.BindEnv("api-secret", "MAILJET_API_SECRET", "MJ_APIKEY_PRIVATE")
+
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("failed to bind flags: %w", err)
+		}
+		return nil
+	},
+}
+
+func stringJoin(items []string, sep string) string {
+	if len(items) == 0 {
+		return ""
+	}
+	result := items[0]
+	for i := 1; i < len(items); i++ {
+		result += sep + items[i]
+	}
+	return result
 }
 
 var convertCmd = &cobra.Command{
 	Use:   "convert [url]",
 	Short: "Convert a URL to EPUB",
 	Long: `Fetch a web article from the given URL and convert it to EPUB format.
-Use -v flag to see the extracted HTML content before conversion.`,
-	Args: cobra.ExactArgs(1),
-	RunE: runConvert,
+Use --send to skip local EPUB generation and send the converted EPUB to your Kindle.`,
+	Args:    cobra.ExactArgs(1),
+	PreRunE: validateEmailConfig,
+	RunE:    runConvert,
 }
 
 func runConvert(cmd *cobra.Command, args []string) error {
 	url := args[0]
-
-	if timeout == 0 {
-		timeout = DEFAULT_TIMEOUT_SECONDS * time.Second
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -81,8 +101,12 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
+	if sendEmail {
+		return sendToKindle(ctx, article)
+	}
+
 	if outputPath == "" {
-		outputPath = sanitizeFilename(article.Title) + ".epub"
+		outputPath = email.GenerateFilename(article)
 	}
 
 	fmt.Printf("Generating EPUB: %s\n", outputPath)
@@ -99,36 +123,22 @@ func runConvert(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func sanitizeFilename(name string) string {
-	replacer := strings.NewReplacer(
-		"/", "_",
-		"\\", "_",
-		":", "_",
-		"*", "_",
-		"?", "_",
-		"\"", "_",
-		"<", "_",
-		">", "_",
-		"|", "_",
-	)
-	sanitized := replacer.Replace(name)
-	sanitized = strings.TrimSpace(sanitized)
-
-	if len(sanitized) > 100 {
-		sanitized = sanitized[:100]
-	}
-
-	if sanitized == "" {
-		sanitized = "article"
-	}
-
-	return sanitized
-}
-
 func main() {
+	extractor = content.NewExtractor()
+	generator = epub.NewGenerator()
+
 	convertCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output file path")
-	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t", 30*time.Second, "Timeout for HTTP requests")
+	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t", DEFAULT_TIMEOUT_SECONDS*time.Second, "Timeout for HTTP requests")
 	convertCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show extracted HTML content")
+
+	convertCmd.Flags().BoolVar(&sendEmail, "send", false, "Send EPUB to Kindle via email instead of saving locally")
+	convertCmd.Flags().StringVar(&emailSubject, "email-subject", "", "Email subject (defaults to article title)")
+
+	convertCmd.Flags().String("kindle-email", "", "Kindle email address (env: F2K_KINDLE_EMAIL)")
+	convertCmd.Flags().String("sender-email", "", "Sender email address (env: F2K_SENDER_EMAIL)")
+	convertCmd.Flags().String("api-key", "", "Mailjet API key (env: MAILJET_API_KEY)")
+	convertCmd.Flags().String("api-secret", "", "Mailjet API secret (env: MAILJET_API_SECRET)")
+
 	rootCmd.AddCommand(convertCmd)
 
 	if err := rootCmd.Execute(); err != nil {

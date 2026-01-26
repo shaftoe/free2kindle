@@ -8,7 +8,7 @@ A self-hosted application that allows users to save web links from their browser
 - **Article Management**: Queue, view, and manage saved articles
 - **Content Extraction**: Clean article content extraction (remove ads, navigation, etc.)
 - **Format Conversion**: Convert HTML to EPUB format
-- **Email Delivery**: Send converted documents to Kindle email address
+- **Email Delivery**: Send converted documents to Kindle email address. Supports multiple email sending providers (Mailjet, SES, SendGrid).
 - **Status Tracking**: Track conversion and delivery status for each article
 
 ## User Workflow
@@ -28,6 +28,33 @@ A self-hosted application that allows users to save web links from their browser
 
 ## Architecture
 
+### CLI Usage Examples
+
+**Convert URL to local EPUB:**
+```bash
+./bin/free2kindle convert https://example.com/article -o article.epub
+```
+
+**Send URL to Kindle via email:**
+```bash
+export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
+export F2K_SENDER_EMAIL="sender@example.com"
+export MAILJET_API_KEY="your_api_key"
+export MAILJET_API_SECRET="your_api_secret"
+
+./bin/free2kindle convert https://example.com/article --send
+```
+
+**Send with custom subject:**
+```bash
+./bin/free2kindle convert https://example.com/article --send --email-subject "Custom Title"
+```
+
+**Verbose mode (show extracted content):**
+```bash
+./bin/free2kindle convert https://example.com/article -v
+```
+
 ### Backend Components (AWS Serverless)
 
 #### 1. Lambda Functions (with Lambda URLs)
@@ -38,7 +65,7 @@ A self-hosted application that allows users to save web links from their browser
 - Fetches article HTML
 - Extracts clean content using go-trafilatura
 - Converts to EPUB
-- Sends EPUB as attachment via Mailjet API to Kindle address
+- Sends EPUB as attachment via email provider (Mailjet/SES/SendGrid) to Kindle address
 - Updates article status in DynamoDB
 
 **Get+Delete Articles, Update Settings Function**
@@ -118,9 +145,10 @@ GET    /health                 - Health check
 AWS_REGION
 DYNAMODB_TABLE_ARTICLES
 DYNAMODB_TABLE_SETTINGS
-S3_BUCKET
-SQS_QUEUE_URL
-SES_SENDER_EMAIL
+
+# Email Provider (Mailjet)
+MAILJET_API_KEY
+MAILJET_API_SECRET
 
 # Security
 API_KEY_SECRET
@@ -130,6 +158,10 @@ JWT_SECRET
 PREFERRED_FORMAT=epub
 MAX_ARTICLE_SIZE=10MB
 AUTO_SEND=true
+
+# Kindle (for CLI and Lambda)
+F2K_KINDLE_EMAIL
+F2K_SENDER_EMAIL
 ```
 
 ## Security Considerations
@@ -138,9 +170,7 @@ AUTO_SEND=true
 2. **Rate Limiting**: Lambda URL rate limiting via concurrency limits
 3. **Input Validation**: Validate URLs, email addresses
 4. **Content Security**: Sanitize HTML content before conversion
-5. **Email Spoofing**: SES verified emails only
 6. **Least Privilege**: IAM roles scoped to required resources only
-7. **Encryption**: S3 bucket encryption enabled, DynamoDB encryption at rest
 
 ## Deployment
 
@@ -161,6 +191,7 @@ AUTO_SEND=true
 ### Go Shared Library (Business Logic)
 - `github.com/markusmobius/go-trafilatura` - Content extraction and parsing
 - `github.com/bmaupin/go-epub` - EPUB generation
+- `github.com/mailjet/mailjet-apiv3-go/v4` - Email sending (Mailjet)
 - HTTP client for fetching web pages
 - Content sanitization and cleanup
 
@@ -170,9 +201,46 @@ AUTO_SEND=true
 - `github.com/golang-jwt/jwt` - JWT handling
 
 ### CLI Tool
-- `github.com/spf13/cobra` - CLI framework
+- Generate EPUBs directly from URLs in terminal
+- Send EPUBs to Kindle via email
+- Standalone mode (no AWS required for local file generation)
 - Uses shared business logic library
+- Support for multiple email providers via generic interface
+
+### Email Providers
+
+The application uses a generic `email.Sender` interface to support multiple email providers:
+
+#### Mailjet (Implemented)
+- Package: `pkg/free2kindle/email/mailjet`
+- Config: API Key, API Secret, Sender Email
+- Environment Variables:
+  - `MAILJET_API_KEY` or `MJ_APIKEY_PUBLIC`
+  - `MAILJET_API_SECRET` or `MJ_APIKEY_PRIVATE`
+  - `F2K_SENDER_EMAIL`
+
+#### Future Providers
+- **AWS SES**: For AWS-native deployments
+- **SendGrid**: Popular email service
+- **Resend**: Modern email API
+- **Postmark**: Transactional email service
+
+#### Email Sending Interface
+
+```go
+type Sender interface {
+    SendEmail(ctx context.Context, req *EmailRequest) error
+}
+
+type EmailRequest struct {
+    Article     *content.Article
+    EPUBData    []byte
+    KindleEmail string
+    Subject     string
+}
+```
 - HTTP client for direct web page fetching
+- Email sending via configured provider
 
 ## Error Handling
 
@@ -182,11 +250,6 @@ AUTO_SEND=true
 - **Conversion failed**: Mark as failed, allow retry
 - **Email delivery failed**: Mark as failed, allow retry
 - **Rate limit exceeded**: Return 429 with retry-after header
-
-### Retry Strategy
-- Exponential backoff for Lambda retries
-- SQS dead-letter queue for failed processing
-- Manual retry option for users
 
 ## Monitoring and Logging
 
@@ -228,7 +291,9 @@ free2kindle/
 │   └── free2kindle/           # Shared business logic library
 │       ├── content/          # Content extraction
 │       ├── epub/             # EPUB generation
-│       └── http/             # HTTP client wrapper
+│       └── email/            # Email sending
+│           ├── mailjet/       # Mailjet provider
+│           └── sender.go      # Generic email interface
 ├── cmd/
 │   ├── lambda/               # Lambda functions
 │   │   ├── auth/

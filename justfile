@@ -4,4 +4,8 @@ build:
 
 # Build CLI and convert URL into EPUB
 run *ARGS: build
-    ./bin/free2kindle convert {{ARGS}}
+    ./bin/free2kindle convert {{ ARGS }}
+
+# Run tests
+test:
+    go test ./...
