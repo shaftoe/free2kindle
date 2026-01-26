@@ -159,7 +159,7 @@ AUTO_SEND=true
 ## Dependencies
 
 ### Go Shared Library (Business Logic)
-- `github.com/go-shiori/go-trafilatura` - Content extraction and parsing
+- `github.com/markusmobius/go-trafilatura` - Content extraction and parsing
 - `github.com/bmaupin/go-epub` - EPUB generation
 - HTTP client for fetching web pages
 - Content sanitization and cleanup
