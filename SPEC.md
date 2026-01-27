@@ -110,6 +110,25 @@ export MAILJET_API_SECRET="your_api_secret"
 - Link to dashboard
 - Manifest V3
 
+#### 2.1 Share Sheet + Shortcuts for iOS
+- Shortcut Flow:
+  1. Accept URL input (from Share Sheet or clipboard)
+  2. Add to your API via POST request
+  3. Show success notification with article title
+  4. Optional: Show error message with retry option
+- Steps in Shortcuts App:
+  1. Input: URL (from Share Sheet)
+  2. Set Variable (API endpoint URL)
+  3. Set Variable (Your API key)
+  4. POST request to /api/v1/articles
+    - Body: {"url": [URL]}
+    - Headers: {"X-API-Key": [API Key]}
+  5. If response.statusCode = 201 or 200:
+    - Show notification "Article saved to Kindle queue"
+    - Return: "✓ [Article Title]"
+   Else:
+    - Show error alert with error message
+
 #### 3. CLI Tool
 - Generate EPUBs directly from URLs in terminal
 - Standalone mode (no AWS required for local file generation)
@@ -134,7 +153,7 @@ PUT    /api/v1/settings          - Update settings
 
 ### Health
 ```
-GET    /health                 - Health check
+GET    /api/v1/health                 - Health check
 ```
 
 ## Configuration
