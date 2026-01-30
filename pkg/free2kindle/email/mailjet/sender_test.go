@@ -25,23 +25,6 @@ func TestNewSender(t *testing.T) {
 	}
 }
 
-func TestNewSenderWithTimeout(t *testing.T) {
-	config := &Config{
-		APIKey:      "test-key",
-		APISecret:   "test-secret",
-		SenderEmail: "test@example.com",
-	}
-
-	sender := NewSenderWithTimeout(config, 60)
-	if sender == nil {
-		t.Fatal("NewSenderWithTimeout returned nil")
-	}
-
-	if sender.config != config {
-		t.Error("Sender config not set correctly")
-	}
-}
-
 func TestValidateConfig(t *testing.T) {
 	tests := []struct {
 		name    string

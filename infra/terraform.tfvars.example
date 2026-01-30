@@ -1,0 +1,20 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+project_id = "your-project-id"
+region     = "us-central1"
+
+source_bucket     = "your-project-id-free2kindle-source"
+source_zip_path   = "./function-source.zip"
+
+environment_variables = {
+  # Email Provider (Mailjet)
+  MAILJET_API_KEY    = "your_mailjet_api_key"
+  MAILJET_API_SECRET = "your_mailjet_api_secret"
+
+  # Security
+  API_KEY_SECRET = "your_api_key_secret"
+
+  # Kindle
+  F2K_KINDLE_EMAIL = "your-kindle@kindle.com"
+  F2K_SENDER_EMAIL = "sender@example.com"
+}

@@ -30,17 +30,7 @@ type Extractor struct {
 
 func NewExtractor() *Extractor {
 	return &Extractor{
-		client: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}
-}
-
-func NewExtractorWithTimeout(timeout time.Duration) *Extractor {
-	return &Extractor{
-		client: &http.Client{
-			Timeout: timeout,
-		},
+		client: &http.Client{},
 	}
 }
 

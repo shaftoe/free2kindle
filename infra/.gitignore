@@ -1,0 +1,13 @@
+# Terraform
+terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform
+.terraform.lock.hcl
+crash.log
+crash.*.log
+plan.out
+plan.out.json
+
+# Function source zip (build artifact)
+function-source.zip

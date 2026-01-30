@@ -29,14 +29,6 @@ func NewSender(config *Config) *Sender {
 	}
 }
 
-func NewSenderWithTimeout(config *Config, timeout int) *Sender {
-	mailjetClient := mailjetLib.NewMailjetClient(config.APIKey, config.APISecret)
-	return &Sender{
-		config: config,
-		client: mailjetClient,
-	}
-}
-
 func (s *Sender) SendEmail(ctx context.Context, req *email.EmailRequest) error {
 	if err := s.validateConfig(); err != nil {
 		return fmt.Errorf("invalid sender config: %w", err)
@@ -113,7 +105,7 @@ func (s *Sender) validateConfig() error {
 
 func (s *Sender) validateRequest(req *email.EmailRequest) error {
 	if req.KindleEmail == "" {
-		return fmt.Errorf("Kindle email is required")
+		return fmt.Errorf("kindle email is required")
 	}
 	if req.EPUBData == nil {
 		return fmt.Errorf("EPUB data is required")

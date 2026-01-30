@@ -34,3 +34,5 @@ go.work.sum
 # Content
 *.epub
 bin/*
+cmd/function/function
+cmd/cli/cli
