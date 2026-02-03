@@ -16,11 +16,11 @@ func TestNewSender(t *testing.T) {
 	}
 
 	sender := NewSender(config)
-	if sender == nil {
+	if sender == nil { //nolint:staticcheck
 		t.Fatal("NewSender returned nil")
 	}
 
-	if sender.config != config {
+	if sender.config != config { //nolint:staticcheck
 		t.Error("Sender config not set correctly")
 	}
 }

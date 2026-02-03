@@ -89,17 +89,17 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	os.Setenv("F2K_KINDLE_EMAIL", "test@kindle.com")
-	os.Setenv("F2K_SENDER_EMAIL", "sender@example.com")
-	os.Setenv("MAILJET_API_KEY", "api-key")
-	os.Setenv("MAILJET_API_SECRET", "api-secret")
-	os.Setenv("API_KEY_SECRET", "api-key-secret")
+	_ = os.Setenv("F2K_KINDLE_EMAIL", "test@kindle.com")
+	_ = os.Setenv("F2K_SENDER_EMAIL", "sender@example.com")
+	_ = os.Setenv("MAILJET_API_KEY", "api-key")
+	_ = os.Setenv("MAILJET_API_SECRET", "api-secret")
+	_ = os.Setenv("API_KEY_SECRET", "api-key-secret")
 	defer func() {
-		os.Unsetenv("F2K_KINDLE_EMAIL")
-		os.Unsetenv("F2K_SENDER_EMAIL")
-		os.Unsetenv("MAILJET_API_KEY")
-		os.Unsetenv("MAILJET_API_SECRET")
-		os.Unsetenv("API_KEY_SECRET")
+		_ = os.Unsetenv("F2K_KINDLE_EMAIL")
+		_ = os.Unsetenv("F2K_SENDER_EMAIL")
+		_ = os.Unsetenv("MAILJET_API_KEY")
+		_ = os.Unsetenv("MAILJET_API_SECRET")
+		_ = os.Unsetenv("API_KEY_SECRET")
 	}()
 
 	cfg, err := Load()

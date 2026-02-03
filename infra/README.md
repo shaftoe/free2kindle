@@ -1,105 +1,116 @@
-# Free2Kindle Infrastructure
+# CloudFormation Templates
 
-Terraform configuration for deploying Free2Kindle to Google Cloud Platform.
+This directory contains AWS CloudFormation templates for deploying Free2Kindle to AWS Lambda.
 
-## Resources Created
+## Templates
 
-- **Cloud Function**: HTTP-triggered function (2nd gen) with unauthenticated public access
-- **Storage Bucket**: GCS bucket for function source code
-- **IAM Policies**: Public invoker role on the Cloud Function
+### bucket.yaml
+Creates an S3 bucket for storing Lambda function source code.
+- Bucket name: `{PROJECT_NAME}-lambda-source`
+- Versioning enabled
+- Encryption enabled (AES256)
+- Public access blocked
 
-## Prerequisites
+### infra.yaml
+Creates the Lambda function infrastructure:
+- IAM role for Lambda execution
+- Lambda function with Function URL
+- CORS configuration for API access
 
-1. Google Cloud project with billing enabled
-2. gcloud CLI installed and authenticated
-3. Terraform installed (v1.0+)
-4. Built function source code as a zip file
+## Deployment
 
-## Setup
+### Prerequisites
 
-1. Copy the example terraform.tfvars file:
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-
-2. Edit terraform.tfvars with your project-specific values
-
-3. Initialize Terraform:
-   ```bash
-   terraform init
-   ```
-
-4. Review the plan:
-   ```bash
-   terraform plan
-   ```
-
-5. Apply the configuration:
-   ```bash
-   terraform apply
-   ```
-
-## Usage via Justfile
-
-The project includes justfile tasks to simplify deployment:
-
+1. Build the Lambda binary:
 ```bash
-# Initialize infrastructure
-just infra-init <project-id>
-
-# Deploy Cloud Function
-just deploy <project-id>
-
-# Get function URL
-just get-url
-
-# View function logs
-just logs
+just build
+just build-lambda-zip
 ```
 
-## Outputs
+2. Set required environment variables:
+```bash
+export MAILJET_API_KEY="your_mailjet_api_key"
+export MAILJET_API_SECRET="your_mailjet_api_secret"
+export API_KEY_SECRET="your_api_key_secret"
+export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
+export F2K_SENDER_EMAIL="sender@example.com"
+```
 
-After deployment, Terraform will output:
+### Deploy
 
-- `function_url`: The HTTP endpoint URL for your API
-- `source_bucket_name`: Name of the GCS bucket
+**Full deployment (recommended):**
+```bash
+just deploy-all free2kindle
+```
+
+This will:
+1. Build the Lambda zip
+2. Deploy the S3 bucket
+3. Upload the Lambda source code
+4. Deploy the Lambda infrastructure
+
+**Step-by-step deployment:**
+```bash
+# Deploy S3 bucket
+just deploy-bucket free2kindle
+
+# Upload Lambda source code
+just upload-zip free2kindle
+
+# Deploy Lambda infrastructure
+just deploy free2kindle
+```
+
+### Get Function URL
+```bash
+just get-url free2kindle
+```
+
+### View Logs
+```bash
+just logs free2kindle
+```
+
+### Destroy
+```bash
+just destroy free2kindle
+```
 
 ## Environment Variables
 
-The Cloud Function requires the following environment variables (configure in terraform.tfvars):
+The following environment variables must be set before deploying:
 
-**Required:**
-- `MAILJET_API_KEY`: Mailjet API key
-- `MAILJET_API_SECRET`: Mailjet API secret
-- `API_KEY_SECRET`: Secret for API key validation
-- `F2K_KINDLE_EMAIL`: Default Kindle email address
-- `F2K_SENDER_EMAIL`: Default sender email address
+| Variable | Description |
+|----------|-------------|
+| `MAILJET_API_KEY` | Mailjet API key |
+| `MAILJET_API_SECRET` | Mailjet API secret |
+| `API_KEY_SECRET` | Secret API key for authentication |
+| `F2K_KINDLE_EMAIL` | Your Kindle email address |
+| `F2K_SENDER_EMAIL` | Verified sender email address |
 
-Note: Kindle and sender email can also be provided per-request via the API body.
+## API Endpoints
 
-## Updating Infrastructure
+Once deployed, the Lambda function provides the following endpoints via Function URL:
 
-To make changes:
+- `GET /api/v1/health` - Health check
+- `POST /api/v1/articles` - Process and send article to Kindle
 
-1. Modify Terraform files
-2. Run `terraform plan` to review changes
-3. Run `terraform apply` to apply changes
+### Example Usage
 
-For Cloud Function code changes:
-1. Build new source zip
-2. Update `source_zip_path` in terraform.tfvars
-3. Run `terraform apply`
-
-## Destroy Infrastructure
-
-To remove all resources:
 ```bash
-terraform destroy
+# Health check
+curl https://<FUNCTION_URL>/api/v1/health
+
+# Send article to Kindle
+curl -X POST https://<FUNCTION_URL>/api/v1/articles \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY_SECRET" \
+  -d '{"url": "https://example.com/article"}'
 ```
 
-## Security Notes
+## Security Considerations
 
-- The Cloud Function is publicly accessible (allUsers invoker)
-- Implement API key authentication in your application code
-- Rotate API_KEY_SECRET regularly
-- Store secrets in Secret Manager for production use (not implemented yet)
+- API key authentication is required for all POST requests
+- CORS is enabled for all origins (configure as needed)
+- S3 bucket has public access blocked
+- Lambda uses provided.al2023 runtime for better security

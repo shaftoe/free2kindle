@@ -2,6 +2,40 @@
 
 Send web links to Kindle - a self-hosted replacement for read-later services.
 
+## AWS Lambda Deployment
+
+Deploy the Free2Kindle API to AWS Lambda using CloudFormation.
+
+### Prerequisites
+
+1. Install AWS CLI and configure credentials
+2. Set required environment variables:
+```bash
+export MAILJET_API_KEY="your_mailjet_api_key"
+export MAILJET_API_SECRET="your_mailjet_api_secret"
+export API_KEY_SECRET="your_api_key_secret"
+export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
+export F2K_SENDER_EMAIL="sender@example.com"
+```
+
+### Deployment
+
+```bash
+# Full deployment
+just deploy-all free2kindle
+
+# Get the Function URL
+just get-url free2kindle
+
+# View logs
+just logs free2kindle
+
+# Destroy infrastructure
+just destroy free2kindle
+```
+
+For detailed instructions, see [cloudformation/README.md](cloudformation/README.md).
+
 ## CLI Tool
 
 The CLI tool allows you to convert web articles to EPUB format and send them to your Kindle device directly from the terminal.
@@ -9,7 +43,7 @@ The CLI tool allows you to convert web articles to EPUB format and send them to 
 ### Installation
 
 ```bash
-go build -o bin/free2kindle cmd/cli/main.go
+go build -o bin/free2kindle cmd/cli
 ```
 
 ### Usage
@@ -105,28 +139,16 @@ free2kindle/
 │   └── free2kindle/           # Shared business logic library
 │       ├── content/          # Content extraction
 │       ├── epub/             # EPUB generation
+│       ├── service/          # Business logic orchestration
 │       └── email/            # Email sending
 │           ├── mailjet/       # Mailjet provider
 │           └── sender.go      # Generic email interface
 ├── cmd/
-│   ├── lambda/               # Lambda functions (future)
+│   ├── lambda/               # Lambda functions
 │   └── cli/                  # CLI tool
 │       └── main.go
-├── web/                      # Web dashboard (future)
-└── extension/                # Browser extension (future)
-```
-free2kindle/
-├── pkg/
-│   └── free2kindle/           # Shared business logic library
-│       ├── content/          # Content extraction
-│       ├── epub/             # EPUB generation
-│       └── http/             # HTTP client wrapper (future)
-├── cmd/
-│   ├── lambda/               # Lambda functions (future)
-│   └── cli/                  # CLI tool
-│       └── main.go
-├── web/                      # Web dashboard (future)
-└── extension/               # Browser extension (future)
+├── cloudformation/            # AWS CloudFormation templates
+└── README.md
 ```
 
 ## License

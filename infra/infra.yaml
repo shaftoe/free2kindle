@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lambda function with Function URL for Free2Kindle API
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: Free2Kindle
+    Description: Name of the project (used for resource naming)
+
+  SourceBucketName:
+    Type: String
+    Default: Free2Kindle-source
+    Description: Name of the S3 bucket containing the Lambda source code
+
+  SourceBucketKey:
+    Type: String
+    Default: function-source.zip
+    Description: S3 key for the Lambda source zip file
+
+  MailjetAPIKey:
+    Type: String
+    NoEcho: true
+    Description: Mailjet API key
+
+  MailjetAPISecret:
+    Type: String
+    NoEcho: true
+    Description: Mailjet API secret
+
+  APIKeySecret:
+    Type: String
+    NoEcho: true
+    Description: Secret API key for authentication
+
+  KindleEmail:
+    Type: String
+    Description: Kindle email address
+
+  SenderEmail:
+    Type: String
+    Description: Verified sender email address
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-lambda-exec"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-api"
+      Description: Free2Kindle API - Article conversion and delivery service
+      Runtime: provided.al2023
+      Handler: bootstrap
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref SourceBucketName
+        S3Key: !Ref SourceBucketKey
+      Timeout: 540
+      MemorySize: 256
+      Environment:
+        Variables:
+          MAILJET_API_KEY: !Ref MailjetAPIKey
+          MAILJET_API_SECRET: !Ref MailjetAPISecret
+          API_KEY_SECRET: !Ref APIKeySecret
+          F2K_KINDLE_EMAIL: !Ref KindleEmail
+          F2K_SENDER_EMAIL: !Ref SenderEmail
+      TracingConfig:
+        Mode: PassThrough
+
+  LambdaFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      AuthType: NONE
+      InvokeMode: BUFFERED
+      Cors:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - POST
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-API-Key
+
+Outputs:
+  FunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref LambdaFunction
+
+  FunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt LambdaFunction.Arn
+
+  FunctionUrl:
+    Description: Function URL endpoint
+    Value: !GetAtt LambdaFunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub "${ProjectName}-function-url"

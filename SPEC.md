@@ -13,18 +13,18 @@ A self-hosted application that allows users to save web links from their browser
 
 ## User Workflow
 
- 1. **Setup** (one-time):
-    - Deploy application to Google Cloud Platform
-    - Configure Kindle email address
-    - Add sender email to Kindle approved email list
-    - Install browser extension
+  1. **Setup** (one-time):
+     - Deploy application to AWS Lambda
+     - Configure Kindle email address
+     - Add sender email to Kindle approved email list
+     - Install browser extension
 
-2. **Daily Use**:
-   - Click extension icon on any web page
-   - Article is queued for processing
-   - Backend extracts content and converts to document
-   - Document is emailed to Kindle device
-   - User can view status in web dashboard
+  2. **Daily Use**:
+    - Click extension icon on any web page
+    - Article is queued for processing
+    - Backend extracts content and converts to document
+    - Document is emailed to Kindle device
+    - User can view status in web dashboard
 
 ## Architecture
 
@@ -55,22 +55,21 @@ export MAILJET_API_SECRET="your_api_secret"
 ./bin/free2kindle convert https://example.com/article -v
 ```
 
-### Backend Components (Google Cloud Serverless)
+### Backend Components (AWS Lambda)
 
-#### 1. Cloud Function (HTTP trigger)
+#### 1. Lambda Function (HTTP trigger via Function URL)
 
 **Monolithic API Function**
 - Accepts and validates all incoming requests with API key authentication
 - **POST /api/v1/articles**: Process article from URL
-  - Fetches article HTML
-  - Extracts clean content using go-trafilatura
-  - Converts to EPUB
-  - Sends EPUB as attachment via email provider (Mailjet) to Kindle address
-  - Updates article status in Firestore
+   - Fetches article HTML
+   - Extracts clean content using go-trafilatura
+   - Converts to EPUB
+   - Sends EPUB as attachment via email provider (Mailjet) to Kindle address
 
 Future implementation will also include:
 
-- **POST /api/v1/articles** will store article metadata in Cloud Storage
+- **POST /api/v1/articles** will store article metadata in S3
 - **GET /api/v1/articles**: List user's articles with pagination and filtering
 - **GET /api/v1/articles/{id}**: Get article details
 - **DELETE /api/v1/articles/{id}**: Remove article from storage
@@ -98,26 +97,26 @@ Future implementation will also include:
 
 #### 2.1 Share Sheet + Shortcuts for iOS
 - Shortcut Flow:
-  1. Accept URL input (from Share Sheet or clipboard)
-  2. Add to your API via POST request
-  3. Show success notification with article title
-  4. Optional: Show error message with retry option
+   1. Accept URL input (from Share Sheet or clipboard)
+   2. Add to your API via POST request
+   3. Show success notification with article title
+   4. Optional: Show error message with retry option
 - Steps in Shortcuts App:
-  1. Input: URL (from Share Sheet)
-  2. Set Variable (API endpoint URL)
-  3. Set Variable (Your API key)
-  4. POST request to /api/v1/articles
-    - Body: {"url": [URL]}
-    - Headers: {"X-API-Key": [API Key]}
-  5. If response.statusCode = 201 or 200:
-    - Show notification "Article saved to Kindle queue"
-    - Return: "✓ [Article Title]"
-   Else:
-    - Show error alert with error message
+   1. Input: URL (from Share Sheet)
+   2. Set Variable (API endpoint URL)
+   3. Set Variable (Your API key)
+   4. POST request to /api/v1/articles
+     - Body: {"url": [URL]}
+     - Headers: {"X-API-Key": [API Key]}
+   5. If response.statusCode = 201 or 200:
+     - Show notification "Article saved to Kindle queue"
+     - Return: "✓ [Article Title]"
+    Else:
+     - Show error alert with error message
 
 #### 3. CLI Tool (done)
 - Generate EPUBs directly from URLs in terminal
-- Standalone mode (no GCP required for local file generation)
+- Standalone mode (no cloud infra required for local file generation)
 - Uses shared business logic library
 
 ## API Endpoints
@@ -148,33 +147,27 @@ GET    /api/v1/health                 - Health check
 Create a `.env` file with the following variables:
 
 ```
-# Google Cloud
-GOOGLE_CLOUD_PROJECT
-FIRESTORE_PROJECT_ID
-FIRESTORE_EMULATOR_HOST (for local development)
-
 # Email Provider (Mailjet)
 MAILJET_API_KEY
 MAILJET_API_SECRET
 
 # Security
 API_KEY_SECRET
-JWT_SECRET
 
-# Kindle (for CLI and Cloud Functions)
+# Kindle (for CLI and Lambda)
 F2K_KINDLE_EMAIL
 F2K_SENDER_EMAIL
 ```
 
 ### Deployment
 ```bash
-# One-time infrastructure setup
-just infra-init <project-id>
+# Build Lambda function zip
+just build-lambda-zip
 
-# Deploy Cloud Function (requires .env file)
-just deploy <project-id>
+# Deploy to AWS (requires Cloudformation)
+just deploy <project-name>
 
-# Get deployed function URL
+# Get deployed Lambda function URL
 just get-url
 
 # View function logs
@@ -183,8 +176,8 @@ just logs
 
 ## Security Considerations
 
-1. **Authentication**: API keys or JWT tokens for all requests
-2. **Rate Limiting**: Cloud Functions rate limiting via concurrency limits and API Gateway
+1. **Authentication**: API keys for all requests
+2. **Rate Limiting**: Lambda concurrency limits
 3. **Input Validation**: Validate URLs, email addresses
 4. **Content Security**: Sanitize HTML content before conversion
 5. **Least Privilege**: IAM roles scoped to required resources only
@@ -192,17 +185,17 @@ just logs
 ## Deployment
 
 ### Infrastructure as Code (IaC)
-- **terraform** with commands run via `justfile` tasks
+- **Cloudformation** with commands run via `justfile` tasks
 
 ### Resources Created
-- Service account for Cloud Function
-- Cloud Function (HTTP trigger, unauthenticated access)
-- Storage bucket for function source code
-- IAM policies for public access
+- S3 bucket for Lambda function source code
+- IAM role for Lambda execution
+- Lambda function with Function URL
+- CORS configuration for cross-origin requests
 
 ### Deployment Pipeline
-- Manual deployment via `just deploy PROJECT_ID`
-- Environment variables loaded from .env file
+- Manual deployment via `just deploy PROJECT_NAME`
+- Environment variables loaded from Cloudformation configuration
 - Single production environment
 
 ## Dependencies
@@ -214,16 +207,14 @@ just logs
 - HTTP client for fetching web pages
 - Content sanitization and cleanup
 
-### Go Cloud Functions
-- `github.com/GoogleCloudPlatform/functions-framework-go` - Cloud Functions framework
-- `cloud.google.com/go/firestore` - Firestore client
-- `github.com/golang-jwt/jwt` - JWT handling
-- HTTP routing library (e.g., `github.com/gorilla/mux` or `net/http`)
+### Go Lambda
+- `github.com/aws/aws-lambda-go/lambda` - Lambda runtime
+- `github.com/aws/aws-lambda-go/events` - Lambda event types
 
 ### CLI Tool
 - Generate EPUBs directly from URLs in terminal
 - Send EPUBs to Kindle via email
-- Standalone mode (no GCP required for local file generation)
+- Standalone mode (no cloud infra required for local file generation)
 - Uses shared business logic library
 - Support for multiple email providers via generic interface
 
@@ -235,9 +226,9 @@ The application uses a generic `email.Sender` interface to support multiple emai
 - Package: `pkg/free2kindle/email/mailjet`
 - Config: API Key, API Secret, Sender Email
 - Environment Variables:
-  - `MAILJET_API_KEY` or `MJ_APIKEY_PUBLIC`
-  - `MAILJET_API_SECRET` or `MJ_APIKEY_PRIVATE`
-  - `F2K_SENDER_EMAIL`
+   - `MAILJET_API_KEY` or `MJ_APIKEY_PUBLIC`
+   - `MAILJET_API_SECRET` or `MJ_APIKEY_PRIVATE`
+   - `F2K_SENDER_EMAIL`
 
 #### Email Sending Interface
 
@@ -268,20 +259,20 @@ type EmailRequest struct {
 ## Monitoring and Logging
 
 ### Cloud Monitoring Metrics
-- Cloud Functions invocation count and errors
+- Lambda invocation count and errors
 - Processing duration
 - Queue depth
 - Email send success rate
 
 ### Logging
-- Structured JSON logging via Cloud Logging
+- Structured JSON logging via CloudWatch
 - Log level: INFO (prod), DEBUG (dev)
 - Include: articleId, userId, operation, duration
 
 ### Alerts
 - High error rate (>5%)
 - Queue backlog (>100 items)
-- Cloud Functions timeout errors
+- Lambda timeout errors
 - Email bounce/feedback
 
 ## Future Enhancements
@@ -309,10 +300,8 @@ free2kindle/
 │           ├── mailjet/       # Mailjet provider
 │           └── sender.go      # Generic email interface
 ├── cmd/
-│   ├── function/             # Monolithic Cloud Function
-│   │   ├── handlers/         # HTTP request handlers
-│   │   ├── models/           # Request/response models
-│   │   └── main.go           # Function entry point
+│   ├── lambda/               # Lambda functions
+│   │   └── main.go
 │   └── cli/                  # CLI tool
 │       └── main.go
 ├── web/                      # Web dashboard
@@ -322,7 +311,7 @@ free2kindle/
 ## Constraints
 
 - Max article size: 10MB
-- Processing time limit: 9 minutes (Cloud Functions 2nd gen)
+- Processing time limit: 15 minutes (AWS Lambda)
 - Email size limit: 25MB (Kindle)
 - Max concurrent processing: 10 articles per user
 - EPUB format only (no PDF support)

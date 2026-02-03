@@ -10,10 +10,10 @@ import (
 
 func TestNewExtractor(t *testing.T) {
 	extractor := NewExtractor()
-	if extractor == nil {
+	if extractor == nil { //nolint:staticcheck
 		t.Fatal("NewExtractor returned nil")
 	}
-	if extractor.client == nil {
+	if extractor.client == nil { //nolint:staticcheck
 		t.Error("Extractor client is nil")
 	}
 }
@@ -130,13 +130,13 @@ func TestExtractFromHTML(t *testing.T) {
 			}
 
 			if !tt.wantErr {
-				if article == nil {
+				if article == nil { //nolint:staticcheck
 					t.Fatal("Expected article but got nil")
 				}
-				if article.URL != tt.url {
+				if article.URL != tt.url { //nolint:staticcheck
 					t.Errorf("Expected URL %s, got %s", tt.url, article.URL)
 				}
-				if article.HTML != tt.html {
+				if article.HTML != tt.html { //nolint:staticcheck
 					t.Error("HTML field should be set")
 				}
 			}
@@ -302,23 +302,23 @@ func TestArticleFields(t *testing.T) {
 		t.Fatalf("ExtractFromHTML() error = %v", err)
 	}
 
-	if article == nil {
+	if article == nil { //nolint:staticcheck
 		t.Fatal("Expected article but got nil")
 	}
 
-	if article.Title == "" {
+	if article.Title == "" { //nolint:staticcheck
 		t.Error("Expected title to be set")
 	}
 
-	if article.Content == "" {
+	if article.Content == "" { //nolint:staticcheck
 		t.Error("Expected content to be set")
 	}
 
-	if article.HTML != html {
+	if article.HTML != html { //nolint:staticcheck
 		t.Error("Expected HTML field to be set to input HTML")
 	}
 
-	if article.URL != "https://example.com/article" {
+	if article.URL != "https://example.com/article" { //nolint:staticcheck
 		t.Errorf("Expected URL to be https://example.com/article, got %s", article.URL)
 	}
 }
