@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -15,42 +16,25 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
 )
 
+const apiKeyHeader = "X-API-Key"
+
 var (
 	cfg *config.Config
 )
 
-func init() {
-	var err error
-	cfg, err = config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-}
+func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
+	path := req.RequestContext.HTTP.Path
+	method := req.RequestContext.HTTP.Method
 
-type APIGatewayRequest struct {
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
-	Path    string            `json:"path"`
-	Method  string            `json:"httpMethod"`
-}
+	log.Printf("Received request: path=%s, method=%s", path, method)
 
-type APIGatewayResponse struct {
-	StatusCode int               `json:"statusCode"`
-	Body       string            `json:"body"`
-	Headers    map[string]string `json:"headers"`
-}
-
-func handleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	path := req.Path
-	method := req.HTTPMethod
-
-	if method == "OPTIONS" {
+	if method == http.MethodOptions {
 		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusOK,
+			StatusCode: http.StatusNoContent,
 			Headers: map[string]string{
 				"Access-Control-Allow-Origin":  "*",
 				"Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-				"Access-Control-Allow-Headers": "Content-Type, X-API-Key",
+				"Access-Control-Allow-Headers": "Content-Type, " + apiKeyHeader,
 			},
 		}, nil
 	}
@@ -77,8 +61,9 @@ func handleHealth() (*events.APIGatewayProxyResponse, error) {
 	}, nil
 }
 
-func handleCreateArticle(ctx context.Context, req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	apiKey := req.Headers["X-API-Key"]
+func handleCreateArticle(ctx context.Context, req events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
+	apiKey := req.Headers[strings.ToLower(apiKeyHeader)] // NOTICE: for some reason it gets lowered by the Lambda environment
+
 	if apiKey == "" {
 		return respondError(http.StatusUnauthorized, "unauthorized", "API key required")
 	}
@@ -117,11 +102,11 @@ func handleCreateArticle(ctx context.Context, req events.APIGatewayProxyRequest)
 	result, err := service.Run(ctx, svcCfg, articleReq.URL)
 	if err != nil {
 		log.Printf("Failed to process article: %v", err)
-		return respondError(http.StatusInternalServerError, "processing_failed", "Failed to process article")
+		return respondError(http.StatusInternalServerError,
+			"processing_failed", "Failed to process article")
 	}
 
 	body, _ := json.Marshal(ArticleResponse{
-		ID:      generateID(),
 		Title:   result.Title,
 		URL:     articleReq.URL,
 		Status:  "completed",
@@ -151,16 +136,11 @@ func respondError(status int, errorType string, message string) (*events.APIGate
 	}, nil
 }
 
-func generateID() string {
-	return "1"
-}
-
 type ArticleRequest struct {
 	URL string `json:"url"`
 }
 
 type ArticleResponse struct {
-	ID      string `json:"id"`
 	Title   string `json:"title"`
 	URL     string `json:"url"`
 	Status  string `json:"status"`
@@ -177,5 +157,12 @@ type HealthResponse struct {
 }
 
 func main() {
+	var err error
+
+	cfg, err = config.Load()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
+	}
+
 	lambda.Start(handleRequest)
 }

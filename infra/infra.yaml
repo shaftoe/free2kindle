@@ -4,17 +4,14 @@ Description: Lambda function with Function URL for Free2Kindle API
 Parameters:
   ProjectName:
     Type: String
-    Default: Free2Kindle
     Description: Name of the project (used for resource naming)
 
   SourceBucketName:
     Type: String
-    Default: Free2Kindle-source
     Description: Name of the S3 bucket containing the Lambda source code
 
   SourceBucketKey:
     Type: String
-    Default: function-source.zip
     Description: S3 key for the Lambda source zip file
 
   MailjetAPIKey:
@@ -81,19 +78,33 @@ Resources:
   LambdaFunctionUrl:
     Type: AWS::Lambda::Url
     Properties:
-      FunctionName: !Ref LambdaFunction
       AuthType: NONE
       InvokeMode: BUFFERED
+      TargetFunctionArn: !GetAtt LambdaFunction.Arn
       Cors:
         AllowOrigins:
           - "*"
         AllowMethods:
           - POST
           - GET
-          - OPTIONS
         AllowHeaders:
           - Content-Type
           - X-API-Key
+
+  LambdaFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  LambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: "*"
 
 Outputs:
   FunctionName:
