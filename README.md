@@ -36,6 +36,31 @@ just destroy free2kindle
 
 For detailed instructions, see [cloudformation/README.md](cloudformation/README.md).
 
+### Browser Bookmarklet
+
+Use a bookmarklet to save articles directly from your browser:
+
+1. Deploy the Lambda function and get the Function URL:
+   ```bash
+   just deploy
+   just get-url
+   ```
+
+2. Copy the bookmarklet code from `bookmarklet.min.js`
+
+3. Replace `YOUR_FUNCTION_URL_HERE` with your actual Function URL
+
+4. Replace `YOUR_API_KEY_HERE` with your `API_KEY_SECRET`
+
+5. In Firefox, create a new bookmark:
+   - Right-click on Bookmarks toolbar → "New Bookmark"
+   - Paste the modified bookmarklet code as the "Location"
+   - Name it "Send to Kindle"
+
+Now you can click the bookmarklet on any page to send it to your Kindle.
+
+**Security Note**: The API key is stored in the bookmarklet. Anyone who can access your bookmarks will see the key. For better security, use a browser extension or restrict who has access to your bookmarks.
+
 ## CLI Tool
 
 The CLI tool allows you to convert web articles to EPUB format and send them to your Kindle device directly from the terminal.

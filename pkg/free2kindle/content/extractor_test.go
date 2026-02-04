@@ -10,7 +10,7 @@ import (
 
 func TestNewExtractor(t *testing.T) {
 	extractor := NewExtractor()
-	if extractor == nil { //nolint:staticcheck
+	if extractor == nil {
 		t.Fatal("NewExtractor returned nil")
 	}
 	if extractor.client == nil { //nolint:staticcheck

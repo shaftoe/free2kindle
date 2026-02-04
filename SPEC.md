@@ -88,12 +88,14 @@ Future implementation will also include:
 - Configure settings
 - Deployed to Netlify
 
-#### 2. Browser Extension (Firefox)
-- Save current page with one click
-- Quick popup to confirm/save
-- View recent articles
-- Link to dashboard
-- Manifest V3
+#### 2. Browser bookmarklet (Firefox)
+
+Possible improvements:
+  - Save current page with one click
+  - Quick popup to confirm/save
+  - View recent articles
+  - Link to dashboard
+  - Manifest V3
 
 #### 2.1 Share Sheet + Shortcuts for iOS
 - Shortcut Flow:
