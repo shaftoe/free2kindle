@@ -58,14 +58,14 @@ func Run(ctx context.Context, cfg *Config, url string) (*Result, error) {
 			Subject:     email.GenerateSubject(article.Title, cfg.Subject),
 		}
 
-		if _, err := cfg.Sender.SendEmail(ctx, emailReq); err != nil {
-			return nil, fmt.Errorf("failed to send email: %w", err)
+		if _, sendErr := cfg.Sender.SendEmail(ctx, emailReq); sendErr != nil {
+			return nil, fmt.Errorf("failed to send email: %w", sendErr)
 		}
 	}
 
 	if cfg.GenerateEPUB && cfg.OutputPath != "" {
-		if err := cfg.Generator.GenerateAndWrite(article, cfg.OutputPath); err != nil {
-			return nil, fmt.Errorf("failed to write EPUB: %w", err)
+		if writeErr := cfg.Generator.GenerateAndWrite(article, cfg.OutputPath); writeErr != nil {
+			return nil, fmt.Errorf("failed to write EPUB: %w", writeErr)
 		}
 	}
 

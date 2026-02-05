@@ -100,3 +100,8 @@ linters:
     nolintlint:
       allow-unused: false
       require-explanation: false
+  exclusions:
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - funlen

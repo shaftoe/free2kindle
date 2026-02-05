@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -15,8 +16,12 @@ import (
 )
 
 // handleCreateArticle handles the creation and email delivery of a new article.
-func handleCreateArticle(ctx context.Context, req events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
-	apiKey := req.Headers[strings.ToLower(apiKeyHeader)] // NOTICE: for some reason header key gets lowered by the Lambda environment
+func handleCreateArticle(
+	ctx context.Context,
+	req *events.LambdaFunctionURLRequest,
+) (*events.APIGatewayProxyResponse, error) {
+	// NOTICE: for some reason header key gets lowered by the Lambda environment
+	apiKey := req.Headers[strings.ToLower(apiKeyHeader)]
 
 	if apiKey == "" {
 		return respondError(http.StatusUnauthorized, "unauthorized", "API key required")
@@ -57,7 +62,7 @@ func handleCreateArticle(ctx context.Context, req events.LambdaFunctionURLReques
 
 	result, err := service.Run(ctx, svcCfg, articleReq.URL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to process article: %w", err)
 	}
 
 	body, _ := json.Marshal(ArticleResponse{

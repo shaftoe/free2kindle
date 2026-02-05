@@ -156,10 +156,13 @@ func TestExtractFromURL(t *testing.T) {
 		expectedTitle string
 	}{
 		{
-			name:          "successful extraction",
-			responseCode:  http.StatusOK,
-			contentType:   "text/html",
-			html:          `<!DOCTYPE html><html><head><title>Test Article</title></head><body><article><h1>Test Article</h1><p>Content here</p></article></body></html>`,
+			name:         "successful extraction",
+			responseCode: http.StatusOK,
+			contentType:  "text/html",
+			html: `<!DOCTYPE html>` +
+				`<html><head><title>Test Article</title></head>` +
+				`<body><article><h1>Test Article</h1>` +
+				`<p>Content here</p></article></body></html>`,
 			wantErr:       false,
 			expectedTitle: "Test Article",
 		},

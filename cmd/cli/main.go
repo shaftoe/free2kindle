@@ -57,6 +57,28 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+func validateSendEmailConfig() error {
+	var missing []string
+	if viper.GetString("kindle-email") == "" {
+		missing = append(missing, "--kindle-email or F2K_KINDLE_EMAIL")
+	}
+	if viper.GetString("sender-email") == "" {
+		missing = append(missing, "--sender-email or F2K_SENDER_EMAIL")
+	}
+	if viper.GetString("api-key") == "" {
+		missing = append(missing, "--api-key or MAILJET_API_KEY")
+	}
+	if viper.GetString("api-secret") == "" {
+		missing = append(missing, "--api-secret or MAILJET_API_SECRET")
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("when using --send flag, the following are required: %s",
+			stringJoin(missing, ", "))
+	}
+	return nil
+}
+
 func stringJoin(items []string, sep string) string {
 	if len(items) == 0 {
 		return ""
@@ -82,25 +104,8 @@ var convertCmd = &cobra.Command{
 func runConvert(_ *cobra.Command, args []string) error {
 	url := args[0]
 
-	if sendEmail {
-		var missing []string
-		if viper.GetString("kindle-email") == "" {
-			missing = append(missing, "--kindle-email or F2K_KINDLE_EMAIL")
-		}
-		if viper.GetString("sender-email") == "" {
-			missing = append(missing, "--sender-email or F2K_SENDER_EMAIL")
-		}
-		if viper.GetString("api-key") == "" {
-			missing = append(missing, "--api-key or MAILJET_API_KEY")
-		}
-		if viper.GetString("api-secret") == "" {
-			missing = append(missing, "--api-secret or MAILJET_API_SECRET")
-		}
-
-		if len(missing) > 0 {
-			return fmt.Errorf("when using --send flag, the following are required: %s",
-				stringJoin(missing, ", "))
-		}
+	if err := validateSendEmailConfig(); err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -129,7 +134,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 	start := time.Now()
 	result, err := service.Run(ctx, svcCfg, url)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to process article: %w", err)
 	}
 	fmt.Printf("Processed in %v\n", time.Since(start))
 
@@ -159,7 +164,8 @@ func main() {
 	generator = epub.NewGenerator()
 
 	convertCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output file path")
-	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t", defaultTimeoutSeconds*time.Second, "Timeout for HTTP requests")
+	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t",
+		defaultTimeoutSeconds*time.Second, "Timeout for HTTP requests")
 	convertCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show extracted HTML content")
 
 	convertCmd.Flags().BoolVar(&sendEmail, "send", false, "Send EPUB to Kindle via email instead of saving locally")

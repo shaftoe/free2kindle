@@ -60,8 +60,8 @@ func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article
 		return nil, fmt.Errorf("failed to fetch URL: %w", err)
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("warning: failed to close response body: %v", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.Printf("warning: failed to close response body: %v", closeErr)
 		}
 	}()
 
@@ -114,7 +114,7 @@ func (e *Extractor) ExtractFromHTML(ctx context.Context, urlStr, html string) (*
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context canceled: %w", ctx.Err())
 	default:
 	}
 

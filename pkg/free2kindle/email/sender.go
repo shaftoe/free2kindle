@@ -9,6 +9,13 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 )
 
+const (
+	// DefaultSubject is the default email subject.
+	DefaultSubject = "Document"
+	// MaxSubjectLength is the maximum length for email subjects.
+	MaxSubjectLength = 100
+)
+
 // SendEmailResponse contains the response from sending an email.
 type SendEmailResponse struct {
 	Status    string `json:"status"`
@@ -45,7 +52,7 @@ func GenerateSubject(articleTitle, customSubject string) string {
 	if articleTitle != "" {
 		return sanitizeSubject(articleTitle)
 	}
-	return "Document"
+	return DefaultSubject
 }
 
 func sanitizeFilename(name string) string {
@@ -60,11 +67,11 @@ func sanitizeFilename(name string) string {
 
 func sanitizeSubject(subject string) string {
 	if subject == "" {
-		return "Document"
+		return DefaultSubject
 	}
 	subject = strings.TrimSpace(subject)
-	if len(subject) > 100 {
-		subject = subject[:100]
+	if len(subject) > MaxSubjectLength {
+		subject = subject[:MaxSubjectLength]
 	}
 	return subject
 }

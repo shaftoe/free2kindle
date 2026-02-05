@@ -9,6 +9,11 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 )
 
+const (
+	// fileModeReadWrite is the file permission for EPUB files (readable by user).
+	fileModeReadWrite = 0o644
+)
+
 // Generator handles EPUB file generation from article content.
 type Generator struct{}
 
@@ -51,8 +56,8 @@ func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 		_ = os.Remove(tmpFile.Name())
 	}()
 
-	if err := e.Write(tmpFile.Name()); err != nil {
-		return nil, fmt.Errorf("failed to write EPUB: %w", err)
+	if writeErr := e.Write(tmpFile.Name()); writeErr != nil {
+		return nil, fmt.Errorf("failed to write EPUB: %w", writeErr)
 	}
 
 	data, err := os.ReadFile(tmpFile.Name())
@@ -70,8 +75,9 @@ func (g *Generator) GenerateAndWrite(article *content.Article, outputPath string
 		return err
 	}
 
-	if err := os.WriteFile(outputPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write EPUB file: %w", err)
+	// #nosec G306 - EPUB files need to be readable by user
+	if writeErr := os.WriteFile(outputPath, data, fileModeReadWrite); writeErr != nil {
+		return fmt.Errorf("failed to write EPUB file: %w", writeErr)
 	}
 
 	return nil

@@ -135,9 +135,11 @@ func TestSanitizeSubject(t *testing.T) {
 			expected: "Test Subject",
 		},
 		{
-			name:     "long subject",
-			input:    "This is a very long subject that definitely exceeds the 100 character limit and should be properly truncated",
-			expected: "This is a very long subject that definitely exceeds the 100 character limit and should be properly t",
+			name: "long subject",
+			input: "This is a very long subject that definitely exceeds the " +
+				"100 character limit and should be properly truncated",
+			expected: "This is a very long subject that definitely exceeds " +
+				"the 100 character limit and should be properly t",
 		},
 		{
 			name:     "empty subject",

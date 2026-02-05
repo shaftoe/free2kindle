@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	apiKeyHeader      = "X-API-Key"
+	apiKeyHeader      = "X-API-Key" // #nosec G101 - this is a header name, not a credential
 	contentTypeHeader = "Content-Type"
-	contentTypeJson   = "application/json"
+	contentTypeJSON   = "application/json"
 
 	version = "0.0.0-devel"
 )
@@ -27,7 +27,7 @@ var (
 	err     error
 	cfg     *config.Config
 	headers = map[string]string{
-		contentTypeHeader: contentTypeJson,
+		contentTypeHeader: contentTypeJSON,
 	}
 )
 
@@ -51,7 +51,7 @@ type HealthResponse struct {
 	Status string `json:"status"`
 }
 
-// setupLogging initializes the logging system for wide events logging
+// setupLogging initializes the logging system for wide events logging.
 // Ref: https://loggingsucks.com/
 func setupLogging(ctx context.Context, req *events.LambdaFunctionURLRequest) {
 	leveler := slog.LevelInfo
@@ -77,10 +77,10 @@ func setupLogging(ctx context.Context, req *events.LambdaFunctionURLRequest) {
 	slog.SetDefault(logger)
 }
 
-func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
+func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
 	var resp *events.APIGatewayProxyResponse
 
-	setupLogging(ctx, &req)
+	setupLogging(ctx, req)
 
 	if req.RequestContext.HTTP.Method == http.MethodOptions {
 		slog.Debug("options request")
@@ -125,7 +125,7 @@ func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*e
 	}, nil
 }
 
-func respondError(status int, errorType string, message string) (*events.APIGatewayProxyResponse, error) {
+func respondError(status int, errorType, message string) (*events.APIGatewayProxyResponse, error) {
 	slog.With("status", status).With("error_type", errorType).Warn("request failed", "error", message)
 
 	body, _ := json.Marshal(ErrorResponse{
