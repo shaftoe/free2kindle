@@ -222,7 +222,7 @@ func TestExtractFromURL(t *testing.T) {
 }
 
 func TestExtractFromURLWithContextCancellation(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("<html><body>Test</body></html>"))

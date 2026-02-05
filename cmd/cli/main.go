@@ -1,3 +1,4 @@
+// Package main implements the CLI application for converting web articles to EPUB.
 package main
 
 import (

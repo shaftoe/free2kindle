@@ -35,7 +35,7 @@ func NewSender(config *Config) *Sender {
 }
 
 // SendEmail sends an email with the EPUB attachment via Mailjet.
-func (s *Sender) SendEmail(_ context.Context, req *email.EmailRequest) (*email.SendEmailResponse, error) {
+func (s *Sender) SendEmail(_ context.Context, req *email.Request) (*email.SendEmailResponse, error) {
 	if err := s.validateConfig(); err != nil {
 		return nil, fmt.Errorf("invalid sender config: %w", err)
 	}
@@ -111,7 +111,7 @@ func (s *Sender) validateConfig() error {
 	return nil
 }
 
-func (s *Sender) validateRequest(req *email.EmailRequest) error {
+func (s *Sender) validateRequest(req *email.Request) error {
 	if req.KindleEmail == "" {
 		return errors.New("kindle email is required")
 	}

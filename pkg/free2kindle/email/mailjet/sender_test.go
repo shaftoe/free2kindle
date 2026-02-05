@@ -80,12 +80,12 @@ func TestValidateConfig(t *testing.T) {
 func TestValidateRequest(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     *email.EmailRequest
+		req     *email.Request
 		wantErr bool
 	}{
 		{
 			name: "valid request",
-			req: &email.EmailRequest{
+			req: &email.Request{
 				Article: &content.Article{
 					Title: "Test Article",
 				},
@@ -96,7 +96,7 @@ func TestValidateRequest(t *testing.T) {
 		},
 		{
 			name: "missing kindle email",
-			req: &email.EmailRequest{
+			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    []byte("data"),
 				KindleEmail: "",
@@ -105,7 +105,7 @@ func TestValidateRequest(t *testing.T) {
 		},
 		{
 			name: "missing epub data",
-			req: &email.EmailRequest{
+			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    nil,
 				KindleEmail: "kindle@kindle.com",
@@ -114,7 +114,7 @@ func TestValidateRequest(t *testing.T) {
 		},
 		{
 			name: "missing article",
-			req: &email.EmailRequest{
+			req: &email.Request{
 				Article:     nil,
 				EPUBData:    []byte("data"),
 				KindleEmail: "kindle@kindle.com",
@@ -144,7 +144,7 @@ func TestSendEmailValidation(t *testing.T) {
 	tests := []struct {
 		name    string
 		config  *Config
-		req     *email.EmailRequest
+		req     *email.Request
 		wantErr bool
 	}{
 		{
@@ -154,7 +154,7 @@ func TestSendEmailValidation(t *testing.T) {
 				APISecret:   "secret",
 				SenderEmail: "test@example.com",
 			},
-			req: &email.EmailRequest{
+			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    []byte("data"),
 				KindleEmail: "kindle@kindle.com",

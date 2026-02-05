@@ -51,7 +51,7 @@ func Run(ctx context.Context, cfg *Config, url string) (*Result, error) {
 	}
 
 	if cfg.SendEmail {
-		emailReq := &email.EmailRequest{
+		emailReq := &email.Request{
 			Article:     article,
 			EPUBData:    epubData,
 			KindleEmail: cfg.KindleEmail,

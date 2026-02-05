@@ -25,6 +25,7 @@ var (
 )
 
 // setupLogging initializes the logging system for wide events logging
+// Ref: https://loggingsucks.com/
 func setupLogging(ctx context.Context, req *events.LambdaFunctionURLRequest) {
 	leveler := slog.LevelInfo
 	if cfg.Debug {

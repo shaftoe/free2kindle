@@ -18,11 +18,11 @@ type SendEmailResponse struct {
 
 // Sender defines the interface for sending emails.
 type Sender interface {
-	SendEmail(ctx context.Context, req *EmailRequest) (*SendEmailResponse, error)
+	SendEmail(ctx context.Context, req *Request) (*SendEmailResponse, error)
 }
 
-// EmailRequest contains the data required to send an email.
-type EmailRequest struct {
+// Request contains the data required to send an email.
+type Request struct {
 	Article     *content.Article
 	EPUBData    []byte
 	KindleEmail string
