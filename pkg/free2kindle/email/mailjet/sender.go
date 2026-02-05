@@ -1,3 +1,4 @@
+// Package mailjet provides a Mailjet implementation of the email Sender interface.
 package mailjet
 
 import (
@@ -11,17 +12,20 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
 )
 
+// Config holds the Mailjet API configuration.
 type Config struct {
 	APIKey      string
 	APISecret   string
 	SenderEmail string
 }
 
+// Sender implements the email.Sender interface using Mailjet.
 type Sender struct {
 	config *Config
 	client *mailjetLib.Client
 }
 
+// NewSender creates a new Mailjet sender instance.
 func NewSender(config *Config) *Sender {
 	mailjetClient := mailjetLib.NewMailjetClient(config.APIKey, config.APISecret)
 	return &Sender{
@@ -30,7 +34,8 @@ func NewSender(config *Config) *Sender {
 	}
 }
 
-func (s *Sender) SendEmail(ctx context.Context, req *email.EmailRequest) (*email.SendEmailResponse, error) {
+// SendEmail sends an email with the EPUB attachment via Mailjet.
+func (s *Sender) SendEmail(_ context.Context, req *email.EmailRequest) (*email.SendEmailResponse, error) {
 	if err := s.validateConfig(); err != nil {
 		return nil, fmt.Errorf("invalid sender config: %w", err)
 	}

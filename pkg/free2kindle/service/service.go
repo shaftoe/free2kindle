@@ -1,3 +1,4 @@
+// Package service provides the main orchestration logic for processing articles.
 package service
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/epub"
 )
 
+// Config holds the configuration for running the service.
 type Config struct {
 	Extractor    *content.Extractor
 	Generator    *epub.Generator
@@ -21,6 +23,7 @@ type Config struct {
 	OutputPath   string
 }
 
+// Result contains the output from processing an article.
 type Result struct {
 	Article  *content.Article
 	EPUBData []byte
@@ -28,6 +31,7 @@ type Result struct {
 	URL      string
 }
 
+// Run processes a URL to extract content, generate EPUB, and optionally send email.
 func Run(ctx context.Context, cfg *Config, url string) (*Result, error) {
 	article, err := cfg.Extractor.ExtractFromURL(ctx, url)
 	if err != nil {

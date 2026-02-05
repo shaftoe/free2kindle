@@ -1,4 +1,4 @@
-// Config package provides configuration for the free2kindle application.
+// Package config provides configuration for the free2kindle application.
 package config
 
 import (
@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Config holds the configuration settings for the application.
 type Config struct {
 	KindleEmail      string
 	SenderEmail      string
@@ -16,6 +17,7 @@ type Config struct {
 	Debug            bool
 }
 
+// Load reads configuration from environment variables and returns a Config instance.
 func Load() (*Config, error) {
 	viper.SetEnvPrefix("F2K")
 	viper.AutomaticEnv()
@@ -55,6 +57,7 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// Validate checks that all required configuration fields are set.
 func (c *Config) Validate() error {
 	var missing []string
 

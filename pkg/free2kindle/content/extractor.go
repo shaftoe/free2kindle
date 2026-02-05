@@ -1,3 +1,4 @@
+// Package content provides article extraction functionality from web pages.
 package content
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/markusmobius/go-trafilatura"
 )
 
+// Article represents the extracted content from a web page.
 type Article struct {
 	Title       string
 	Author      string
@@ -25,16 +27,19 @@ type Article struct {
 	HTML        string
 }
 
+// Extractor handles the extraction of article content from URLs and HTML.
 type Extractor struct {
 	client *http.Client
 }
 
+// NewExtractor creates a new Extractor instance.
 func NewExtractor() *Extractor {
 	return &Extractor{
 		client: &http.Client{},
 	}
 }
 
+// ExtractFromURL fetches and extracts article content from the given URL.
 func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article, error) {
 	if err := validateURL(urlStr); err != nil {
 		return nil, fmt.Errorf("invalid URL: %w", err)
@@ -96,6 +101,7 @@ func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article
 	}, nil
 }
 
+// ExtractFromHTML extracts article content from the provided HTML string.
 func (e *Extractor) ExtractFromHTML(ctx context.Context, urlStr, html string) (*Article, error) {
 	if err := validateURL(urlStr); err != nil {
 		return nil, fmt.Errorf("invalid URL: %w", err)

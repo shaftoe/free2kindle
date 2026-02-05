@@ -1,3 +1,4 @@
+// Package email provides email sending functionality for Kindle devices.
 package email
 
 import (
@@ -8,16 +9,19 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 )
 
+// SendEmailResponse contains the response from sending an email.
 type SendEmailResponse struct {
 	Status    string `json:"status"`
 	Message   string `json:"message"`
 	EmailUUID string `json:"email_uuid,omitempty"`
 }
 
+// Sender defines the interface for sending emails.
 type Sender interface {
 	SendEmail(ctx context.Context, req *EmailRequest) (*SendEmailResponse, error)
 }
 
+// EmailRequest contains the data required to send an email.
 type EmailRequest struct {
 	Article     *content.Article
 	EPUBData    []byte
@@ -25,6 +29,7 @@ type EmailRequest struct {
 	Subject     string
 }
 
+// GenerateFilename creates a sanitized filename from the article title.
 func GenerateFilename(article *content.Article) string {
 	if article.Title != "" {
 		return sanitizeFilename(article.Title) + ".epub"
@@ -32,6 +37,7 @@ func GenerateFilename(article *content.Article) string {
 	return "article.epub"
 }
 
+// GenerateSubject creates an email subject from the article title or custom subject.
 func GenerateSubject(articleTitle, customSubject string) string {
 	if customSubject != "" {
 		return sanitizeSubject(customSubject)

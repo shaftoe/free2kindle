@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const DEFAULT_TIMEOUT_SECONDS = 30
+const defaultTimeoutSeconds = 30
 
 var (
 	outputPath string
@@ -33,7 +33,7 @@ var rootCmd = &cobra.Command{
 	Use:   "free2kindle",
 	Short: "Convert web articles to EPUB format",
 	Long:  `A CLI tool to fetch web articles and convert them to EPUB format for Kindle devices.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		viper.SetEnvPrefix("F2K")
 		viper.AutomaticEnv()
 		if err := viper.BindEnv("kindle-email", "F2K_KINDLE_EMAIL"); err != nil {
@@ -78,7 +78,7 @@ var convertCmd = &cobra.Command{
 	RunE: runConvert,
 }
 
-func runConvert(cmd *cobra.Command, args []string) error {
+func runConvert(_ *cobra.Command, args []string) error {
 	url := args[0]
 
 	if sendEmail {
@@ -158,7 +158,7 @@ func main() {
 	generator = epub.NewGenerator()
 
 	convertCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output file path")
-	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t", DEFAULT_TIMEOUT_SECONDS*time.Second, "Timeout for HTTP requests")
+	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t", defaultTimeoutSeconds*time.Second, "Timeout for HTTP requests")
 	convertCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show extracted HTML content")
 
 	convertCmd.Flags().BoolVar(&sendEmail, "send", false, "Send EPUB to Kindle via email instead of saving locally")

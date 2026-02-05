@@ -1,3 +1,4 @@
+// Package epub provides EPUB file generation functionality.
 package epub
 
 import (
@@ -8,12 +9,15 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 )
 
+// Generator handles EPUB file generation from article content.
 type Generator struct{}
 
+// NewGenerator creates a new EPUB generator instance.
 func NewGenerator() *Generator {
 	return &Generator{}
 }
 
+// Generate creates an EPUB file from the given article and returns its bytes.
 func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 	e, err := epub.NewEpub(article.Title)
 	if err != nil {
@@ -59,6 +63,7 @@ func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 	return data, nil
 }
 
+// GenerateAndWrite generates an EPUB file and writes it to the specified path.
 func (g *Generator) GenerateAndWrite(article *content.Article, outputPath string) error {
 	data, err := g.Generate(article)
 	if err != nil {
