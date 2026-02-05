@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,14 +16,40 @@ import (
 )
 
 const (
-	apiKeyHeader = "X-API-Key"
-	version      = "0.0.0-devel"
+	apiKeyHeader      = "X-API-Key"
+	contentTypeHeader = "Content-Type"
+	contentTypeJson   = "application/json"
+
+	version = "0.0.0-devel"
 )
 
 var (
-	err error
-	cfg *config.Config
+	err     error
+	cfg     *config.Config
+	headers = map[string]string{
+		contentTypeHeader: contentTypeJson,
+	}
 )
+
+type ArticleRequest struct {
+	URL string `json:"url"`
+}
+
+type ArticleResponse struct {
+	Title   string `json:"title"`
+	URL     string `json:"url"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
+type HealthResponse struct {
+	Status string `json:"status"`
+}
 
 // setupLogging initializes the logging system for wide events logging
 // Ref: https://loggingsucks.com/
@@ -62,8 +89,8 @@ func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*e
 			StatusCode: http.StatusNoContent,
 			Headers: map[string]string{
 				"Access-Control-Allow-Origin":  "*",
-				"Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-				"Access-Control-Allow-Headers": "Content-Type, " + apiKeyHeader,
+				"Access-Control-Allow-Methods": fmt.Sprintf("%s, %s, %s", http.MethodPost, http.MethodGet, http.MethodOptions),
+				"Access-Control-Allow-Headers": fmt.Sprintf("%s, %s", contentTypeHeader, apiKeyHeader),
 			},
 		}, nil
 	}
@@ -74,7 +101,8 @@ func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*e
 
 		return &events.APIGatewayProxyResponse{
 			StatusCode: http.StatusOK,
-			Body:       "ok",
+			Body:       `{"status": "ok"}`,
+			Headers:    headers,
 		}, nil
 
 	case http.MethodPost + "/api/v1/articles":
@@ -94,12 +122,11 @@ func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*e
 
 	return &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusNotFound,
-		Body:       "not found",
 	}, nil
 }
 
 func respondError(status int, errorType string, message string) (*events.APIGatewayProxyResponse, error) {
-	slog.With("status", status).With("error_type", errorType).Info("request failed", "error", message)
+	slog.With("status", status).With("error_type", errorType).Warn("request failed", "error", message)
 
 	body, _ := json.Marshal(ErrorResponse{
 		Error:   errorType,
@@ -108,30 +135,8 @@ func respondError(status int, errorType string, message string) (*events.APIGate
 	return &events.APIGatewayProxyResponse{
 		StatusCode: status,
 		Body:       string(body),
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
+		Headers:    headers,
 	}, nil
-}
-
-type ArticleRequest struct {
-	URL string `json:"url"`
-}
-
-type ArticleResponse struct {
-	Title   string `json:"title"`
-	URL     string `json:"url"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-type ErrorResponse struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
-}
-
-type HealthResponse struct {
-	Status string `json:"status"`
 }
 
 func main() {

@@ -14,8 +14,9 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
 )
 
+// handleCreateArticle handles the creation and email delivery of a new article.
 func handleCreateArticle(ctx context.Context, req events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
-	apiKey := req.Headers[strings.ToLower(apiKeyHeader)] // NOTICE: for some reason it gets lowered by the Lambda environment
+	apiKey := req.Headers[strings.ToLower(apiKeyHeader)] // NOTICE: for some reason header key gets lowered by the Lambda environment
 
 	if apiKey == "" {
 		return respondError(http.StatusUnauthorized, "unauthorized", "API key required")
@@ -63,14 +64,12 @@ func handleCreateArticle(ctx context.Context, req events.LambdaFunctionURLReques
 		Title:   result.Title,
 		URL:     articleReq.URL,
 		Status:  "completed",
-		Message: "Article sent to Kindle successfully",
+		Message: "article sent to Kindle successfully",
 	})
 
 	return &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusCreated,
 		Body:       string(body),
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
+		Headers:    headers,
 	}, nil
 }
