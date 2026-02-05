@@ -16,11 +16,11 @@ func TestNewSender(t *testing.T) {
 	}
 
 	sender := NewSender(config)
-	if sender == nil { //nolint:staticcheck
+	if sender == nil {
 		t.Fatal("NewSender returned nil")
 	}
 
-	if sender.config != config { //nolint:staticcheck
+	if sender.config != config {
 		t.Error("Sender config not set correctly")
 	}
 }
@@ -166,7 +166,7 @@ func TestSendEmailValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sender := NewSender(tt.config)
-			err := sender.SendEmail(ctx, tt.req)
+			_, err := sender.SendEmail(ctx, tt.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SendEmail() error = %v, wantErr %v", err, tt.wantErr)
 			}

@@ -37,6 +37,11 @@ Parameters:
     Type: String
     Description: Verified sender email address
 
+  Debug:
+    Type: String
+    Description: Debug flag
+    Default: "false"
+
 Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -72,6 +77,7 @@ Resources:
           API_KEY_SECRET: !Ref APIKeySecret
           F2K_KINDLE_EMAIL: !Ref KindleEmail
           F2K_SENDER_EMAIL: !Ref SenderEmail
+          DEBUG: !Ref Debug
       TracingConfig:
         Mode: PassThrough
 

@@ -13,7 +13,7 @@ func TestNewExtractor(t *testing.T) {
 	if extractor == nil {
 		t.Fatal("NewExtractor returned nil")
 	}
-	if extractor.client == nil { //nolint:staticcheck
+	if extractor.client == nil {
 		t.Error("Extractor client is nil")
 	}
 }
@@ -130,13 +130,13 @@ func TestExtractFromHTML(t *testing.T) {
 			}
 
 			if !tt.wantErr {
-				if article == nil { //nolint:staticcheck
+				if article == nil {
 					t.Fatal("Expected article but got nil")
 				}
-				if article.URL != tt.url { //nolint:staticcheck
+				if article.URL != tt.url {
 					t.Errorf("Expected URL %s, got %s", tt.url, article.URL)
 				}
-				if article.HTML != tt.html { //nolint:staticcheck
+				if article.HTML != tt.html {
 					t.Error("HTML field should be set")
 				}
 			}
@@ -235,7 +235,7 @@ func TestExtractFromURLWithContextCancellation(t *testing.T) {
 	extractor := NewExtractor()
 	_, err := extractor.ExtractFromURL(ctx, server.URL)
 	if err == nil {
-		t.Error("Expected error due to cancelled context, got nil")
+		t.Error("Expected error due to canceled context, got nil")
 	}
 }
 
@@ -248,7 +248,7 @@ func TestExtractFromHTMLWithContextCancellation(t *testing.T) {
 	extractor := NewExtractor()
 	_, err := extractor.ExtractFromHTML(ctx, "https://example.com/article", html)
 	if err == nil {
-		t.Error("Expected error due to cancelled context, got nil")
+		t.Error("Expected error due to canceled context, got nil")
 	}
 }
 
@@ -302,23 +302,23 @@ func TestArticleFields(t *testing.T) {
 		t.Fatalf("ExtractFromHTML() error = %v", err)
 	}
 
-	if article == nil { //nolint:staticcheck
+	if article == nil {
 		t.Fatal("Expected article but got nil")
 	}
 
-	if article.Title == "" { //nolint:staticcheck
+	if article.Title == "" {
 		t.Error("Expected title to be set")
 	}
 
-	if article.Content == "" { //nolint:staticcheck
+	if article.Content == "" {
 		t.Error("Expected content to be set")
 	}
 
-	if article.HTML != html { //nolint:staticcheck
+	if article.HTML != html {
 		t.Error("Expected HTML field to be set to input HTML")
 	}
 
-	if article.URL != "https://example.com/article" { //nolint:staticcheck
+	if article.URL != "https://example.com/article" {
 		t.Errorf("Expected URL to be https://example.com/article, got %s", article.URL)
 	}
 }

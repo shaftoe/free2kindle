@@ -54,7 +54,8 @@ deploy-api:
             MailjetAPISecret="$MAILJET_API_SECRET" \
             APIKeySecret="$API_KEY_SECRET" \
             KindleEmail="$F2K_KINDLE_EMAIL" \
-            SenderEmail="$F2K_SENDER_EMAIL"
+            SenderEmail="$F2K_SENDER_EMAIL" \
+            Debug="true"
 
 # Full deployment (bucket + upload + infra)
 deploy: build-lambda-zip
@@ -88,7 +89,7 @@ test-url *URL:
       -H "X-API-Key: $API_KEY_SECRET" \
       -d "{\"url\": \"{{ URL }}\"}"
 
-update-lambda: build-lambda-zip upload-zip
+deploy-lambda: build-lambda-zip upload-zip
     aws lambda update-function-code \
         --function-name {{ project_name }}-api \
         --s3-bucket {{ bucket_name }} \

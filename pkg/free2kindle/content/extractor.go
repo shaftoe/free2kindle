@@ -2,6 +2,7 @@ package content
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,7 +45,7 @@ func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article
 		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -78,7 +79,7 @@ func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article
 	}
 
 	if result.ContentNode == nil {
-		return nil, fmt.Errorf("no content extracted")
+		return nil, errors.New("no content extracted")
 	}
 
 	contentHTML := dom.InnerHTML(result.ContentNode)
@@ -121,7 +122,7 @@ func (e *Extractor) ExtractFromHTML(ctx context.Context, urlStr, html string) (*
 	}
 
 	if result.ContentNode == nil {
-		return nil, fmt.Errorf("no content extracted")
+		return nil, errors.New("no content extracted")
 	}
 
 	contentHTML := dom.InnerHTML(result.ContentNode)
@@ -140,7 +141,7 @@ func (e *Extractor) ExtractFromHTML(ctx context.Context, urlStr, html string) (*
 
 func validateURL(urlStr string) error {
 	if urlStr == "" {
-		return fmt.Errorf("URL cannot be empty")
+		return errors.New("URL cannot be empty")
 	}
 
 	u, err := url.Parse(urlStr)
@@ -149,11 +150,11 @@ func validateURL(urlStr string) error {
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return fmt.Errorf("URL must use http or https scheme")
+		return errors.New("URL must use http or https scheme")
 	}
 
 	if u.Host == "" {
-		return fmt.Errorf("URL must have a host")
+		return errors.New("URL must have a host")
 	}
 
 	return nil

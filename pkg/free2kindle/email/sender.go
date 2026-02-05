@@ -8,8 +8,14 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 )
 
+type SendEmailResponse struct {
+	Status    string `json:"status"`
+	Message   string `json:"message"`
+	EmailUUID string `json:"email_uuid,omitempty"`
+}
+
 type Sender interface {
-	SendEmail(ctx context.Context, req *EmailRequest) error
+	SendEmail(ctx context.Context, req *EmailRequest) (*SendEmailResponse, error)
 }
 
 type EmailRequest struct {

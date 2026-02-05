@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
@@ -60,9 +61,11 @@ func stringJoin(items []string, sep string) string {
 		return ""
 	}
 	result := items[0]
+	var resultSb63 strings.Builder
 	for i := 1; i < len(items); i++ {
-		result += sep + items[i]
+		resultSb63.WriteString(sep + items[i])
 	}
+	result += resultSb63.String()
 	return result
 }
 

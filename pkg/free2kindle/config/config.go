@@ -13,6 +13,7 @@ type Config struct {
 	MailjetAPIKey    string
 	MailjetAPISecret string
 	APIKeySecret     string
+	Debug            bool
 }
 
 func Load() (*Config, error) {
@@ -34,6 +35,9 @@ func Load() (*Config, error) {
 	if err := viper.BindEnv("api-key-secret", "API_KEY_SECRET"); err != nil {
 		return nil, fmt.Errorf("failed to bind api-key-secret env: %w", err)
 	}
+	if err := viper.BindEnv("debug", "DEBUG"); err != nil {
+		return nil, fmt.Errorf("failed to bind debug env: %w", err)
+	}
 
 	cfg := &Config{
 		KindleEmail:      viper.GetString("kindle-email"),
@@ -41,6 +45,7 @@ func Load() (*Config, error) {
 		MailjetAPIKey:    viper.GetString("api-key"),
 		MailjetAPISecret: viper.GetString("api-secret"),
 		APIKeySecret:     viper.GetString("api-key-secret"),
+		Debug:            viper.GetBool("debug"),
 	}
 
 	if err := cfg.Validate(); err != nil {

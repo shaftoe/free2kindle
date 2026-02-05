@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/email/mailjet"
@@ -16,17 +19,39 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
 )
 
-const apiKeyHeader = "X-API-Key"
+const (
+	apiKeyHeader = "X-API-Key"
+	version      = "0.0.0-devel"
+)
 
 var (
 	cfg *config.Config
 )
 
+func setupLogging(ctx context.Context) {
+	leveler := slog.LevelInfo
+	if cfg.Debug {
+		leveler = slog.LevelDebug
+	}
+
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: leveler,
+	})
+
+	deadline, _ := ctx.Deadline()
+	lc, _ := lambdacontext.FromContext(ctx)
+	logger := slog.New(handler).With("version", version).With("request_id", lc.AwsRequestID).With("deadline", deadline)
+
+	slog.SetDefault(logger)
+}
+
 func handleRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
+	setupLogging(ctx)
+
 	path := req.RequestContext.HTTP.Path
 	method := req.RequestContext.HTTP.Method
 
-	log.Printf("Received request: path=%s, method=%s", path, method)
+	slog.Debug(fmt.Sprintf("Received request: path=%s, method=%s", path, method))
 
 	if method == http.MethodOptions {
 		return &events.APIGatewayProxyResponse{
@@ -101,7 +126,7 @@ func handleCreateArticle(ctx context.Context, req events.LambdaFunctionURLReques
 
 	result, err := service.Run(ctx, svcCfg, articleReq.URL)
 	if err != nil {
-		log.Printf("Failed to process article: %v", err)
+		slog.Error(fmt.Sprintf("Failed to process article: %v", err))
 		return respondError(http.StatusInternalServerError,
 			"processing_failed", "Failed to process article")
 	}
@@ -161,7 +186,8 @@ func main() {
 
 	cfg, err = config.Load()
 	if err != nil {
-		log.Fatalf("failed to load configuration: %v", err)
+		slog.Error("failed to load configuration", "error", err)
+		os.Exit(1)
 	}
 
 	lambda.Start(handleRequest)

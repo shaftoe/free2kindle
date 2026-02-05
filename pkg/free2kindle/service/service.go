@@ -54,7 +54,7 @@ func Run(ctx context.Context, cfg *Config, url string) (*Result, error) {
 			Subject:     email.GenerateSubject(article.Title, cfg.Subject),
 		}
 
-		if err := cfg.Sender.SendEmail(ctx, emailReq); err != nil {
+		if _, err := cfg.Sender.SendEmail(ctx, emailReq); err != nil {
 			return nil, fmt.Errorf("failed to send email: %w", err)
 		}
 	}
