@@ -9,13 +9,13 @@ Deploy the Free2Kindle API to AWS Lambda using CloudFormation.
 ### Prerequisites
 
 1. Install AWS CLI and configure credentials
-2. Set required environment variables:
+2. Set required environment variables in `.env`, e.g:
 ```bash
-export MAILJET_API_KEY="your_mailjet_api_key"
-export MAILJET_API_SECRET="your_mailjet_api_secret"
-export API_KEY_SECRET="your_api_key_secret"
+export F2K_API_KEY="your_api_key_secret"
 export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
 export F2K_SENDER_EMAIL="sender@example.com"
+export MAILJET_API_KEY="your_mailjet_api_key"
+export MAILJET_API_SECRET="your_mailjet_api_secret"
 ```
 
 ### Deployment
@@ -33,33 +33,6 @@ just logs free2kindle
 # Destroy infrastructure
 just destroy free2kindle
 ```
-
-For detailed instructions, see [cloudformation/README.md](cloudformation/README.md).
-
-### Browser Bookmarklet
-
-Use a bookmarklet to save articles directly from your browser:
-
-1. Deploy the Lambda function and get the Function URL:
-   ```bash
-   just deploy
-   just get-url
-   ```
-
-2. Copy the bookmarklet code from `bookmarklet.min.js`
-
-3. Replace `YOUR_FUNCTION_URL_HERE` with your actual Function URL
-
-4. Replace `YOUR_API_KEY_HERE` with your `API_KEY_SECRET`
-
-5. In Firefox, create a new bookmark:
-   - Right-click on Bookmarks toolbar → "New Bookmark"
-   - Paste the modified bookmarklet code as the "Location"
-   - Name it "Send to Kindle"
-
-Now you can click the bookmarklet on any page to send it to your Kindle.
-
-**Security Note**: The API key is stored in the bookmarklet. Anyone who can access your bookmarks will see the key. For better security, use a browser extension or restrict who has access to your bookmarks.
 
 ## CLI Tool
 
@@ -116,10 +89,30 @@ export MAILJET_API_SECRET="your_api_secret"
 - **Multiple Providers**: Supports Mailjet (with extensible architecture for SES, SendGrid, etc.)
 - **Environment Variables**: Configure via flags or environment variables
 
+### Browser Extension
+
+**Install the extension:**
+
+**Temporary Installation (Development):**
+
+1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on"
+3. Select the `extension/manifest.json` file
+4. Configure settings by clicking extension icon → "Configure Settings"
+5. Enter your API URL and API Key
+
+**Using the extension:**
+1. Click the extension icon on any web page to send it to Kindle
+2. Or right-click on any link → "Send to Kindle"
+3. Configure API settings via extension icon → "Configure Settings"
+4. The extension stores your API key and URL securely using Chrome storage API
+5. CORS headers are properly configured for cross-origin requests to your Lambda function
+
 ### Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|----------|
+| `F2K_API_KEY` | Shared API Key secret | - |
 | `F2K_KINDLE_EMAIL` | Your Kindle email address | - |
 | `F2K_SENDER_EMAIL` | Verified sender email address | - |
 | `MAILJET_API_KEY` | Mailjet API key | - |

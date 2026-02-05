@@ -74,7 +74,7 @@ Resources:
         Variables:
           MAILJET_API_KEY: !Ref MailjetAPIKey
           MAILJET_API_SECRET: !Ref MailjetAPISecret
-          API_KEY_SECRET: !Ref APIKeySecret
+          F2K_API_KEY: !Ref APIKeySecret
           F2K_KINDLE_EMAIL: !Ref KindleEmail
           F2K_SENDER_EMAIL: !Ref SenderEmail
           DEBUG: !Ref Debug
@@ -87,15 +87,6 @@ Resources:
       AuthType: NONE
       InvokeMode: BUFFERED
       TargetFunctionArn: !GetAtt LambdaFunction.Arn
-      Cors:
-        AllowOrigins:
-          - "*"
-        AllowMethods:
-          - POST
-          - GET
-        AllowHeaders:
-          - Content-Type
-          - X-API-Key
 
   LambdaFunctionUrlPermission:
     Type: AWS::Lambda::Permission

@@ -19,25 +19,37 @@ import (
 func handleCreateArticle(
 	ctx context.Context,
 	req *events.LambdaFunctionURLRequest,
-) (*events.APIGatewayProxyResponse, error) {
+) *events.LambdaFunctionURLResponse {
 	// NOTICE: for some reason header key gets lowered by the Lambda environment
-	apiKey := req.Headers[strings.ToLower(apiKeyHeader)]
+	apiKey, ok := req.Headers[strings.ToLower(apiKeyHeader)]
 
-	if apiKey == "" {
-		return respondError(http.StatusUnauthorized, "unauthorized", "API key required")
+	if !ok || apiKey == "" {
+		return &events.LambdaFunctionURLResponse{
+			StatusCode: http.StatusUnauthorized,
+			Body:       `{"message": "API key required"}`,
+		}
 	}
 
 	if apiKey != cfg.APIKeySecret {
-		return respondError(http.StatusUnauthorized, "unauthorized", "Invalid API key")
+		return &events.LambdaFunctionURLResponse{
+			StatusCode: http.StatusUnauthorized,
+			Body:       `{"message": "Invalid API key"}`,
+		}
 	}
 
 	var articleReq ArticleRequest
 	if err := json.Unmarshal([]byte(req.Body), &articleReq); err != nil {
-		return respondError(http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return &events.LambdaFunctionURLResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       `{"message": "Invalid request body"}`,
+		}
 	}
 
 	if articleReq.URL == "" {
-		return respondError(http.StatusBadRequest, "invalid_request", "URL is required")
+		return &events.LambdaFunctionURLResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       `{"message": "URL is required"}`,
+		}
 	}
 
 	slog.SetDefault(slog.Default().With("url", articleReq.URL))
@@ -62,7 +74,10 @@ func handleCreateArticle(
 
 	result, err := service.Run(ctx, svcCfg, articleReq.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to process article: %w", err)
+		return &events.LambdaFunctionURLResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       fmt.Sprintf(`{"message": "Failed to process article: %v"}`, err),
+		}
 	}
 
 	body, _ := json.Marshal(ArticleResponse{
@@ -72,9 +87,9 @@ func handleCreateArticle(
 		Message: "article sent to Kindle successfully",
 	})
 
-	return &events.APIGatewayProxyResponse{
+	return &events.LambdaFunctionURLResponse{
 		StatusCode: http.StatusCreated,
 		Body:       string(body),
-		Headers:    headers,
-	}, nil
+		Headers:    getCORSHeaders(req),
+	}
 }

@@ -34,7 +34,7 @@ func Load() (*Config, error) {
 	if err := viper.BindEnv("api-secret", "MAILJET_API_SECRET", "MJ_APIKEY_PRIVATE"); err != nil {
 		return nil, fmt.Errorf("failed to bind api-secret env: %w", err)
 	}
-	if err := viper.BindEnv("api-key-secret", "API_KEY_SECRET"); err != nil {
+	if err := viper.BindEnv("api-key-secret", "F2K_API_KEY"); err != nil {
 		return nil, fmt.Errorf("failed to bind api-key-secret env: %w", err)
 	}
 	if err := viper.BindEnv("debug", "DEBUG"); err != nil {
@@ -74,7 +74,7 @@ func (c *Config) Validate() error {
 		missing = append(missing, "MAILJET_API_SECRET")
 	}
 	if c.APIKeySecret == "" {
-		missing = append(missing, "API_KEY_SECRET")
+		missing = append(missing, "F2K_API_KEY")
 	}
 
 	if len(missing) > 0 {

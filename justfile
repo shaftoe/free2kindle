@@ -52,7 +52,7 @@ deploy-api:
             SourceBucketKey={{ lambda_archive }} \
             MailjetAPIKey="$MAILJET_API_KEY" \
             MailjetAPISecret="$MAILJET_API_SECRET" \
-            APIKeySecret="$API_KEY_SECRET" \
+            APIKeySecret="$F2K_API_KEY" \
             KindleEmail="$F2K_KINDLE_EMAIL" \
             SenderEmail="$F2K_SENDER_EMAIL" \
             Debug="true"
@@ -86,7 +86,7 @@ logs:
 test-url *URL:
     curl -X POST $(just get-url)/api/v1/articles \
       -H "Content-Type: application/json" \
-      -H "X-API-Key: $API_KEY_SECRET" \
+      -H "X-API-Key: $F2K_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"
 
 deploy-lambda: build-lambda-zip upload-zip

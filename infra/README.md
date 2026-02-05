@@ -31,7 +31,7 @@ just build-lambda-zip
 ```bash
 export MAILJET_API_KEY="your_mailjet_api_key"
 export MAILJET_API_SECRET="your_mailjet_api_secret"
-export API_KEY_SECRET="your_api_key_secret"
+export F2K_API_KEY="your_api_key_secret"
 export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
 export F2K_SENDER_EMAIL="sender@example.com"
 ```
@@ -84,7 +84,7 @@ The following environment variables must be set before deploying:
 |----------|-------------|
 | `MAILJET_API_KEY` | Mailjet API key |
 | `MAILJET_API_SECRET` | Mailjet API secret |
-| `API_KEY_SECRET` | Secret API key for authentication |
+| `F2K_API_KEY` | Secret API key for authentication |
 | `F2K_KINDLE_EMAIL` | Your Kindle email address |
 | `F2K_SENDER_EMAIL` | Verified sender email address |
 
@@ -104,7 +104,7 @@ curl https://<FUNCTION_URL>/api/v1/health
 # Send article to Kindle
 curl -X POST https://<FUNCTION_URL>/api/v1/articles \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: $API_KEY_SECRET" \
+  -H "X-API-Key: $F2K_API_KEY" \
   -d '{"url": "https://example.com/article"}'
 ```
 

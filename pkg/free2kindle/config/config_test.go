@@ -93,13 +93,13 @@ func TestLoad(t *testing.T) {
 	_ = os.Setenv("F2K_SENDER_EMAIL", "sender@example.com")
 	_ = os.Setenv("MAILJET_API_KEY", "api-key")
 	_ = os.Setenv("MAILJET_API_SECRET", "api-secret")
-	_ = os.Setenv("API_KEY_SECRET", "api-key-secret")
+	_ = os.Setenv("F2K_API_KEY", "api-key-secret")
 	defer func() {
 		_ = os.Unsetenv("F2K_KINDLE_EMAIL")
 		_ = os.Unsetenv("F2K_SENDER_EMAIL")
 		_ = os.Unsetenv("MAILJET_API_KEY")
 		_ = os.Unsetenv("MAILJET_API_SECRET")
-		_ = os.Unsetenv("API_KEY_SECRET")
+		_ = os.Unsetenv("F2K_API_KEY")
 	}()
 
 	cfg, err := Load()

@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -24,12 +23,23 @@ const (
 )
 
 var (
-	err     error
-	cfg     *config.Config
-	headers = map[string]string{
-		contentTypeHeader: contentTypeJSON,
-	}
+	err error
+	cfg *config.Config
 )
+
+func getCORSHeaders(req *events.LambdaFunctionURLRequest) map[string]string {
+	origin := req.Headers["origin"]
+	if origin == "" {
+		origin = "*"
+	}
+	return map[string]string{
+		contentTypeHeader:                  contentTypeJSON,
+		"Access-Control-Allow-Origin":      origin,
+		"Access-Control-Allow-Headers":     fmt.Sprintf("%s, %s", contentTypeHeader, apiKeyHeader),
+		"Access-Control-Allow-Methods":     fmt.Sprintf("%s, %s, %s", http.MethodPost, http.MethodGet, http.MethodOptions),
+		"Access-Control-Allow-Credentials": "true",
+	}
+}
 
 type ArticleRequest struct {
 	URL string `json:"url"`
@@ -39,11 +49,6 @@ type ArticleResponse struct {
 	Title   string `json:"title"`
 	URL     string `json:"url"`
 	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-type ErrorResponse struct {
-	Error   string `json:"error"`
 	Message string `json:"message"`
 }
 
@@ -77,66 +82,45 @@ func setupLogging(ctx context.Context, req *events.LambdaFunctionURLRequest) {
 	slog.SetDefault(logger)
 }
 
-func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) (*events.APIGatewayProxyResponse, error) {
-	var resp *events.APIGatewayProxyResponse
-
+func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) *events.LambdaFunctionURLResponse {
 	setupLogging(ctx, req)
 
 	if req.RequestContext.HTTP.Method == http.MethodOptions {
-		slog.Debug("options request")
-
-		return &events.APIGatewayProxyResponse{
+		return response(req, &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusNoContent,
-			Headers: map[string]string{
-				"Access-Control-Allow-Origin":  "*",
-				"Access-Control-Allow-Methods": fmt.Sprintf("%s, %s, %s", http.MethodPost, http.MethodGet, http.MethodOptions),
-				"Access-Control-Allow-Headers": fmt.Sprintf("%s, %s", contentTypeHeader, apiKeyHeader),
-			},
-		}, nil
+		})
 	}
 
 	switch req.RequestContext.HTTP.Method + req.RequestContext.HTTP.Path {
 	case http.MethodGet + "/api/v1/health":
-		slog.Debug("health check")
-
-		return &events.APIGatewayProxyResponse{
+		return response(req, &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusOK,
 			Body:       `{"status": "ok"}`,
-			Headers:    headers,
-		}, nil
+		})
 
 	case http.MethodPost + "/api/v1/articles":
-		resp, err = handleCreateArticle(ctx, req)
+		return response(req, handleCreateArticle(ctx, req))
 
-		if resp != nil {
-			slog.Info("article sent")
-			return resp, nil
-		}
+	default:
+		return response(req, &events.LambdaFunctionURLResponse{
+			StatusCode: http.StatusNotFound,
+			Body:       `{"status": "not_found"}`,
+		})
 	}
-
-	if err != nil {
-		return respondError(http.StatusInternalServerError, "internal_server_error", err.Error())
-	}
-
-	slog.Debug("not found")
-
-	return &events.APIGatewayProxyResponse{
-		StatusCode: http.StatusNotFound,
-	}, nil
 }
 
-func respondError(status int, errorType, message string) (*events.APIGatewayProxyResponse, error) {
-	slog.With("status", status).With("error_type", errorType).Warn("request failed", "error", message)
+func response(req *events.LambdaFunctionURLRequest, resp *events.LambdaFunctionURLResponse) *events.LambdaFunctionURLResponse {
+	logger := slog.With("status", resp.StatusCode)
 
-	body, _ := json.Marshal(ErrorResponse{
-		Error:   errorType,
-		Message: message,
-	})
-	return &events.APIGatewayProxyResponse{
-		StatusCode: status,
-		Body:       string(body),
-		Headers:    headers,
-	}, nil
+	if resp.StatusCode >= http.StatusNoContent {
+		logger.Warn("request failed")
+	} else {
+		logger.Info("request succeeded")
+	}
+
+	resp.Headers = getCORSHeaders(req)
+
+	return resp
 }
 
 func main() {

@@ -1,9 +1,11 @@
 # Free2Kindle Specification
 
 ## Overview
-A self-hosted application that allows users to save web links from their browser, convert them to Kindle-compatible documents, and automatically email them to their Kindle device via the Kindle Personal Document Service.
+
+A self-hosted / CLI application that allows users to save web links from the terminal, the browser or via iOS share feature, and have them delivered to Kindle via the Kindle Personal Document Service.
 
 ## Core Features
+
 - **Browser Extension**: Firefox extension to save articles with one click
 - **Content Extraction**: Clean article content extraction (remove ads, navigation, etc.)
 - **Article Management**: Queue, view, and manage saved articles
@@ -18,19 +20,21 @@ A self-hosted application that allows users to save web links from their browser
      - Configure Kindle email address
      - Add sender email to Kindle approved email list
      - Install browser extension
+     - Setup iOS Shortcut for quick sharing
 
   2. **Daily Use**:
-    - Click extension icon on any web page
+    - Click extension icon on any web page / share via iOS shortcut
     - Article is queued for processing
     - Backend extracts content and converts to document
     - Document is emailed to Kindle device
-    - User can view status in web dashboard
+    - User can view saved articles in web dashboard
 
 ## Architecture
 
 ### CLI Usage Examples
 
 **Convert URL to local EPUB:**
+
 ```bash
 ./bin/free2kindle convert https://example.com/article -o article.epub
 ```
@@ -42,17 +46,7 @@ export F2K_SENDER_EMAIL="sender@example.com"
 export MAILJET_API_KEY="your_api_key"
 export MAILJET_API_SECRET="your_api_secret"
 
-./bin/free2kindle convert https://example.com/article --send
-```
-
-**Send with custom subject:**
-```bash
-./bin/free2kindle convert https://example.com/article --send --email-subject "Custom Title"
-```
-
-**Verbose mode (show extracted content):**
-```bash
-./bin/free2kindle convert https://example.com/article -v
+./bin/free2kindle convert --send https://example.com/article
 ```
 
 ### Backend Components (AWS Lambda)
@@ -88,14 +82,29 @@ Future implementation will also include:
 - Configure settings
 - Deployed to Netlify
 
-#### 2. Browser bookmarklet (Firefox)
+#### 2. Browser Extension (Firefox)
 
-Possible improvements:
-  - Save current page with one click
-  - Quick popup to confirm/save
-  - View recent articles
-  - Link to dashboard
-  - Manifest V3
+A Firefox extension to save articles with one click and right-click context menu.
+
+**Features:**
+- Click extension icon to send current tab URL to Kindle
+- Right-click on any link → "Send to Kindle" context menu
+- Settings page to configure API key and URL (stored securely via chrome.storage.local)
+- Manifest V3 compatible
+
+**Self-Distribution Plan:**
+The extension will be packaged and signed for self-distribution:
+1. Install `web-ext` CLI tool: `npm install --global web-ext`
+2. Package extension: `cd extension && web-ext build` (creates `.xpi` file)
+3. Sign extension via Mozilla's signing service: `web-ext sign --api-key=<key> --api-secret=<secret>`
+4. Distribute signed `.xpi` file (host on GitHub Releases, website, or direct download)
+5. Users install via Firefox → Menu → Add-ons → Gear icon → Install Add-on From File
+
+**Future Improvements:**
+- Quick popup to confirm/save before sending
+- View recent articles from popup
+- Link to dashboard from settings page
+- Better error handling and retry functionality
 
 #### 2.1 Share Sheet + Shortcuts for iOS
 - Shortcut Flow:
@@ -154,7 +163,7 @@ MAILJET_API_KEY
 MAILJET_API_SECRET
 
 # Security
-API_KEY_SECRET
+F2K_API_KEY
 
 # Kindle (for CLI and Lambda)
 F2K_KINDLE_EMAIL
@@ -306,8 +315,13 @@ free2kindle/
 │   │   └── main.go
 │   └── cli/                  # CLI tool
 │       └── main.go
-├── web/                      # Web dashboard
-└── extension/                # Browser extension
+├── web/                      # Web dashboard (SvelteKit)
+└── extension/                # Browser extension (Firefox)
+    ├── manifest.json          # Extension manifest (Manifest V3)
+    ├── popup.html/js         # Icon click popup UI
+    ├── background.js          # Context menu handler
+    ├── options.html/js        # Settings page
+    └── icons/               # Extension icons (16x16, 32x32, 48x48, 128x128)
 ```
 
 ## Constraints
@@ -317,3 +331,4 @@ free2kindle/
 - Email size limit: 25MB (Kindle)
 - Max concurrent processing: 10 articles per user
 - EPUB format only (no PDF support)
+- Extension permissions: storage, contextMenus, activeTab, host_permissions (for API requests)
