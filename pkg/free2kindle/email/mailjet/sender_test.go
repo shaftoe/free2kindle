@@ -139,16 +139,15 @@ func TestValidateRequest(t *testing.T) {
 }
 
 func TestSendEmailValidation(t *testing.T) {
-	ctx := context.Background()
-
 	tests := []struct {
-		name    string
-		config  *Config
-		req     *email.Request
-		wantErr bool
+		name       string
+		config     *Config
+		req        *email.Request
+		wantErr    bool
+		expectResp *email.SendEmailResponse
 	}{
 		{
-			name: "missing config",
+			name: "missing api key in config",
 			config: &Config{
 				APIKey:      "",
 				APISecret:   "secret",
@@ -159,16 +158,114 @@ func TestSendEmailValidation(t *testing.T) {
 				EPUBData:    []byte("data"),
 				KindleEmail: "kindle@kindle.com",
 			},
-			wantErr: true,
+			wantErr:    true,
+			expectResp: nil,
+		},
+		{
+			name: "missing api secret in config",
+			config: &Config{
+				APIKey:      "key",
+				APISecret:   "",
+				SenderEmail: "test@example.com",
+			},
+			req: &email.Request{
+				Article:     &content.Article{Title: "Test"},
+				EPUBData:    []byte("data"),
+				KindleEmail: "kindle@kindle.com",
+			},
+			wantErr:    true,
+			expectResp: nil,
+		},
+		{
+			name: "missing sender email in config",
+			config: &Config{
+				APIKey:      "key",
+				APISecret:   "secret",
+				SenderEmail: "",
+			},
+			req: &email.Request{
+				Article:     &content.Article{Title: "Test"},
+				EPUBData:    []byte("data"),
+				KindleEmail: "kindle@kindle.com",
+			},
+			wantErr:    true,
+			expectResp: nil,
+		},
+		{
+			name: "missing kindle email in request",
+			config: &Config{
+				APIKey:      "key",
+				APISecret:   "secret",
+				SenderEmail: "test@example.com",
+			},
+			req: &email.Request{
+				Article:     &content.Article{Title: "Test"},
+				EPUBData:    []byte("data"),
+				KindleEmail: "",
+			},
+			wantErr:    true,
+			expectResp: nil,
+		},
+		{
+			name: "missing epub data in request",
+			config: &Config{
+				APIKey:      "key",
+				APISecret:   "secret",
+				SenderEmail: "test@example.com",
+			},
+			req: &email.Request{
+				Article:     &content.Article{Title: "Test"},
+				EPUBData:    nil,
+				KindleEmail: "kindle@kindle.com",
+			},
+			wantErr:    true,
+			expectResp: nil,
+		},
+		{
+			name: "missing article in request",
+			config: &Config{
+				APIKey:      "key",
+				APISecret:   "secret",
+				SenderEmail: "test@example.com",
+			},
+			req: &email.Request{
+				Article:     nil,
+				EPUBData:    []byte("data"),
+				KindleEmail: "kindle@kindle.com",
+			},
+			wantErr:    true,
+			expectResp: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 			sender := NewSender(tt.config)
-			_, err := sender.SendEmail(ctx, tt.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SendEmail() error = %v, wantErr %v", err, tt.wantErr)
+			resp, err := sender.SendEmail(ctx, tt.req)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("SendEmail() expected error, got nil")
+				}
+				if resp != nil {
+					t.Errorf("SendEmail() expected nil response on error, got %v", resp)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("SendEmail() unexpected error = %v", err)
+				return
+			}
+
+			if tt.expectResp != nil {
+				if resp.Status != tt.expectResp.Status {
+					t.Errorf("SendEmail() Status = %v, want %v", resp.Status, tt.expectResp.Status)
+				}
+				if resp.Message != tt.expectResp.Message {
+					t.Errorf("SendEmail() Message = %v, want %v", resp.Message, tt.expectResp.Message)
+				}
 			}
 		})
 	}

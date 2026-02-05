@@ -21,6 +21,7 @@ linters:
     - exhaustive
     - funlen
     - gochecknoinits
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
@@ -42,16 +43,15 @@ linters:
     - prealloc
     - revive
     - staticcheck
+    - thelper
+    - tparallel
     - unconvert
     - unparam
     - unused
     - whitespace
     - wrapcheck
     # More linters to consider:
-    # - gocognit
     # - testifylint
-    # - thelper
-    # - tparallel
   settings:
     gocyclo:
       min-complexity: 15
@@ -105,3 +105,4 @@ linters:
       - path: '(.+)_test\.go'
         linters:
           - funlen
+          - gocognit
