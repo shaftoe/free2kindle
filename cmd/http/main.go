@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/server"
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/server"
 )
 
 const (
@@ -30,7 +30,7 @@ func main() {
 		})))
 	}
 
-	router := f2khttp.NewRouter(cfg)
+	router := server.NewRouter(cfg)
 
 	port := "8080"
 	slog.Info("starting HTTP server", "port", port)
