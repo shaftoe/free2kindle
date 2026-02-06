@@ -26,14 +26,14 @@ func handleCreateArticle(
 	if !ok || apiKey == "" {
 		return &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusUnauthorized,
-			Body:       `{"message": "API key required"}`,
+			Body:       body("API key required"),
 		}
 	}
 
 	if apiKey != cfg.APIKeySecret {
 		return &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusUnauthorized,
-			Body:       `{"message": "Invalid API key"}`,
+			Body:       body("Invalid API key"),
 		}
 	}
 
@@ -41,14 +41,14 @@ func handleCreateArticle(
 	if err := json.Unmarshal([]byte(req.Body), &articleReq); err != nil {
 		return &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       `{"message": "Invalid request body"}`,
+			Body:       body("Invalid request body"),
 		}
 	}
 
 	if articleReq.URL == "" {
 		return &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       `{"message": "URL is required"}`,
+			Body:       body("URL is required"),
 		}
 	}
 
@@ -76,7 +76,7 @@ func handleCreateArticle(
 	if err != nil {
 		return &events.LambdaFunctionURLResponse{
 			StatusCode: http.StatusInternalServerError,
-			Body:       fmt.Sprintf(`{"message": "Failed to process article: %v"}`, err),
+			Body:       body(fmt.Sprintf("Failed to process article: %v", err)),
 		}
 	}
 

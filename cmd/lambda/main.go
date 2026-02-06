@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -26,6 +27,15 @@ var (
 	err error
 	cfg *config.Config
 )
+
+func body(msg string) string {
+	jsonBytes, err := json.Marshal(Body{Message: msg})
+	if err != nil {
+		return ""
+	}
+
+	return string(jsonBytes)
+}
 
 func getCORSHeaders(req *events.LambdaFunctionURLRequest) map[string]string {
 	origin := req.Headers["origin"]
@@ -56,6 +66,10 @@ type HealthResponse struct {
 	Status string `json:"status"`
 }
 
+type Body struct {
+	Message string `json:"message"`
+}
+
 // setupLogging initializes the logging system for wide events logging.
 // Ref: https://loggingsucks.com/
 func setupLogging(ctx context.Context, req *events.LambdaFunctionURLRequest) {
@@ -82,7 +96,8 @@ func setupLogging(ctx context.Context, req *events.LambdaFunctionURLRequest) {
 	slog.SetDefault(logger)
 }
 
-func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) *events.LambdaFunctionURLResponse {
+func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) (
+	*events.LambdaFunctionURLResponse, error) {
 	setupLogging(ctx, req)
 
 	if req.RequestContext.HTTP.Method == http.MethodOptions {
@@ -109,13 +124,16 @@ func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) *e
 	}
 }
 
-func response(req *events.LambdaFunctionURLRequest, resp *events.LambdaFunctionURLResponse) *events.LambdaFunctionURLResponse {
+func response(req *events.LambdaFunctionURLRequest, resp *events.LambdaFunctionURLResponse) (
+	*events.LambdaFunctionURLResponse, error) {
 	logger := slog.With("status", resp.StatusCode)
-	if resp.Body != "" {
-		logger = logger.With("message", resp.Body)
+
+	var b Body
+	if err = json.Unmarshal([]byte(resp.Body), &b); err != nil && b.Message != "" {
+		logger = logger.With("message", b.Message)
 	}
 
-	if resp.StatusCode >= http.StatusNoContent {
+	if resp.StatusCode > http.StatusNoContent {
 		logger.Warn("request failed")
 	} else {
 		logger.Info("request succeeded")
@@ -123,7 +141,7 @@ func response(req *events.LambdaFunctionURLRequest, resp *events.LambdaFunctionU
 
 	resp.Headers = getCORSHeaders(req)
 
-	return resp
+	return resp, nil
 }
 
 func main() {
