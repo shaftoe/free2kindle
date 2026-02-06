@@ -13,7 +13,15 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
 )
 
+const (
+	messageSentToKindle  = "article sent to Kindle successfully"
+	messageEmailDisabled = "article processed successfully (email sending disabled)"
+)
+
 func newHandlers(deps *handlerDeps) *handlers {
+	if deps.serviceRun == nil {
+		deps.serviceRun = service.Run
+	}
 	return &handlers{deps: deps}
 }
 
@@ -51,7 +59,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	opts := service.NewOptions(h.deps.cfg.SendEnabled, true, "", "")
 
-	result, err := service.Run(r.Context(), d, h.deps.cfg, opts, req.URL)
+	result, err := h.deps.serviceRun(r.Context(), d, h.deps.cfg, opts, req.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
@@ -66,9 +74,9 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
 
-	message := "article sent to Kindle successfully"
+	message := messageSentToKindle
 	if !h.deps.cfg.SendEnabled {
-		message = "article processed successfully (email sending disabled)"
+		message = messageEmailDisabled
 	}
 
 	addLogAttr(r.Context(), slog.String("message", message))

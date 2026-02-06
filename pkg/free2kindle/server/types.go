@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
 )
 
 type articleRequest struct {
@@ -26,7 +27,8 @@ type errorResponse struct {
 }
 
 type handlerDeps struct {
-	cfg *config.Config
+	cfg        *config.Config
+	serviceRun func(context.Context, *service.Deps, *config.Config, *service.Options, string) (*service.Result, error)
 }
 
 type handlers struct {
