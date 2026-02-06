@@ -99,3 +99,6 @@ deploy-lambda: build-lambda-zip upload-zip
 
 server:
     reflex -r '\.(env|go)$' -s -- go run ./cmd/http/main.go
+
+update-deps:
+    go get -u all
