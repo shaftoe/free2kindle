@@ -108,9 +108,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		latency := time.Since(start)
 		statusCode := recorder.status
 
-		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
-			record.Level = slog.LevelWarn
-		} else if statusCode >= http.StatusInternalServerError {
+		if statusCode >= http.StatusInternalServerError {
 			record.Level = slog.LevelError
 		}
 
