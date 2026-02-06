@@ -98,4 +98,4 @@ deploy-lambda: build-lambda-zip upload-zip
         --publish
 
 server:
-    reflex -r '\.(go)$' -s -- go run ./cmd/http/main.go
+    reflex -r '\.(env|go)$' -s -- go run ./cmd/http/main.go
