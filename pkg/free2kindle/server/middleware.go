@@ -1,7 +1,6 @@
-package http
+package server
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -12,61 +11,20 @@ import (
 	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
-const apiKeyHeader = "X-API-Key"
-const requestIDKey = "request_id"
-const lambdaCtxKey = "lambda_ctx"
-
-type contextKey string
-
-type responseBodyWriter struct {
+type responseStatusRecorder struct {
 	http.ResponseWriter
-	body   bytes.Buffer
 	status int
-	wrote  bool
 }
 
-func (w *responseBodyWriter) WriteHeader(code int) {
-	if !w.wrote {
-		w.status = code
-		w.wrote = true
-		w.ResponseWriter.WriteHeader(code)
-	}
+func (r *responseStatusRecorder) WriteHeader(code int) {
+	r.status = code
+	r.ResponseWriter.WriteHeader(code)
 }
 
-func (w *responseBodyWriter) Write(b []byte) (int, error) {
-	if !w.wrote {
-		w.WriteHeader(http.StatusOK)
-	}
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
-}
-
-func (w *responseBodyWriter) Status() int {
-	if w.status == 0 {
-		return http.StatusOK
-	}
-	return w.status
-}
-
-func (w *responseBodyWriter) Message() string {
-	type message struct {
-		Message string `json:"message"`
-	}
-
-	var msg message
-	if err := json.Unmarshal(w.body.Bytes(), &msg); err != nil {
-		return ""
-	}
-
-	return msg.Message
-}
-
-func jsonContentTypeMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
-}
+const (
+	apiKeyHeader = "X-API-Key" //nolint:gosec // G101: This is a header name constant, not a hardcoded credential
+	requestIDKey = "request_id"
+)
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +36,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Content-Type", "application/json")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
@@ -95,7 +52,7 @@ func authMiddleware(apiKeySecret string) func(next http.Handler) http.Handler {
 			if apiKey == "" || apiKey != apiKeySecret {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid API key"})
+				_ = json.NewEncoder(w).Encode(errorResponse{Message: "Invalid API key"})
 				return
 			}
 			next.ServeHTTP(w, r)
@@ -105,13 +62,24 @@ func authMiddleware(apiKeySecret string) func(next http.Handler) http.Handler {
 
 func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := r.Header.Get("X-Request-ID")
+		requestID := ""
+
+		if lc, ok := lambdacontext.FromContext(r.Context()); ok {
+			requestID = lc.AwsRequestID
+		}
+
+		if requestID == "" {
+			requestID = r.Header.Get("X-Request-ID")
+		}
+
 		if requestID == "" {
 			requestID = r.Header.Get("x-amzn-request-id")
 		}
+
 		if requestID == "" {
 			requestID = generateRequestID()
 		}
+
 		ctx := context.WithValue(r.Context(), contextKey(requestIDKey), requestID)
 		w.Header().Set("X-Request-ID", requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -122,59 +90,40 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		wrapped := &responseBodyWriter{
-			ResponseWriter: w,
-			body:           bytes.Buffer{},
-		}
-
 		requestID, _ := r.Context().Value(contextKey(requestIDKey)).(string)
 
-		var lambdaCtx *lambdacontext.LambdaContext
-		if lc, ok := lambdacontext.FromContext(r.Context()); ok {
-			lambdaCtx = lc
-		}
-
-		next.ServeHTTP(wrapped, r)
-
-		latency := time.Since(start)
-		statusCode := wrapped.Status()
-		msg := wrapped.Message()
-
 		level := slog.LevelInfo
-		if statusCode >= 400 && statusCode < 500 {
-			level = slog.LevelWarn
-		} else if statusCode >= 500 {
-			level = slog.LevelError
-		}
-
 		record := slog.NewRecord(time.Now(), level, "request completed", 0)
 		record.AddAttrs(
-			slog.String("timestamp", time.Now().UTC().Format(time.RFC3339)),
 			slog.String("request_id", requestID),
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
+		)
+
+		ctx := context.WithValue(r.Context(), logRecordKey, &logRecord{Record: &record})
+
+		recorder := &responseStatusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(recorder, r.WithContext(ctx))
+
+		latency := time.Since(start)
+		statusCode := recorder.status
+
+		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
+			record.Level = slog.LevelWarn
+		} else if statusCode >= http.StatusInternalServerError {
+			record.Level = slog.LevelError
+		}
+
+		record.AddAttrs(
 			slog.Int("status", statusCode),
 			slog.Int64("latency_ms", latency.Milliseconds()),
 			slog.String("client_ip", remoteAddr(r)),
 			slog.String("user_agent", r.Header.Get("User-Agent")),
 		)
 
-		if msg != "" {
-			record.AddAttrs(slog.String("message", msg))
+		if err := slog.Default().Handler().Handle(ctx, record); err != nil {
+			slog.Error("failed to log request", "error", err)
 		}
-
-		if lambdaCtx != nil {
-			record.AddAttrs(
-				slog.String("lambda_request_id", lambdaCtx.AwsRequestID),
-				slog.String("lambda_function", lambdaCtx.InvokedFunctionArn),
-			)
-		}
-
-		if statusCode >= 400 {
-			record.AddAttrs(slog.String("response_body", truncateString(wrapped.body.String(), 500)))
-		}
-
-		slog.Default().Handler().Handle(r.Context(), record)
 	})
 }
 
@@ -187,11 +136,4 @@ func remoteAddr(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return "-"
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
 }

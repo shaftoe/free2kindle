@@ -1,3 +1,4 @@
+// Lambda is the entry point for AWS Lambda deployment using API Gateway.
 package main
 
 import (
@@ -6,7 +7,7 @@ import (
 
 	"github.com/akrylysov/algnhsa"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/http"
+	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/server"
 )
 
 func main() {

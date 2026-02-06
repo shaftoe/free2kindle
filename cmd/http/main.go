@@ -1,12 +1,20 @@
+// HTTP server is the entry point for running the application as a standalone HTTP server.
 package main
 
 import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/http"
+	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/server"
+)
+
+const (
+	readTimeout  = 5 * time.Second
+	writeTimeout = 10 * time.Second
+	idleTimeout  = 15 * time.Second
 )
 
 func main() {
@@ -26,8 +34,15 @@ func main() {
 
 	port := "8080"
 	slog.Info("starting HTTP server", "port", port)
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		slog.Error("failed to start server", "error", err)
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
+	}
+	if srvErr := srv.ListenAndServe(); srvErr != nil {
+		slog.Error("failed to start server", "error", srvErr)
 		os.Exit(1)
 	}
 }

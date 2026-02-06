@@ -1,7 +1,9 @@
-package http
+// Package server provides HTTP handlers and middleware for the free2kindle application.
+package server
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
@@ -10,44 +12,35 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
 )
 
-type handlerDeps struct {
-	KindleEmail      string
-	SenderEmail      string
-	MailjetAPIKey    string
-	MailjetAPISecret string
-}
-
-type handlers struct {
-	deps *handlerDeps
-}
-
 func newHandlers(deps *handlerDeps) *handlers {
 	return &handlers{deps: deps}
 }
 
-func (h *handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
+func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(HealthResponse{Status: "ok"})
+	_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 }
 
-func (h *handlers) HandleCreateArticle(w http.ResponseWriter, r *http.Request) {
-	var req ArticleRequest
+func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
+	var req articleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid request body"})
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Invalid request body"})
 		return
 	}
 
 	if req.URL == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Message: "URL is required"})
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: "URL is required"})
 		return
 	}
 
+	addLogAttr(r.Context(), slog.String("article_url", req.URL))
+
 	mailjetConfig := &mailjet.Config{
-		APIKey:      h.deps.MailjetAPIKey,
-		APISecret:   h.deps.MailjetAPISecret,
-		SenderEmail: h.deps.SenderEmail,
+		APIKey:      h.deps.mailjetAPIKey,
+		APISecret:   h.deps.mailjetAPISecret,
+		SenderEmail: h.deps.senderEmail,
 	}
 
 	svcCfg := &service.Config{
@@ -56,8 +49,8 @@ func (h *handlers) HandleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		Sender:       mailjet.NewSender(mailjetConfig),
 		SendEmail:    true,
 		GenerateEPUB: true,
-		KindleEmail:  h.deps.KindleEmail,
-		SenderEmail:  h.deps.SenderEmail,
+		KindleEmail:  h.deps.kindleEmail,
+		SenderEmail:  h.deps.senderEmail,
 		Subject:      "",
 		OutputPath:   "",
 	}
@@ -65,12 +58,14 @@ func (h *handlers) HandleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	result, err := service.Run(r.Context(), svcCfg, req.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{Message: "Failed to process article: " + err.Error()})
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
 		return
 	}
 
+	addLogAttr(r.Context(), slog.String("article_title", result.Title))
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(ArticleResponse{
+	_ = json.NewEncoder(w).Encode(articleResponse{
 		Title:   result.Title,
 		URL:     req.URL,
 		Status:  "completed",
