@@ -95,3 +95,6 @@ deploy-lambda: build-lambda-zip upload-zip
         --s3-bucket {{ bucket_name }} \
         --s3-key {{ lambda_archive }} \
         --publish
+
+server:
+    go run ./cmd/http/main.go

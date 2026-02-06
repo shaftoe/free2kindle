@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -31,6 +32,16 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	r.Use(corsMiddleware)
 	r.Use(loggingMiddleware)
 	r.Use(jsonContentTypeMiddleware)
+
+	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: "not_found"})
+	})
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: "method_not_allowed"})
+	})
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Unauthenticated routes
