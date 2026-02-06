@@ -7,7 +7,7 @@ import (
 
 	"github.com/akrylysov/algnhsa"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/server"
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/server"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 		})))
 	}
 
-	router := f2khttp.NewRouter(cfg)
+	router := server.NewRouter(cfg)
 
 	algnhsa.ListenAndServe(router, nil)
 }
