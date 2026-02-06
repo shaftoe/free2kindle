@@ -55,6 +55,7 @@ deploy-api:
             APIKeySecret="$F2K_API_KEY" \
             KindleEmail="$F2K_KINDLE_EMAIL" \
             SenderEmail="$F2K_SENDER_EMAIL" \
+            SendEnabled="$F2K_SEND_ENABLED" \
             Debug="true"
 
 # Full deployment (bucket + upload + infra)
@@ -97,4 +98,4 @@ deploy-lambda: build-lambda-zip upload-zip
         --publish
 
 server:
-    go run ./cmd/http/main.go
+    reflex -r '\.(go)$' -s -- go run ./cmd/http/main.go

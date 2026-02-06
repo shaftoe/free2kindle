@@ -37,6 +37,11 @@ Parameters:
     Type: String
     Description: Verified sender email address
 
+  SendEnabled:
+    Type: String
+    Description: Enable email sending
+    Default: "false"
+
   Debug:
     Type: String
     Description: Debug flag
@@ -72,12 +77,13 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          MAILJET_API_KEY: !Ref MailjetAPIKey
-          MAILJET_API_SECRET: !Ref MailjetAPISecret
+          DEBUG: !Ref Debug
           F2K_API_KEY: !Ref APIKeySecret
           F2K_KINDLE_EMAIL: !Ref KindleEmail
           F2K_SENDER_EMAIL: !Ref SenderEmail
-          DEBUG: !Ref Debug
+          F2K_SEND_ENABLED: !Ref SendEnabled
+          MAILJET_API_KEY: !Ref MailjetAPIKey
+          MAILJET_API_SECRET: !Ref MailjetAPISecret
       TracingConfig:
         Mode: PassThrough
 

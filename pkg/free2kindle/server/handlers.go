@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/email/mailjet"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/epub"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
@@ -37,25 +38,20 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	addLogAttr(r.Context(), slog.String("article_url", req.URL))
 
-	mailjetConfig := &mailjet.Config{
-		APIKey:      h.deps.mailjetAPIKey,
-		APISecret:   h.deps.mailjetAPISecret,
-		SenderEmail: h.deps.senderEmail,
+	var sender email.Sender
+	if h.deps.cfg.SendEnabled {
+		sender = mailjet.NewSender(h.deps.cfg.MailjetAPIKey, h.deps.cfg.MailjetAPISecret, h.deps.cfg.SenderEmail)
 	}
 
-	svcCfg := &service.Config{
-		Extractor:    content.NewExtractor(),
-		Generator:    epub.NewGenerator(),
-		Sender:       mailjet.NewSender(mailjetConfig),
-		SendEmail:    true,
-		GenerateEPUB: true,
-		KindleEmail:  h.deps.kindleEmail,
-		SenderEmail:  h.deps.senderEmail,
-		Subject:      "",
-		OutputPath:   "",
-	}
+	d := service.NewDeps(
+		content.NewExtractor(),
+		epub.NewGenerator(),
+		sender,
+	)
 
-	result, err := service.Run(r.Context(), svcCfg, req.URL)
+	opts := service.NewOptions(h.deps.cfg.SendEnabled, true, "", "")
+
+	result, err := service.Run(r.Context(), d, h.deps.cfg, opts, req.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
@@ -64,11 +60,18 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	addLogAttr(r.Context(), slog.String("article_title", result.Title))
 
+	message := "article sent to Kindle successfully"
+	if !h.deps.cfg.SendEnabled {
+		message = "article processed successfully (email sending disabled)"
+	}
+
+	addLogAttr(r.Context(), slog.String("message", message))
+
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
 		Title:   result.Title,
 		URL:     req.URL,
 		Status:  "completed",
-		Message: "article sent to Kindle successfully",
+		Message: message,
 	})
 }

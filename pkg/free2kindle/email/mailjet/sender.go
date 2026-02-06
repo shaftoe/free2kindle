@@ -12,25 +12,22 @@ import (
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
 )
 
-// Config holds the Mailjet API configuration.
-type Config struct {
-	APIKey      string
-	APISecret   string
-	SenderEmail string
-}
-
 // Sender implements the email.Sender interface using Mailjet.
 type Sender struct {
-	config *Config
-	client *mailjetLib.Client
+	apiKey      string
+	apiSecret   string
+	senderEmail string
+	client      *mailjetLib.Client
 }
 
 // NewSender creates a new Mailjet sender instance.
-func NewSender(config *Config) *Sender {
-	mailjetClient := mailjetLib.NewMailjetClient(config.APIKey, config.APISecret)
+func NewSender(apiKey, apiSecret, senderEmail string) *Sender {
+	mailjetClient := mailjetLib.NewMailjetClient(apiKey, apiSecret)
 	return &Sender{
-		config: config,
-		client: mailjetClient,
+		apiKey:      apiKey,
+		apiSecret:   apiSecret,
+		senderEmail: senderEmail,
+		client:      mailjetClient,
 	}
 }
 
@@ -52,7 +49,7 @@ func (s *Sender) SendEmail(_ context.Context, req *email.Request) (*email.SendEm
 	messagesInfo := []mailjetLib.InfoMessagesV31{
 		{
 			From: &mailjetLib.RecipientV31{
-				Email: s.config.SenderEmail,
+				Email: s.senderEmail,
 			},
 			To: &mailjetLib.RecipientsV31{
 				mailjetLib.RecipientV31{
@@ -99,13 +96,13 @@ func (s *Sender) SendEmail(_ context.Context, req *email.Request) (*email.SendEm
 }
 
 func (s *Sender) validateConfig() error {
-	if s.config.APIKey == "" {
+	if s.apiKey == "" {
 		return errors.New("API key is required")
 	}
-	if s.config.APISecret == "" {
+	if s.apiSecret == "" {
 		return errors.New("API secret is required")
 	}
-	if s.config.SenderEmail == "" {
+	if s.senderEmail == "" {
 		return errors.New("sender email is required")
 	}
 	return nil

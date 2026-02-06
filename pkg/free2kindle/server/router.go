@@ -21,10 +21,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	handlers := newHandlers(&handlerDeps{
-		kindleEmail:      cfg.KindleEmail,
-		senderEmail:      cfg.SenderEmail,
-		mailjetAPIKey:    cfg.MailjetAPIKey,
-		mailjetAPISecret: cfg.MailjetAPISecret,
+		cfg: cfg,
 	})
 
 	r.Use(middleware.Recoverer)

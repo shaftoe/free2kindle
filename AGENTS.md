@@ -18,3 +18,4 @@
 - Vet code: `go vet ./...`
 - Tidy dependencies: `go mod tidy`
 - Check for unused dependencies: `go mod why`
+- Run linter: `golangci-lint run`

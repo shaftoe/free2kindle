@@ -14,53 +14,66 @@ func TestConfigValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config",
+			name: "valid config with send enabled",
 			config: &Config{
 				KindleEmail:      "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
 				APIKeySecret:     "api-key-secret",
+				SendEnabled:      true,
 			},
 			wantErr: false,
 		},
 		{
-			name: "missing kindle email",
+			name: "valid config with send disabled",
+			config: &Config{
+				APIKeySecret: "api-key-secret",
+				SendEnabled:  false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing kindle email with send enabled",
 			config: &Config{
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
 				APIKeySecret:     "api-key-secret",
+				SendEnabled:      true,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing sender email",
+			name: "missing sender email with send enabled",
 			config: &Config{
 				KindleEmail:      "test@kindle.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
 				APIKeySecret:     "api-key-secret",
+				SendEnabled:      true,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing mailjet api key",
+			name: "missing mailjet api key with send enabled",
 			config: &Config{
 				KindleEmail:      "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPISecret: "api-secret",
 				APIKeySecret:     "api-key-secret",
+				SendEnabled:      true,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing mailjet api secret",
+			name: "missing mailjet api secret with send enabled",
 			config: &Config{
 				KindleEmail:   "test@kindle.com",
 				SenderEmail:   "sender@example.com",
 				MailjetAPIKey: "api-key",
 				APIKeySecret:  "api-key-secret",
+				SendEnabled:   true,
 			},
 			wantErr: true,
 		},
@@ -71,8 +84,17 @@ func TestConfigValidate(t *testing.T) {
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
+				SendEnabled:      true,
 			},
 			wantErr: true,
+		},
+		{
+			name: "missing email config with send disabled",
+			config: &Config{
+				APIKeySecret: "api-key-secret",
+				SendEnabled:  false,
+			},
+			wantErr: false,
 		},
 	}
 

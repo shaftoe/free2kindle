@@ -9,66 +9,63 @@ import (
 )
 
 func TestNewSender(t *testing.T) {
-	config := &Config{
-		APIKey:      "test-key",
-		APISecret:   "test-secret",
-		SenderEmail: "test@example.com",
-	}
-
-	sender := NewSender(config)
+	sender := NewSender("test-key", "test-secret", "test@example.com")
 	if sender == nil {
 		t.Fatal("NewSender returned nil")
 	}
 
-	if sender.config != config {
-		t.Error("Sender config not set correctly")
+	if sender.apiKey != "test-key" {
+		t.Error("Sender API key not set correctly")
+	}
+	if sender.apiSecret != "test-secret" {
+		t.Error("Sender API secret not set correctly")
+	}
+	if sender.senderEmail != "test@example.com" {
+		t.Error("Sender email not set correctly")
 	}
 }
 
 func TestValidateConfig(t *testing.T) {
 	tests := []struct {
-		name    string
-		config  *Config
-		wantErr bool
+		name        string
+		apiKey      string
+		apiSecret   string
+		senderEmail string
+		wantErr     bool
 	}{
 		{
-			name: "valid config",
-			config: &Config{
-				APIKey:      "key",
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			},
-			wantErr: false,
+			name:        "valid config",
+			apiKey:      "key",
+			apiSecret:   "secret",
+			senderEmail: "test@example.com",
+			wantErr:     false,
 		},
 		{
-			name: "missing api key",
-			config: &Config{
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			},
-			wantErr: true,
+			name:        "missing api key",
+			apiKey:      "",
+			apiSecret:   "secret",
+			senderEmail: "test@example.com",
+			wantErr:     true,
 		},
 		{
-			name: "missing api secret",
-			config: &Config{
-				APIKey:      "key",
-				SenderEmail: "test@example.com",
-			},
-			wantErr: true,
+			name:        "missing api secret",
+			apiKey:      "key",
+			apiSecret:   "",
+			senderEmail: "test@example.com",
+			wantErr:     true,
 		},
 		{
-			name: "missing sender email",
-			config: &Config{
-				APIKey:    "key",
-				APISecret: "secret",
-			},
-			wantErr: true,
+			name:        "missing sender email",
+			apiKey:      "key",
+			apiSecret:   "secret",
+			senderEmail: "",
+			wantErr:     true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sender := NewSender(tt.config)
+			sender := NewSender(tt.apiKey, tt.apiSecret, tt.senderEmail)
 			err := sender.validateConfig()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateConfig() error = %v, wantErr %v", err, tt.wantErr)
@@ -125,11 +122,7 @@ func TestValidateRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sender := NewSender(&Config{
-				APIKey:      "key",
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			})
+			sender := NewSender("key", "secret", "test@example.com")
 			err := sender.validateRequest(tt.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateRequest() error = %v, wantErr %v", err, tt.wantErr)
@@ -140,19 +133,19 @@ func TestValidateRequest(t *testing.T) {
 
 func TestSendEmailValidation(t *testing.T) {
 	tests := []struct {
-		name       string
-		config     *Config
-		req        *email.Request
-		wantErr    bool
-		expectResp *email.SendEmailResponse
+		name        string
+		apiKey      string
+		apiSecret   string
+		senderEmail string
+		req         *email.Request
+		wantErr     bool
+		expectResp  *email.SendEmailResponse
 	}{
 		{
-			name: "missing api key in config",
-			config: &Config{
-				APIKey:      "",
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			},
+			name:        "missing api key in config",
+			apiKey:      "",
+			apiSecret:   "secret",
+			senderEmail: "test@example.com",
 			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    []byte("data"),
@@ -162,12 +155,10 @@ func TestSendEmailValidation(t *testing.T) {
 			expectResp: nil,
 		},
 		{
-			name: "missing api secret in config",
-			config: &Config{
-				APIKey:      "key",
-				APISecret:   "",
-				SenderEmail: "test@example.com",
-			},
+			name:        "missing api secret in config",
+			apiKey:      "key",
+			apiSecret:   "",
+			senderEmail: "test@example.com",
 			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    []byte("data"),
@@ -177,12 +168,10 @@ func TestSendEmailValidation(t *testing.T) {
 			expectResp: nil,
 		},
 		{
-			name: "missing sender email in config",
-			config: &Config{
-				APIKey:      "key",
-				APISecret:   "secret",
-				SenderEmail: "",
-			},
+			name:        "missing sender email in config",
+			apiKey:      "key",
+			apiSecret:   "secret",
+			senderEmail: "",
 			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    []byte("data"),
@@ -192,12 +181,10 @@ func TestSendEmailValidation(t *testing.T) {
 			expectResp: nil,
 		},
 		{
-			name: "missing kindle email in request",
-			config: &Config{
-				APIKey:      "key",
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			},
+			name:        "missing kindle email in request",
+			apiKey:      "key",
+			apiSecret:   "secret",
+			senderEmail: "test@example.com",
 			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    []byte("data"),
@@ -207,12 +194,10 @@ func TestSendEmailValidation(t *testing.T) {
 			expectResp: nil,
 		},
 		{
-			name: "missing epub data in request",
-			config: &Config{
-				APIKey:      "key",
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			},
+			name:        "missing epub data in request",
+			apiKey:      "key",
+			apiSecret:   "secret",
+			senderEmail: "test@example.com",
 			req: &email.Request{
 				Article:     &content.Article{Title: "Test"},
 				EPUBData:    nil,
@@ -222,12 +207,10 @@ func TestSendEmailValidation(t *testing.T) {
 			expectResp: nil,
 		},
 		{
-			name: "missing article in request",
-			config: &Config{
-				APIKey:      "key",
-				APISecret:   "secret",
-				SenderEmail: "test@example.com",
-			},
+			name:        "missing article in request",
+			apiKey:      "key",
+			apiSecret:   "secret",
+			senderEmail: "test@example.com",
 			req: &email.Request{
 				Article:     nil,
 				EPUBData:    []byte("data"),
@@ -241,7 +224,7 @@ func TestSendEmailValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			sender := NewSender(tt.config)
+			sender := NewSender(tt.apiKey, tt.apiSecret, tt.senderEmail)
 			resp, err := sender.SendEmail(ctx, tt.req)
 
 			if tt.wantErr {

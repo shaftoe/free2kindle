@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/email/mailjet"
@@ -104,8 +105,10 @@ var convertCmd = &cobra.Command{
 func runConvert(_ *cobra.Command, args []string) error {
 	url := args[0]
 
-	if err := validateSendEmailConfig(); err != nil {
-		return err
+	if sendEmail {
+		if err := validateSendEmailConfig(); err != nil {
+			return err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -113,51 +116,64 @@ func runConvert(_ *cobra.Command, args []string) error {
 
 	fmt.Printf("Fetching article from: %s\n", url)
 
-	mailjetConfig := &mailjet.Config{
-		APIKey:      viper.GetString("api-key"),
-		APISecret:   viper.GetString("api-secret"),
-		SenderEmail: viper.GetString("sender-email"),
+	cfg := buildConfig()
+
+	var sender email.Sender
+	if sendEmail {
+		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
 	}
 
-	svcCfg := &service.Config{
-		Extractor:    content.NewExtractor(),
-		Generator:    generator,
-		Sender:       mailjet.NewSender(mailjetConfig),
-		SendEmail:    sendEmail,
-		GenerateEPUB: sendEmail,
-		KindleEmail:  viper.GetString("kindle-email"),
-		SenderEmail:  viper.GetString("sender-email"),
-		Subject:      emailSubject,
-		OutputPath:   outputPath,
-	}
+	d := service.NewDeps(
+		content.NewExtractor(),
+		generator,
+		sender,
+	)
+
+	opts := service.NewOptions(sendEmail, true, emailSubject, outputPath)
 
 	start := time.Now()
-	result, err := service.Run(ctx, svcCfg, url)
+	result, err := service.Run(ctx, d, cfg, opts, url)
 	if err != nil {
 		return fmt.Errorf("failed to process article: %w", err)
 	}
 	fmt.Printf("Processed in %v\n", time.Since(start))
 
+	printVerboseOutput(result)
+	printResult(result, cfg)
+
+	return nil
+}
+
+func buildConfig() *config.Config {
+	return &config.Config{
+		KindleEmail:      viper.GetString("kindle-email"),
+		SenderEmail:      viper.GetString("sender-email"),
+		MailjetAPIKey:    viper.GetString("api-key"),
+		MailjetAPISecret: viper.GetString("api-secret"),
+		SendEnabled:      viper.GetBool("send-enabled"),
+	}
+}
+
+func printVerboseOutput(result *service.Result) {
 	if verbose {
 		fmt.Println("\n--- Extracted Content (HTML) ---")
 		fmt.Println(result.Article.Content)
 		fmt.Println("--- End of Extracted Content ---")
 		fmt.Println()
 	}
+}
 
+func printResult(result *service.Result, cfg *config.Config) {
 	if !sendEmail {
 		if outputPath == "" {
 			outputPath = email.GenerateFilename(result.Article)
 		}
-
 		absPath, _ := filepath.Abs(outputPath)
 		fmt.Printf("\n✓ EPUB saved to: %s\n", absPath)
 	} else {
 		senderEmail := viper.GetString("sender-email")
-		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s)\n", senderEmail, svcCfg.KindleEmail)
+		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s)\n", senderEmail, cfg.KindleEmail)
 	}
-
-	return nil
 }
 
 func main() {

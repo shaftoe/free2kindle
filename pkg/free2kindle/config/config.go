@@ -15,6 +15,7 @@ type Config struct {
 	MailjetAPISecret string
 	APIKeySecret     string
 	Debug            bool
+	SendEnabled      bool
 }
 
 // Load reads configuration from environment variables and returns a Config instance.
@@ -40,6 +41,9 @@ func Load() (*Config, error) {
 	if err := viper.BindEnv("debug", "DEBUG"); err != nil {
 		return nil, fmt.Errorf("failed to bind debug env: %w", err)
 	}
+	if err := viper.BindEnv("send-enabled", "F2K_SEND_ENABLED"); err != nil {
+		return nil, fmt.Errorf("failed to bind send-enabled env: %w", err)
+	}
 
 	cfg := &Config{
 		KindleEmail:      viper.GetString("kindle-email"),
@@ -48,6 +52,7 @@ func Load() (*Config, error) {
 		MailjetAPISecret: viper.GetString("api-secret"),
 		APIKeySecret:     viper.GetString("api-key-secret"),
 		Debug:            viper.GetBool("debug"),
+		SendEnabled:      viper.GetBool("send-enabled"),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -61,20 +66,23 @@ func Load() (*Config, error) {
 func (c *Config) Validate() error {
 	var missing []string
 
-	if c.KindleEmail == "" {
-		missing = append(missing, "F2K_KINDLE_EMAIL")
-	}
-	if c.SenderEmail == "" {
-		missing = append(missing, "F2K_SENDER_EMAIL")
-	}
-	if c.MailjetAPIKey == "" {
-		missing = append(missing, "MAILJET_API_KEY")
-	}
-	if c.MailjetAPISecret == "" {
-		missing = append(missing, "MAILJET_API_SECRET")
-	}
 	if c.APIKeySecret == "" {
 		missing = append(missing, "F2K_API_KEY")
+	}
+
+	if c.SendEnabled {
+		if c.KindleEmail == "" {
+			missing = append(missing, "F2K_KINDLE_EMAIL")
+		}
+		if c.SenderEmail == "" {
+			missing = append(missing, "F2K_SENDER_EMAIL")
+		}
+		if c.MailjetAPIKey == "" {
+			missing = append(missing, "MAILJET_API_KEY")
+		}
+		if c.MailjetAPISecret == "" {
+			missing = append(missing, "MAILJET_API_SECRET")
+		}
 	}
 
 	if len(missing) > 0 {

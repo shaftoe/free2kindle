@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"log/slog"
+
+	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
 )
 
 type articleRequest struct {
@@ -25,10 +27,7 @@ type errorResponse struct {
 }
 
 type handlerDeps struct {
-	kindleEmail      string
-	senderEmail      string
-	mailjetAPIKey    string
-	mailjetAPISecret string
+	cfg *config.Config
 }
 
 type handlers struct {
