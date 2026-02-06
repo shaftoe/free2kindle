@@ -2,9 +2,9 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 
-	"github.com/akrylysov/algnhsa"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
 	f2khttp "github.com/shaftoe/free2kindle/pkg/free2kindle/http"
 )
@@ -24,5 +24,10 @@ func main() {
 
 	router := f2khttp.NewRouter(cfg)
 
-	algnhsa.ListenAndServe(router, nil)
+	port := "8080"
+	slog.Info("starting HTTP server", "port", port)
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		slog.Error("failed to start server", "error", err)
+		os.Exit(1)
+	}
 }

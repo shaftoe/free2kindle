@@ -3,7 +3,9 @@ module github.com/shaftoe/free2kindle
 go 1.25.6
 
 require (
+	github.com/akrylysov/algnhsa v1.1.0
 	github.com/aws/aws-lambda-go v1.52.0
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-shiori/dom v0.0.0-20230515143342-73569d674e1c
 	github.com/go-shiori/go-epub v1.2.1
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.8
@@ -20,7 +22,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/forPelevin/gomoji v1.4.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-shiori/go-readability v0.0.0-20251205110129-5db1dc9836f0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gofrs/uuid/v5 v5.0.0 // indirect
