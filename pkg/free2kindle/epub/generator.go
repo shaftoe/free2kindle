@@ -2,6 +2,7 @@
 package epub
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -48,24 +49,13 @@ func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 		return nil, fmt.Errorf("failed to add chapter: %w", err)
 	}
 
-	tmpFile, err := os.CreateTemp("", "*.epub")
+	var buffer bytes.Buffer
+	_, err = e.WriteTo(&buffer)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer func() {
-		_ = os.Remove(tmpFile.Name())
-	}()
-
-	if writeErr := e.Write(tmpFile.Name()); writeErr != nil {
-		return nil, fmt.Errorf("failed to write EPUB: %w", writeErr)
+		return nil, fmt.Errorf("failed to write EPUB: %w", err)
 	}
 
-	data, err := os.ReadFile(tmpFile.Name())
-	if err != nil {
-		return nil, fmt.Errorf("failed to read EPUB data: %w", err)
-	}
-
-	return data, nil
+	return buffer.Bytes(), nil
 }
 
 // GenerateAndWrite generates an EPUB file and writes it to the specified path.
