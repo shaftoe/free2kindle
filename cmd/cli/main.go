@@ -179,7 +179,7 @@ func printResult(result *service.Result, cfg *config.Config) {
 func main() {
 	generator = epub.NewGenerator()
 
-	convertCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output file path")
+	convertCmd.Flags().StringVarP(&outputPath, "output", "o", "article.epub", "Output file path")
 	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t",
 		defaultTimeoutSeconds*time.Second, "Timeout for HTTP requests")
 	convertCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show extracted HTML content")
