@@ -9,7 +9,7 @@ import (
 
 // Config holds the configuration settings for the application.
 type Config struct {
-	KindleEmail      string
+	DestEmail        string
 	SenderEmail      string
 	MailjetAPIKey    string
 	MailjetAPISecret string
@@ -23,8 +23,8 @@ func Load() (*Config, error) {
 	viper.SetEnvPrefix("F2K")
 	viper.AutomaticEnv()
 
-	if err := viper.BindEnv("kindle-email", "F2K_KINDLE_EMAIL"); err != nil {
-		return nil, fmt.Errorf("failed to bind kindle-email env: %w", err)
+	if err := viper.BindEnv("destination-email", "F2K_DEST_EMAIL"); err != nil {
+		return nil, fmt.Errorf("failed to bind destination-email env: %w", err)
 	}
 	if err := viper.BindEnv("sender-email", "F2K_SENDER_EMAIL"); err != nil {
 		return nil, fmt.Errorf("failed to bind sender-email env: %w", err)
@@ -46,7 +46,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		KindleEmail:      viper.GetString("kindle-email"),
+		DestEmail:        viper.GetString("destination-email"),
 		SenderEmail:      viper.GetString("sender-email"),
 		MailjetAPIKey:    viper.GetString("api-key"),
 		MailjetAPISecret: viper.GetString("api-secret"),
@@ -71,8 +71,8 @@ func (c *Config) Validate() error {
 	}
 
 	if c.SendEnabled {
-		if c.KindleEmail == "" {
-			missing = append(missing, "F2K_KINDLE_EMAIL")
+		if c.DestEmail == "" {
+			missing = append(missing, "F2K_DEST_EMAIL")
 		}
 		if c.SenderEmail == "" {
 			missing = append(missing, "F2K_SENDER_EMAIL")

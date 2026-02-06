@@ -12,7 +12,7 @@ Deploy the Free2Kindle API to AWS Lambda using CloudFormation.
 2. Set required environment variables in `.env`, e.g:
 ```bash
 export F2K_API_KEY="your_api_key_secret"
-export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
+export F2K_DEST_EMAIL="your-kindle@kindle.com"
 export F2K_SENDER_EMAIL="sender@example.com"
 export MAILJET_API_KEY="your_mailjet_api_key"
 export MAILJET_API_SECRET="your_mailjet_api_secret"
@@ -55,7 +55,7 @@ go build -o bin/free2kindle cmd/cli
 **Send directly to Kindle via email:**
 
 ```bash
-export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
+export F2K_DEST_EMAIL="your-kindle@kindle.com"
 export F2K_SENDER_EMAIL="sender@example.com"
 export MAILJET_API_KEY="your_api_key"
 export MAILJET_API_SECRET="your_api_secret"
@@ -113,7 +113,7 @@ export MAILJET_API_SECRET="your_api_secret"
 | Variable | Description | Default |
 |----------|-------------|----------|
 | `F2K_API_KEY` | Shared API Key secret | - |
-| `F2K_KINDLE_EMAIL` | Your Kindle email address | - |
+| `F2K_DEST_EMAIL` | Your Kindle email address | - |
 | `F2K_SENDER_EMAIL` | Verified sender email address | - |
 | `MAILJET_API_KEY` | Mailjet API key | - |
 | `MAILJET_API_SECRET` | Mailjet API secret | - |

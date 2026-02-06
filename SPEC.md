@@ -41,7 +41,7 @@ A self-hosted / CLI application that allows users to save web links from the ter
 
 **Send URL to Kindle via email:**
 ```bash
-export F2K_KINDLE_EMAIL="your-kindle@kindle.com"
+export F2K_DEST_EMAIL="your-kindle@kindle.com"
 export F2K_SENDER_EMAIL="sender@example.com"
 export MAILJET_API_KEY="your_api_key"
 export MAILJET_API_SECRET="your_api_secret"
@@ -166,7 +166,7 @@ MAILJET_API_SECRET
 F2K_API_KEY
 
 # Kindle (for CLI and Lambda)
-F2K_KINDLE_EMAIL
+F2K_DEST_EMAIL
 F2K_SENDER_EMAIL
 ```
 
@@ -251,7 +251,7 @@ type Sender interface {
 type EmailRequest struct {
     Article     *content.Article
     EPUBData    []byte
-    KindleEmail string
+    DestEmail string
     Subject     string
 }
 ```

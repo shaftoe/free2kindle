@@ -29,7 +29,7 @@ Parameters:
     NoEcho: true
     Description: Secret API key for authentication
 
-  KindleEmail:
+  DestEmail:
     Type: String
     Description: Kindle email address
 
@@ -79,7 +79,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           F2K_API_KEY: !Ref APIKeySecret
-          F2K_KINDLE_EMAIL: !Ref KindleEmail
+          F2K_DEST_EMAIL: !Ref DestEmail
           F2K_SENDER_EMAIL: !Ref SenderEmail
           F2K_SEND_ENABLED: !Ref SendEnabled
           MAILJET_API_KEY: !Ref MailjetAPIKey

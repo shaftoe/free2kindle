@@ -53,7 +53,7 @@ func (s *Sender) SendEmail(_ context.Context, req *email.Request) (*email.SendEm
 			},
 			To: &mailjetLib.RecipientsV31{
 				mailjetLib.RecipientV31{
-					Email: req.KindleEmail,
+					Email: req.DestEmail,
 				},
 			},
 			Subject:  subject,
@@ -109,7 +109,7 @@ func (s *Sender) validateConfig() error {
 }
 
 func (s *Sender) validateRequest(req *email.Request) error {
-	if req.KindleEmail == "" {
+	if req.DestEmail == "" {
 		return errors.New("kindle email is required")
 	}
 	if req.EPUBData == nil {

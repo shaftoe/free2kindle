@@ -1,4 +1,4 @@
-// Package email provides email sending functionality for Kindle devices.
+// Package email provides email sending functionality.
 package email
 
 import (
@@ -30,10 +30,18 @@ type Sender interface {
 
 // Request contains the data required to send an email.
 type Request struct {
-	Article     *content.Article
-	EPUBData    []byte
-	KindleEmail string
-	Subject     string
+	// Article is the article to be sent.
+	Article *content.Article
+
+	// EPUBData is the EPUB data to be sent as attachment.
+	EPUBData []byte
+
+	// Subject is the email subject.
+	Subject string
+
+	// DestEmail is the email address of the recipient, typically a
+	// Kindle Personal Document Service address like "abcd@kindle.com".
+	DestEmail string
 }
 
 // GenerateFilename creates a sanitized filename from the article title.

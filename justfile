@@ -53,7 +53,7 @@ deploy-api:
             MailjetAPIKey="$MAILJET_API_KEY" \
             MailjetAPISecret="$MAILJET_API_SECRET" \
             APIKeySecret="$F2K_API_KEY" \
-            KindleEmail="$F2K_KINDLE_EMAIL" \
+            DestEmail="$F2K_DEST_EMAIL" \
             SenderEmail="$F2K_SENDER_EMAIL" \
             SendEnabled="true" \
             Debug="true"

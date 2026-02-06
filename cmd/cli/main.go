@@ -38,7 +38,7 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		viper.SetEnvPrefix("F2K")
 		viper.AutomaticEnv()
-		if err := viper.BindEnv("kindle-email", "F2K_KINDLE_EMAIL"); err != nil {
+		if err := viper.BindEnv("destination-email", "F2K_DEST_EMAIL"); err != nil {
 			return fmt.Errorf("failed to bind env: %w", err)
 		}
 		if err := viper.BindEnv("sender-email", "F2K_SENDER_EMAIL"); err != nil {
@@ -60,8 +60,8 @@ var rootCmd = &cobra.Command{
 
 func validateSendEmailConfig() error {
 	var missing []string
-	if viper.GetString("kindle-email") == "" {
-		missing = append(missing, "--kindle-email or F2K_KINDLE_EMAIL")
+	if viper.GetString("destination-email") == "" {
+		missing = append(missing, "--destination-email or F2K_DEST_EMAIL")
 	}
 	if viper.GetString("sender-email") == "" {
 		missing = append(missing, "--sender-email or F2K_SENDER_EMAIL")
@@ -146,7 +146,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 
 func buildConfig() *config.Config {
 	return &config.Config{
-		KindleEmail:      viper.GetString("kindle-email"),
+		DestEmail:        viper.GetString("destination-email"),
 		SenderEmail:      viper.GetString("sender-email"),
 		MailjetAPIKey:    viper.GetString("api-key"),
 		MailjetAPISecret: viper.GetString("api-secret"),
@@ -172,7 +172,7 @@ func printResult(result *service.Result, cfg *config.Config) {
 		fmt.Printf("\n✓ EPUB saved to: %s\n", absPath)
 	} else {
 		senderEmail := viper.GetString("sender-email")
-		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s)\n", senderEmail, cfg.KindleEmail)
+		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s)\n", senderEmail, cfg.DestEmail)
 	}
 }
 
@@ -187,7 +187,7 @@ func main() {
 	convertCmd.Flags().BoolVar(&sendEmail, "send", false, "Send EPUB to Kindle via email instead of saving locally")
 	convertCmd.Flags().StringVar(&emailSubject, "email-subject", "", "Email subject (defaults to article title)")
 
-	convertCmd.Flags().String("kindle-email", "", "Kindle email address (env: F2K_KINDLE_EMAIL)")
+	convertCmd.Flags().String("destination-email", "", "Kindle email address (env: F2K_DEST_EMAIL)")
 	convertCmd.Flags().String("sender-email", "", "Sender email address (env: F2K_SENDER_EMAIL)")
 	convertCmd.Flags().String("api-key", "", "Mailjet API key (env: MAILJET_API_KEY)")
 	convertCmd.Flags().String("api-secret", "", "Mailjet API secret (env: MAILJET_API_SECRET)")

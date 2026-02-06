@@ -73,10 +73,10 @@ func Run(ctx context.Context, d *Deps, cfg *config.Config, opts *Options, url st
 
 	if opts.sendEmail {
 		emailReq := &email.Request{
-			Article:     article,
-			EPUBData:    epubData,
-			KindleEmail: cfg.KindleEmail,
-			Subject:     email.GenerateSubject(article.Title, opts.subject),
+			Article:   article,
+			EPUBData:  epubData,
+			DestEmail: cfg.DestEmail,
+			Subject:   email.GenerateSubject(article.Title, opts.subject),
 		}
 
 		if _, sendErr := d.sender.SendEmail(ctx, emailReq); sendErr != nil {
@@ -86,7 +86,7 @@ func Run(ctx context.Context, d *Deps, cfg *config.Config, opts *Options, url st
 
 	if opts.generateEPUB && opts.outputPath != "" {
 		if writeErr := d.generator.GenerateAndWrite(article, opts.outputPath); writeErr != nil {
-			return nil, fmt.Errorf("failed to write EPUB: %w", writeErr)
+			return nil, fmt.Errorf("failed to write EPUB document: %w", writeErr)
 		}
 	}
 
