@@ -111,6 +111,9 @@ func handleRequest(ctx context.Context, req *events.LambdaFunctionURLRequest) *e
 
 func response(req *events.LambdaFunctionURLRequest, resp *events.LambdaFunctionURLResponse) *events.LambdaFunctionURLResponse {
 	logger := slog.With("status", resp.StatusCode)
+	if resp.Body != "" {
+		logger = logger.With("message", resp.Body)
+	}
 
 	if resp.StatusCode >= http.StatusNoContent {
 		logger.Warn("request failed")
