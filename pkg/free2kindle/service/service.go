@@ -49,7 +49,6 @@ func NewOptions(sendEmail, generateEPUB bool, subject, outputPath string) *Optio
 type Result struct {
 	Article  *content.Article
 	EPUBData []byte
-	Title    string
 	URL      string
 }
 
@@ -94,7 +93,5 @@ func Run(ctx context.Context, d *Deps, cfg *config.Config, opts *Options, url st
 	return &Result{
 		Article:  article,
 		EPUBData: epubData,
-		Title:    article.Title,
-		URL:      url,
 	}, nil
 }

@@ -14,7 +14,6 @@ type articleRequest struct {
 type articleResponse struct {
 	Title   string `json:"title"`
 	URL     string `json:"url"`
-	Status  string `json:"status"`
 	Message string `json:"message"`
 }
 

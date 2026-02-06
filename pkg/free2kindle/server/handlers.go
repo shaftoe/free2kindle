@@ -58,7 +58,13 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addLogAttr(r.Context(), slog.String("article_title", result.Title))
+	if result.Article == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: article is nil"})
+		return
+	}
+
+	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
 
 	message := "article sent to Kindle successfully"
 	if !h.deps.cfg.SendEnabled {
@@ -69,9 +75,8 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
-		Title:   result.Title,
+		Title:   result.Article.Title,
 		URL:     req.URL,
-		Status:  "completed",
 		Message: message,
 	})
 }
