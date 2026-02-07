@@ -49,6 +49,8 @@ func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 		return nil, fmt.Errorf("failed to add chapter: %w", err)
 	}
 
+	e.EmbedImages()
+
 	var buffer bytes.Buffer
 	_, err = e.WriteTo(&buffer)
 	if err != nil {
