@@ -16,8 +16,7 @@ A self-hosted / CLI application that allows users to save web links from the ter
 ## User Workflow
 
   1. **Setup** (one-time):
-     - Deploy application to AWS Lambda
-     - Configure Kindle email address
+     - Deploy application to AWS Lambda (CloudFormation)
      - Add sender email to Kindle approved email list
      - Install browser extension
      - Setup iOS Shortcut for quick sharing
@@ -27,7 +26,7 @@ A self-hosted / CLI application that allows users to save web links from the ter
     - Article is queued for processing
     - Backend extracts content and converts to document
     - Document is emailed to Kindle device
-    - User can view saved articles in web dashboard
+    - User can search/view/delete saved articles in web dashboard
 
 ## Architecture
 
@@ -63,7 +62,7 @@ export MAILJET_API_SECRET="your_api_secret"
 
 Future implementation will also include:
 
-- **POST /api/v1/articles** will store article metadata in S3
+- **POST /api/v1/articles** will store article metadata in DynamoDB
 - **GET /api/v1/articles**: List user's articles with pagination and filtering
 - **GET /api/v1/articles/{id}**: Get article details
 - **DELETE /api/v1/articles/{id}**: Remove article from storage
@@ -76,11 +75,11 @@ Future implementation will also include:
 
 #### 1. Web Dashboard
 - View list of articles
-- Filter by status
+- Filter by status/tags
 - View article details
 - Retry failed articles
 - Configure settings
-- Deployed to Netlify
+- Deployed to Netlify/similar hosting service
 
 #### 2. Browser Extension (Firefox)
 
@@ -202,6 +201,7 @@ just logs
 - S3 bucket for Lambda function source code
 - IAM role for Lambda execution
 - Lambda function with Function URL
+- DynamoDB table for article metadata
 - CORS configuration for cross-origin requests
 
 ### Deployment Pipeline

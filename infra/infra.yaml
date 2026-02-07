@@ -61,6 +61,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
 
   LambdaFunction:
     Type: AWS::Lambda::Function
@@ -84,6 +85,7 @@ Resources:
           F2K_SEND_ENABLED: !Ref SendEnabled
           MAILJET_API_KEY: !Ref MailjetAPIKey
           MAILJET_API_SECRET: !Ref MailjetAPISecret
+          F2K_DYNAMODB_TABLE_NAME: !GetAtt DynamoDBTable.Name
       TracingConfig:
         Mode: PassThrough
 
@@ -109,6 +111,36 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: "*"
 
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-articles"
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  DynamoDBTableAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-dynamodb-access"
+      Roles:
+        - !Ref LambdaExecutionRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource: !GetAtt DynamoDBTable.Arn
+
 Outputs:
   FunctionName:
     Description: Name of the Lambda function
@@ -123,3 +155,15 @@ Outputs:
     Value: !GetAtt LambdaFunctionUrl.FunctionUrl
     Export:
       Name: !Sub "${ProjectName}-function-url"
+
+  DynamoDBTableName:
+    Description: Name of the DynamoDB table for storing articles
+    Value: !GetAtt DynamoDBTable.TableName
+    Export:
+      Name: !Sub "${ProjectName}-dynamodb-table-name"
+
+  DynamoDBTableArn:
+    Description: ARN of the DynamoDB table
+    Value: !GetAtt DynamoDBTable.Arn
+    Export:
+      Name: !Sub "${ProjectName}-dynamodb-table-arn"
