@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,6 +53,26 @@ func getArticleIDandRequest(r *http.Request) (*articleRequest, *string, error) {
 	return req, &id, nil
 }
 
+func (h *handlers) processDBArticleUpdates(ctx context.Context) (*errgroup.Group, chan<- *model.Article) {
+	eg := &errgroup.Group{}
+	articles := make(chan *model.Article)
+
+	eg.Go(func() error {
+
+		if h.deps.repository != nil {
+			for article := range articles {
+				if storeErr := h.deps.repository.Store(ctx, article); storeErr != nil {
+					addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return eg, articles
+}
+
 func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	req, id, err := getArticleIDandRequest(r)
 	if err != nil {
@@ -60,21 +81,14 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eg, ctx := errgroup.WithContext(r.Context())
-
 	addLogAttr(r.Context(), slog.String("article_id", *id))
 
-	eg.Go(func() error {
-		if h.deps.repository != nil {
-			if storeErr := h.deps.repository.Store(r.Context(), &model.Article{
-				ID:  *id,
-				URL: req.URL,
-			}); storeErr != nil {
-				addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
-			}
-		}
-		return nil
-	})
+	eg, artChan := h.processDBArticleUpdates(r.Context())
+
+	artChan <- &model.Article{
+		ID:  *id,
+		URL: req.URL,
+	}
 
 	var sender email.Sender
 	if h.deps.cfg.SendEnabled {
@@ -115,14 +129,8 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
 	}
 
-	eg.Go(func() error {
-		if h.deps.repository != nil {
-			if storeErr := h.deps.repository.Store(ctx, result.Article); storeErr != nil {
-				addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
-			}
-		}
-		return nil
-	})
+	artChan <- result.Article
+	close(artChan)
 
 	message := messageSentToKindle
 	if !h.deps.cfg.SendEnabled {
