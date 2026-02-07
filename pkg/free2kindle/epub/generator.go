@@ -5,9 +5,12 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/go-shiori/go-epub"
 	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -21,6 +24,53 @@ type Generator struct{}
 // NewGenerator creates a new EPUB generator instance.
 func NewGenerator() *Generator {
 	return &Generator{}
+}
+
+func buildMetadataHeader(article *content.Article) string {
+	var metaLines []string
+
+	sourceInfo := ""
+	if article.SiteName != "" {
+		sourceInfo = article.SiteName
+	}
+	if article.SourceDomain != "" {
+		if sourceInfo != "" {
+			sourceInfo += " (" + article.SourceDomain + ")"
+		} else {
+			sourceInfo = article.SourceDomain
+		}
+	}
+	if sourceInfo != "" {
+		metaLines = append(metaLines, fmt.Sprintf("<p><strong>Source:</strong> %s</p>", sourceInfo))
+	}
+
+	if article.ReadingTimeMinutes > 0 {
+		metaLines = append(metaLines, fmt.Sprintf("<p><strong>Reading time:</strong> %d min</p>", article.ReadingTimeMinutes))
+	}
+
+	if !article.PublishedAt.IsZero() {
+		metaLines = append(metaLines,
+			fmt.Sprintf("<p><strong>Published:</strong> %s</p>", article.PublishedAt.Format("2006-01-02")))
+	}
+
+	if !article.ExtractedAt.IsZero() {
+		metaLines = append(metaLines,
+			fmt.Sprintf("<p><strong>Extracted:</strong> %s</p>", article.ExtractedAt.Format("2006-01-02")))
+	}
+
+	if article.ContentType != "" {
+		contentType := cases.Title(language.English).String(article.ContentType)
+		metaLines = append(metaLines, fmt.Sprintf("<p><strong>Type:</strong> %s</p>", contentType))
+	}
+
+	if len(metaLines) == 0 {
+		return ""
+	}
+
+	return `<div style="font-size: 0.85em; color: #666; margin-bottom: 2em; ` +
+		`padding: 1em; border-left: 3px solid #ccc; background-color: #f9f9f9;">
+` + strings.Join(metaLines, "") + `
+</div>`
 }
 
 // Generate creates an EPUB file from the given article and returns its bytes.
@@ -42,9 +92,14 @@ func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 		e.SetDescription(article.Excerpt)
 	}
 
-	e.SetLang("en")
+	e.SetLang(article.Language)
+	if article.Language == "" {
+		e.SetLang("en")
+	}
 
-	_, err = e.AddSection(article.Content, "Chapter 1", "chapter1.xhtml", "")
+	articleContent := buildMetadataHeader(article) + article.Content
+
+	_, err = e.AddSection(articleContent, "Chapter 1", "chapter1.xhtml", "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to add chapter: %w", err)
 	}
