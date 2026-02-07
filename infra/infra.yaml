@@ -85,7 +85,7 @@ Resources:
           F2K_SEND_ENABLED: !Ref SendEnabled
           MAILJET_API_KEY: !Ref MailjetAPIKey
           MAILJET_API_SECRET: !Ref MailjetAPISecret
-          F2K_DYNAMODB_TABLE_NAME: !GetAtt DynamoDBTable.Name
+          F2K_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
       TracingConfig:
         Mode: PassThrough
 
@@ -158,7 +158,7 @@ Outputs:
 
   DynamoDBTableName:
     Description: Name of the DynamoDB table for storing articles
-    Value: !GetAtt DynamoDBTable.TableName
+    Value: !Ref DynamoDBTable
     Export:
       Name: !Sub "${ProjectName}-dynamodb-table-name"
 
