@@ -258,6 +258,11 @@ func TestArticleFields(t *testing.T) {
 		t.Error("Expected reading time to be set")
 	}
 
+	id, err := ArticleIDFromURL(server.URL)
+	if err != nil {
+		t.Fatalf("ArticleIDFromURL() error = %v", err)
+	}
+	article.ID = id
 	if article.ID == "" {
 		t.Error("Expected ID to be set")
 	}

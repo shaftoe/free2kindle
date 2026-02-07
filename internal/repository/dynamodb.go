@@ -42,9 +42,6 @@ func NewDynamoDB(awsConfig *aws.Config, tableName string) *DynamoDB {
 // Store saves an article to DynamoDB.
 func (d *DynamoDB) Store(ctx context.Context, article *model.Article) error {
 	now := time.Now()
-	if article.UpdatedAt.IsZero() {
-		article.UpdatedAt = now
-	}
 
 	if article.CreatedAt.IsZero() {
 		article.CreatedAt = now

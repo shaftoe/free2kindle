@@ -35,11 +35,6 @@ func NewExtractor() *Extractor {
 
 // ExtractFromURL fetches and extracts article content from given URL.
 func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*model.Article, error) {
-	id, err := ArticleIDFromURL(urlStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract article ID: %w", err)
-	}
-
 	parsedURL, body, err := e.fetchURL(ctx, urlStr)
 	if err != nil {
 		return nil, err
@@ -63,7 +58,7 @@ func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*model.A
 		return nil, errors.New("no content extracted")
 	}
 
-	return e.buildArticle(result, urlStr, id), nil
+	return e.buildArticle(result, urlStr), nil
 }
 
 func (e *Extractor) fetchURL(ctx context.Context, urlStr string) (*url.URL, io.ReadCloser, error) {
@@ -104,13 +99,12 @@ func (e *Extractor) fetchURL(ctx context.Context, urlStr string) (*url.URL, io.R
 	return parsedURL, resp.Body, nil
 }
 
-func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, id string) *model.Article {
+func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr string) *model.Article {
 	contentHTML := dom.InnerHTML(result.ContentNode)
 	plainText := stripHTML(contentHTML)
 	wordCount := countWords(plainText)
 
 	return &model.Article{
-		ID:                 id,
 		Title:              result.Metadata.Title,
 		Author:             result.Metadata.Author,
 		Content:            contentHTML,

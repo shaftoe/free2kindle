@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
 )
 
@@ -13,11 +14,11 @@ type articleRequest struct {
 }
 
 type articleResponse struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	URL     string `json:"url"`
-	Message string `json:"message"`
-	Status  string `json:"status"`
+	ID             string `json:"id"`
+	Title          string `json:"title"`
+	URL            string `json:"url"`
+	Message        string `json:"message"`
+	DeliveryStatus string `json:"delivery_status,omitempty"`
 }
 
 type healthResponse struct {
@@ -31,6 +32,7 @@ type errorResponse struct {
 type handlerDeps struct {
 	cfg        *config.Config
 	serviceRun func(context.Context, *service.Deps, *config.Config, *service.Options, string) (*service.Result, error)
+	repository repository.Repository
 }
 
 type handlers struct {

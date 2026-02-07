@@ -21,11 +21,10 @@ type Article struct {
 	Title              string     `json:"title" dynamodbav:"title"`
 	Author             string     `json:"author" dynamodbav:"author"`
 	Content            string     `json:"content" dynamodbav:"content"`
-	HTML               string     `json:"html" dynamodbav:"html"`
 	Excerpt            string     `json:"excerpt" dynamodbav:"excerpt"`
 	URL                string     `json:"url" dynamodbav:"url"`
 	ImageURL           string     `json:"imageUrl" dynamodbav:"imageUrl"`
-	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt"`
+	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt,omitempty"`
 	ExtractedAt        time.Time  `json:"extractedAt" dynamodbav:"extractedAt"`
 	WordCount          int        `json:"wordCount" dynamodbav:"wordCount"`
 	ReadingTimeMinutes int        `json:"readingTimeMinutes" dynamodbav:"readingTimeMinutes"`
@@ -34,11 +33,10 @@ type Article struct {
 	ContentType        string     `json:"contentType" dynamodbav:"contentType"`
 	Language           string     `json:"language" dynamodbav:"language"`
 
-	DeliveryStatus       Status     `json:"deliveryStatus" dynamodbav:"deliveryStatus"`
-	DeliveryAttemptCount int        `json:"deliveryAttemptCount" dynamodbav:"deliveryAttemptCount"`
-	LastDeliveryAttempt  *time.Time `json:"lastDeliveryAttempt,omitempty" dynamodbav:"lastDeliveryAttempt"`
-	DeliveryError        string     `json:"deliveryError,omitempty" dynamodbav:"deliveryError"`
+	LastDeliveryAttemptAt *time.Time `json:"lastDeliveryAttemptAt,omitempty" dynamodbav:"lastDeliveryAttemptAt,omitempty"`
+	DeliveryStatus        Status     `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
+	DeliveryError         *string    `json:"deliveryError,omitempty" dynamodbav:"deliveryError,omitempty"`
 
-	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" dynamodbav:"updatedAt"`
+	CreatedAt time.Time  `json:"createdAt" dynamodbav:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty" dynamodbav:"updatedAt,omitempty"`
 }

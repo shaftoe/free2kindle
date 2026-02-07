@@ -118,8 +118,8 @@ func TestHandleCreateArticleSuccessWithoutEmail(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Title != "Test Article" {
-		t.Errorf("expected title 'Test Article', got '%s'", resp.Title)
+	if resp.Title != testArticleTitle {
+		t.Errorf("expected title '%s', got '%s'", testArticleTitle, resp.Title)
 	}
 	if resp.Message != "article processed successfully (email sending disabled)" {
 		t.Errorf("expected message 'article processed successfully (email sending disabled)', got '%s'", resp.Message)
@@ -147,8 +147,9 @@ func TestHandleCreateArticleInvalidJSON(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "Invalid request body" {
-		t.Errorf("expected message 'Invalid request body', got '%s'", resp.Message)
+	expectedMsg := "failed to decode request body: invalid character 'i' looking for beginning of value"
+	if resp.Message != expectedMsg {
+		t.Errorf("expected message '%s', got '%s'", expectedMsg, resp.Message)
 	}
 }
 
@@ -175,8 +176,8 @@ func TestHandleCreateArticleMissingURL(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "URL is required" {
-		t.Errorf("expected message 'URL is required', got '%s'", resp.Message)
+	if resp.Message != "missing URL in request body" {
+		t.Errorf("expected message 'missing URL in request body', got '%s'", resp.Message)
 	}
 }
 

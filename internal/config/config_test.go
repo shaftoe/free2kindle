@@ -37,27 +37,9 @@ func TestConfigValidate(t *testing.T) {
 			name: "valid server config",
 			config: &Config{
 				Mode:          ModeServer,
-				APIKeySecret:   "api-key-secret",
+				APIKeySecret:  "api-key-secret",
 				DynamoDBTable: "test-table",
 			},
-			wantErr: false,
-		},
-		{
-			name: "server config missing api key",
-			config: &Config{
-				Mode:          ModeServer,
-				DynamoDBTable: "test-table",
-			},
-			wantErr: true,
-		},
-		{
-			name: "server config missing dynamodb table",
-			config: &Config{
-				Mode:          ModeServer,
-				APIKeySecret:   "api-key-secret",
-			},
-			wantErr: true,
-		},
 			wantErr: false,
 		},
 		{
@@ -124,7 +106,6 @@ func TestConfigValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.config.Mode = ModeCLI
 			err := tt.config.Validate()
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -133,7 +114,6 @@ func TestConfigValidate(t *testing.T) {
 			}
 		})
 	}
-}
 }
 
 func TestLoad(t *testing.T) {

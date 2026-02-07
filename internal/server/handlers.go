@@ -3,6 +3,8 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -11,8 +13,8 @@ import (
 	"github.com/shaftoe/free2kindle/internal/email/mailjet"
 	"github.com/shaftoe/free2kindle/internal/epub"
 	"github.com/shaftoe/free2kindle/internal/model"
-	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -32,21 +34,47 @@ func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 }
 
-func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
-	var req articleRequest
+func getArticleIDandRequest(r *http.Request) (*articleRequest, *string, error) {
+	var req *articleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Invalid request body"})
-		return
+		return nil, nil, fmt.Errorf("failed to decode request body: %w", err)
 	}
 
 	if req.URL == "" {
+		return nil, nil, errors.New("missing URL in request body")
+	}
+
+	id, err := content.ArticleIDFromURL(req.URL)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return req, &id, nil
+}
+
+func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
+	req, id, err := getArticleIDandRequest(r)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: "URL is required"})
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
 		return
 	}
 
-	addLogAttr(r.Context(), slog.String("article_url", req.URL))
+	eg, ctx := errgroup.WithContext(r.Context())
+
+	addLogAttr(r.Context(), slog.String("article_id", *id))
+
+	eg.Go(func() error {
+		if h.deps.repository != nil {
+			if storeErr := h.deps.repository.Store(r.Context(), &model.Article{
+				ID:  *id,
+				URL: req.URL,
+			}); storeErr != nil {
+				addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
+			}
+		}
+		return nil
+	})
 
 	var sender email.Sender
 	if h.deps.cfg.SendEnabled {
@@ -74,18 +102,27 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result.Article.DeliveryStatus = model.StatusPending
+	if h.deps.cfg.SendEnabled {
+		result.Article.DeliveryStatus = model.StatusDelivered
+	}
+
+	result.Article.ID = *id
 
 	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
 	addLogAttr(r.Context(), slog.String("article_id", result.Article.ID))
-	addLogAttr(r.Context(), slog.String("article_status", string(result.Article.DeliveryStatus)))
 
-	repo := repository.NewDynamoDB(h.deps.cfg.AWSConfig, h.deps.cfg.DynamoDBTable)
-	if err = repo.Store(r.Context(), result.Article); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
-		return
+	if result.Article.DeliveryStatus != "" {
+		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
 	}
+
+	eg.Go(func() error {
+		if h.deps.repository != nil {
+			if storeErr := h.deps.repository.Store(ctx, result.Article); storeErr != nil {
+				addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
+			}
+		}
+		return nil
+	})
 
 	message := messageSentToKindle
 	if !h.deps.cfg.SendEnabled {
@@ -94,12 +131,14 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	addLogAttr(r.Context(), slog.String("message", message))
 
+	_ = eg.Wait()
+
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
-		ID:      result.Article.ID,
-		Title:   result.Article.Title,
-		URL:     req.URL,
-		Message: message,
-		Status:  string(result.Article.DeliveryStatus),
+		ID:             result.Article.ID,
+		Title:          result.Article.Title,
+		URL:            req.URL,
+		Message:        message,
+		DeliveryStatus: string(result.Article.DeliveryStatus),
 	})
 }
