@@ -8,11 +8,13 @@ require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-shiori/dom v0.0.0-20230515143342-73569d674e1c
 	github.com/go-shiori/go-epub v1.2.1
+	github.com/google/uuid v1.6.0
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.8
 	github.com/markusmobius/go-trafilatura v1.12.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/text v0.33.0
 )
 
 require (
@@ -54,6 +56,5 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

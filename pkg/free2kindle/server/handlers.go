@@ -73,6 +73,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
+	addLogAttr(r.Context(), slog.String("article_id", result.Article.ID))
 
 	message := messageSentToKindle
 	if !h.deps.cfg.SendEnabled {

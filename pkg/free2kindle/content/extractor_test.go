@@ -71,79 +71,6 @@ func TestValidateURL(t *testing.T) {
 	}
 }
 
-func TestExtractFromHTML(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name    string
-		url     string
-		html    string
-		wantErr bool
-	}{
-		{
-			name: "valid html article",
-			url:  "https://example.com/article",
-			html: `<!DOCTYPE html>
-<html>
-<head>
-	<title>Test Article Title</title>
-	<meta name="description" content="Test excerpt">
-	<meta name="author" content="Test Author">
-</head>
-<body>
-	<article>
-		<h1>Test Article Title</h1>
-		<p>This is the main content of the article.</p>
-	</article>
-</body>
-</html>`,
-			wantErr: false,
-		},
-		{
-			name:    "html with minimal content",
-			url:     "https://example.com/article",
-			html:    `<!DOCTYPE html><html><body><h1>Title</h1><p>Content</p></body></html>`,
-			wantErr: false,
-		},
-		{
-			name:    "empty html",
-			url:     "https://example.com/article",
-			html:    "",
-			wantErr: true,
-		},
-		{
-			name:    "invalid url",
-			url:     "invalid-url",
-			html:    "<html><body><h1>Title</h1><p>Content</p></body></html>",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			extractor := NewExtractor()
-			article, err := extractor.ExtractFromHTML(ctx, tt.url, tt.html)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ExtractFromHTML() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if !tt.wantErr {
-				if article == nil {
-					t.Fatal("Expected article but got nil")
-				}
-				if article.URL != tt.url {
-					t.Errorf("Expected URL %s, got %s", tt.url, article.URL)
-				}
-				if article.HTML != tt.html {
-					t.Error("HTML field should be set")
-				}
-			}
-		})
-	}
-}
-
 func TestExtractFromURL(t *testing.T) {
 	ctx := context.Background()
 
@@ -242,19 +169,6 @@ func TestExtractFromURLWithContextCancellation(t *testing.T) {
 	}
 }
 
-func TestExtractFromHTMLWithContextCancellation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	html := `<!DOCTYPE html><html><head><title>Test</title></head><body><p>Content</p></body></html>`
-
-	extractor := NewExtractor()
-	_, err := extractor.ExtractFromHTML(ctx, "https://example.com/article", html)
-	if err == nil {
-		t.Error("Expected error due to canceled context, got nil")
-	}
-}
-
 func TestExtractFromURLInvalidURL(t *testing.T) {
 	ctx := context.Background()
 	extractor := NewExtractor()
@@ -299,10 +213,17 @@ func TestArticleFields(t *testing.T) {
 </body>
 </html>`
 
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(html))
+	}))
+	defer server.Close()
+
 	extractor := NewExtractor()
-	article, err := extractor.ExtractFromHTML(ctx, "https://example.com/article", html)
+	article, err := extractor.ExtractFromURL(ctx, server.URL)
 	if err != nil {
-		t.Fatalf("ExtractFromHTML() error = %v", err)
+		t.Fatalf("ExtractFromURL() error = %v", err)
 	}
 
 	if article == nil {
@@ -317,11 +238,27 @@ func TestArticleFields(t *testing.T) {
 		t.Error("Expected content to be set")
 	}
 
-	if article.HTML != html {
-		t.Error("Expected HTML field to be set to input HTML")
+	if article.URL != server.URL {
+		t.Errorf("Expected URL to be %s, got %s", server.URL, article.URL)
 	}
 
-	if article.URL != "https://example.com/article" {
-		t.Errorf("Expected URL to be https://example.com/article, got %s", article.URL)
+	if article.Excerpt == "" {
+		t.Error("Expected excerpt to be set")
+	}
+
+	if article.Author == "" {
+		t.Error("Expected author to be set")
+	}
+
+	if article.WordCount == 0 {
+		t.Error("Expected word count to be set")
+	}
+
+	if article.ReadingTimeMinutes == 0 {
+		t.Error("Expected reading time to be set")
+	}
+
+	if article.ID == "" {
+		t.Error("Expected ID to be set")
 	}
 }

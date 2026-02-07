@@ -22,6 +22,7 @@ const (
 
 // Article represents the extracted content from a web page.
 type Article struct {
+	ID                 string
 	Title              string
 	Author             string
 	Content            string
@@ -53,6 +54,11 @@ func NewExtractor() *Extractor {
 
 // ExtractFromURL fetches and extracts article content from the given URL.
 func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article, error) {
+	id, err := ArticleIDFromURL(urlStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract article ID: %w", err)
+	}
+
 	parsedURL, body, err := e.fetchURL(ctx, urlStr)
 	if err != nil {
 		return nil, err
@@ -76,7 +82,7 @@ func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article
 		return nil, errors.New("no content extracted")
 	}
 
-	return e.buildArticle(result, urlStr, ""), nil
+	return e.buildArticle(result, urlStr, id), nil
 }
 
 func (e *Extractor) fetchURL(ctx context.Context, urlStr string) (*url.URL, io.ReadCloser, error) {
@@ -117,13 +123,13 @@ func (e *Extractor) fetchURL(ctx context.Context, urlStr string) (*url.URL, io.R
 	return parsedURL, resp.Body, nil
 }
 
-func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, html string) *Article {
+func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, id string) *Article {
 	contentHTML := dom.InnerHTML(result.ContentNode)
-
 	plainText := stripHTML(contentHTML)
 	wordCount := countWords(plainText)
 
 	return &Article{
+		ID:                 id,
 		Title:              result.Metadata.Title,
 		Author:             result.Metadata.Author,
 		Content:            contentHTML,
@@ -131,7 +137,6 @@ func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, html
 		ImageURL:           result.Metadata.Image,
 		PublishedAt:        result.Metadata.Date,
 		URL:                urlStr,
-		HTML:               html,
 		ExtractedAt:        time.Now(),
 		WordCount:          wordCount,
 		ReadingTimeMinutes: (wordCount + wordsPerMinute - 1) / wordsPerMinute,
@@ -140,39 +145,6 @@ func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, html
 		ContentType:        result.Metadata.PageType,
 		Language:           result.Metadata.Language,
 	}
-}
-
-// ExtractFromHTML extracts article content from the provided HTML string.
-func (e *Extractor) ExtractFromHTML(ctx context.Context, urlStr, html string) (*Article, error) {
-	if err := validateURL(urlStr); err != nil {
-		return nil, fmt.Errorf("invalid URL: %w", err)
-	}
-
-	parsedURL, err := url.Parse(urlStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
-	}
-
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context canceled: %w", ctx.Err())
-	default:
-	}
-
-	opts := trafilatura.Options{
-		OriginalURL: parsedURL,
-	}
-
-	result, err := trafilatura.Extract(strings.NewReader(html), opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract article content: %w", err)
-	}
-
-	if result.ContentNode == nil {
-		return nil, errors.New("no content extracted")
-	}
-
-	return e.buildArticle(result, urlStr, html), nil
 }
 
 func stripHTML(html string) string {
