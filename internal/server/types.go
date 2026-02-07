@@ -13,9 +13,11 @@ type articleRequest struct {
 }
 
 type articleResponse struct {
+	ID      string `json:"id"`
 	Title   string `json:"title"`
 	URL     string `json:"url"`
 	Message string `json:"message"`
+	Status  string `json:"status"`
 }
 
 type healthResponse struct {

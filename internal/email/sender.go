@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 const (
@@ -31,7 +31,7 @@ type Sender interface {
 // Request contains the data required to send an email.
 type Request struct {
 	// Article is the article to be sent.
-	Article *content.Article
+	Article *model.Article
 
 	// EPUBData is the EPUB data to be sent as attachment.
 	EPUBData []byte
@@ -45,7 +45,7 @@ type Request struct {
 }
 
 // GenerateFilename creates a sanitized filename from the article title.
-func GenerateFilename(article *content.Article) string {
+func GenerateFilename(article *model.Article) string {
 	if article.Title != "" {
 		return sanitizeFilename(article.Title) + ".epub"
 	}

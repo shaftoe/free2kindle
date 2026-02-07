@@ -14,14 +14,12 @@ import (
 
 	"github.com/go-shiori/dom"
 	"github.com/markusmobius/go-trafilatura"
-	"github.com/shaftoe/free2kindle/internal/types"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 const (
 	wordsPerMinute = 250
 )
-
-type Article = types.Article
 
 // Extractor handles the extraction of article content from URLs and HTML.
 type Extractor struct {
@@ -35,8 +33,8 @@ func NewExtractor() *Extractor {
 	}
 }
 
-// ExtractFromURL fetches and extracts article content from the given URL.
-func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*Article, error) {
+// ExtractFromURL fetches and extracts article content from given URL.
+func (e *Extractor) ExtractFromURL(ctx context.Context, urlStr string) (*model.Article, error) {
 	id, err := ArticleIDFromURL(urlStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract article ID: %w", err)
@@ -106,19 +104,19 @@ func (e *Extractor) fetchURL(ctx context.Context, urlStr string) (*url.URL, io.R
 	return parsedURL, resp.Body, nil
 }
 
-func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, id string) *Article {
+func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, id string) *model.Article {
 	contentHTML := dom.InnerHTML(result.ContentNode)
 	plainText := stripHTML(contentHTML)
 	wordCount := countWords(plainText)
 
-	return &Article{
+	return &model.Article{
 		ID:                 id,
 		Title:              result.Metadata.Title,
 		Author:             result.Metadata.Author,
 		Content:            contentHTML,
 		Excerpt:            result.Metadata.Description,
 		ImageURL:           result.Metadata.Image,
-		PublishedAt:        result.Metadata.Date,
+		PublishedAt:        toTimePtr(result.Metadata.Date),
 		URL:                urlStr,
 		ExtractedAt:        time.Now(),
 		WordCount:          wordCount,
@@ -128,6 +126,13 @@ func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr, id s
 		ContentType:        result.Metadata.PageType,
 		Language:           result.Metadata.Language,
 	}
+}
+
+func toTimePtr(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
 }
 
 func stripHTML(html string) string {

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/shaftoe/free2kindle/internal/service"
 )
 
@@ -48,7 +48,7 @@ func TestHandleCreateArticleSuccessWithEmail(t *testing.T) {
 		_ *service.Options, _ string,
 	) (*service.Result, error) {
 		return &service.Result{
-			Article: &content.Article{Title: "Test Article"},
+			Article: &model.Article{Title: "Test Article"},
 		}, nil
 	}
 	h := newHandlers(&handlerDeps{
@@ -93,7 +93,7 @@ func TestHandleCreateArticleSuccessWithoutEmail(t *testing.T) {
 		_ *service.Options, _ string,
 	) (*service.Result, error) {
 		return &service.Result{
-			Article: &content.Article{Title: "Test Article"},
+			Article: &model.Article{Title: "Test Article"},
 		}, nil
 	}
 	h := newHandlers(&handlerDeps{

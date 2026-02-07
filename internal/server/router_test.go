@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/shaftoe/free2kindle/internal/service"
 )
 
@@ -48,7 +48,7 @@ func createTestHandlerWithMock(
 			_ *service.Options, _ string,
 		) (*service.Result, error) {
 			return &service.Result{
-				Article: &content.Article{Title: testArticleTitle},
+				Article: &model.Article{Title: testArticleTitle},
 			}, nil
 		},
 	})

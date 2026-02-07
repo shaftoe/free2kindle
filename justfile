@@ -85,7 +85,7 @@ logs:
 
 # Test deployed Lambda function with article URL
 test-url *URL:
-    curl -X POST $(just get-url)/api/v1/articles \
+    curl -X POST http://localhost:8080/api/v1/articles \
       -H "Content-Type: application/json" \
       -H "X-API-Key: $F2K_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"

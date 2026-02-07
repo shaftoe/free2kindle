@@ -9,7 +9,7 @@ import (
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/epub"
-	"github.com/shaftoe/free2kindle/internal/types"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 // Deps holds the external dependencies required by the service.
@@ -48,7 +48,7 @@ func NewOptions(sendEmail, generateEPUB bool, subject, outputPath string) *Optio
 
 // Result contains the output from processing an article.
 type Result struct {
-	Article  *types.Article
+	Article  *model.Article
 	EPUBData []byte
 	URL      string
 }

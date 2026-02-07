@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 func TestNewSender(t *testing.T) {
@@ -83,7 +83,7 @@ func TestValidateRequest(t *testing.T) {
 		{
 			name: "valid request",
 			req: &email.Request{
-				Article: &content.Article{
+				Article: &model.Article{
 					Title: "Test Article",
 				},
 				EPUBData:  []byte("test epub data"),
@@ -94,7 +94,7 @@ func TestValidateRequest(t *testing.T) {
 		{
 			name: "missing kindle email",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  []byte("data"),
 				DestEmail: "",
 			},
@@ -103,7 +103,7 @@ func TestValidateRequest(t *testing.T) {
 		{
 			name: "missing epub data",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  nil,
 				DestEmail: "kindle@kindle.com",
 			},
@@ -147,7 +147,7 @@ func TestSendEmailValidation(t *testing.T) {
 			apiSecret:   "secret",
 			senderEmail: "test@example.com",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  []byte("data"),
 				DestEmail: "kindle@kindle.com",
 			},
@@ -160,7 +160,7 @@ func TestSendEmailValidation(t *testing.T) {
 			apiSecret:   "",
 			senderEmail: "test@example.com",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  []byte("data"),
 				DestEmail: "kindle@kindle.com",
 			},
@@ -173,7 +173,7 @@ func TestSendEmailValidation(t *testing.T) {
 			apiSecret:   "secret",
 			senderEmail: "",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  []byte("data"),
 				DestEmail: "kindle@kindle.com",
 			},
@@ -186,7 +186,7 @@ func TestSendEmailValidation(t *testing.T) {
 			apiSecret:   "secret",
 			senderEmail: "test@example.com",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  []byte("data"),
 				DestEmail: "",
 			},
@@ -199,7 +199,7 @@ func TestSendEmailValidation(t *testing.T) {
 			apiSecret:   "secret",
 			senderEmail: "test@example.com",
 			req: &email.Request{
-				Article:   &content.Article{Title: "Test"},
+				Article:   &model.Article{Title: "Test"},
 				EPUBData:  nil,
 				DestEmail: "kindle@kindle.com",
 			},

@@ -84,6 +84,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
+		ID:      result.Article.ID,
 		Title:   result.Article.Title,
 		URL:     req.URL,
 		Message: message,

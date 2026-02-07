@@ -3,32 +3,32 @@ package email
 import (
 	"testing"
 
-	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 func TestGenerateFilename(t *testing.T) {
 	tests := []struct {
 		name     string
-		article  *content.Article
+		article  *model.Article
 		expected string
 	}{
 		{
 			name: "article with title",
-			article: &content.Article{
+			article: &model.Article{
 				Title: "Test Article",
 			},
 			expected: "Test Article.epub",
 		},
 		{
 			name: "article with special characters in title",
-			article: &content.Article{
+			article: &model.Article{
 				Title: "Test Article: What's New?",
 			},
 			expected: "Test Article Whats New.epub",
 		},
 		{
 			name:     "article without title",
-			article:  &content.Article{},
+			article:  &model.Article{},
 			expected: "article.epub",
 		},
 	}

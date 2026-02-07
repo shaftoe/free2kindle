@@ -1,8 +1,11 @@
+// Package repository provides article persistence implementations.
 package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 const (
@@ -28,16 +32,6 @@ const (
 	attributeNameSiteName     = "siteName"
 	attributeNameContentType  = "contentType"
 	attributeNameLanguage     = "language"
-
-	attributeNameDeliveryStatus       = "deliveryStatus"
-	attributeNameDeliveryAttemptCount = "deliveryAttemptCount"
-	attributeNameLastDeliveryAttempt  = "lastDeliveryAttempt"
-	attributeNameDeliveryError        = "deliveryError"
-
-	attributeNameCreatedAt = "createdAt"
-	attributeNameUpdatedAt = "updatedAt"
-
-	iso8601Format = "2006-01-02T15:04:05Z07:00"
 )
 
 // DynamoDB implements Repository interface using AWS DynamoDB.
@@ -57,7 +51,9 @@ func NewDynamoDB(awsConfig *aws.Config, tableName string) *DynamoDB {
 		tableName: tableName,
 	}
 }
-func (d *DynamoDB) Store(ctx context.Context, article *Article) error {
+
+// Store saves an article to DynamoDB.
+func (d *DynamoDB) Store(ctx context.Context, article *model.Article) error {
 	now := time.Now()
 	if article.UpdatedAt.IsZero() {
 		article.UpdatedAt = now
@@ -84,7 +80,7 @@ func (d *DynamoDB) Store(ctx context.Context, article *Article) error {
 }
 
 // GetByID implements Repository.GetByID.
-func (d *DynamoDB) GetByID(ctx context.Context, id string) (*Article, error) {
+func (d *DynamoDB) GetByID(ctx context.Context, id string) (*model.Article, error) {
 	resp, err := d.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(d.tableName),
 		Key: map[string]types.AttributeValue{
@@ -99,16 +95,16 @@ func (d *DynamoDB) GetByID(ctx context.Context, id string) (*Article, error) {
 		return nil, ErrNotFound
 	}
 
-	var article Article
-	if err := attributevalue.UnmarshalMap(resp.Item, &article); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal article: %w", err)
+	var article model.Article
+	if unmarshalErr := attributevalue.UnmarshalMap(resp.Item, &article); unmarshalErr != nil {
+		return nil, fmt.Errorf("failed to unmarshal article: %w", unmarshalErr)
 	}
 
 	return &article, nil
 }
 
 // GetByURL implements Repository.GetByURL.
-func (d *DynamoDB) GetByURL(ctx context.Context, url string) (*Article, error) {
+func (d *DynamoDB) GetByURL(ctx context.Context, url string) (*model.Article, error) {
 	id, err := content.ArticleIDFromURL(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate article ID: %w", err)
@@ -118,14 +114,18 @@ func (d *DynamoDB) GetByURL(ctx context.Context, url string) (*Article, error) {
 }
 
 // ListRecent implements Repository.ListRecent.
-func (d *DynamoDB) ListRecent(ctx context.Context, limit int) ([]*Article, error) {
+func (d *DynamoDB) ListRecent(ctx context.Context, limit int) ([]*model.Article, error) {
 	if limit <= 0 {
 		limit = 10
 	}
 
+	if limit > math.MaxInt32 {
+		limit = math.MaxInt32
+	}
+
 	scanInput := &dynamodb.ScanInput{
 		TableName:            aws.String(d.tableName),
-		Limit:                aws.Int32(int32(limit)),
+		Limit:                aws.Int32(int32(limit)), // #nosec G115 -- limit is already checked against MaxInt32
 		ScanFilter:           nil,
 		ProjectionExpression: aws.String("id, url, title, extractedAt, deliveryStatus"),
 	}
@@ -135,11 +135,11 @@ func (d *DynamoDB) ListRecent(ctx context.Context, limit int) ([]*Article, error
 		return nil, fmt.Errorf("failed to scan articles: %w", err)
 	}
 
-	var articles []*Article
+	var articles []*model.Article
 	for _, item := range resp.Items {
-		var article Article
-		if err := attributevalue.UnmarshalMap(item, &article); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal article: %w", err)
+		var article model.Article
+		if unmarshalErr := attributevalue.UnmarshalMap(item, &article); unmarshalErr != nil {
+			return nil, fmt.Errorf("failed to unmarshal article: %w", unmarshalErr)
 		}
 		articles = append(articles, &article)
 	}
@@ -148,4 +148,4 @@ func (d *DynamoDB) ListRecent(ctx context.Context, limit int) ([]*Article, error
 }
 
 // ErrNotFound is returned when an article is not found.
-var ErrNotFound = fmt.Errorf("article not found")
+var ErrNotFound = errors.New("article not found")
