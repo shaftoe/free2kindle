@@ -234,7 +234,7 @@ just logs
 The application uses a generic `email.Sender` interface to support multiple email providers:
 
 #### Mailjet (Implemented)
-- Package: `pkg/free2kindle/email/mailjet`
+- Package: `internal/email/mailjet`
 - Config: API Key, API Secret, Sender Email
 - Environment Variables:
    - `MAILJET_API_KEY` or `MJ_APIKEY_PUBLIC`

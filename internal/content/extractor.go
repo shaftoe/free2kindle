@@ -14,31 +14,14 @@ import (
 
 	"github.com/go-shiori/dom"
 	"github.com/markusmobius/go-trafilatura"
+	"github.com/shaftoe/free2kindle/internal/types"
 )
 
 const (
 	wordsPerMinute = 250
 )
 
-// Article represents the extracted content from a web page.
-type Article struct {
-	ID                 string
-	Title              string
-	Author             string
-	Content            string
-	Excerpt            string
-	URL                string
-	ImageURL           string
-	PublishedAt        time.Time
-	HTML               string
-	ExtractedAt        time.Time
-	WordCount          int
-	ReadingTimeMinutes int
-	SourceDomain       string
-	SiteName           string
-	ContentType        string
-	Language           string
-}
+type Article = types.Article
 
 // Extractor handles the extraction of article content from URLs and HTML.
 type Extractor struct {

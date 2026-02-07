@@ -5,10 +5,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/epub"
+	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/email"
+	"github.com/shaftoe/free2kindle/internal/epub"
+	"github.com/shaftoe/free2kindle/internal/types"
 )
 
 // Deps holds the external dependencies required by the service.
@@ -47,7 +48,7 @@ func NewOptions(sendEmail, generateEPUB bool, subject, outputPath string) *Optio
 
 // Result contains the output from processing an article.
 type Result struct {
-	Article  *content.Article
+	Article  *types.Article
 	EPUBData []byte
 	URL      string
 }

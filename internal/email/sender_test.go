@@ -3,7 +3,7 @@ package email
 import (
 	"testing"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
+	"github.com/shaftoe/free2kindle/internal/content"
 )
 
 func TestGenerateFilename(t *testing.T) {

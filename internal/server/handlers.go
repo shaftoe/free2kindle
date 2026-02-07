@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/email/mailjet"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/epub"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
+	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/email"
+	"github.com/shaftoe/free2kindle/internal/email/mailjet"
+	"github.com/shaftoe/free2kindle/internal/epub"
+	"github.com/shaftoe/free2kindle/internal/service"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/server"
+	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/server"
 )
 
 const (

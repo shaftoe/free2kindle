@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
+	"github.com/shaftoe/free2kindle/internal/content"
 )
 
 const (

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the testing strategy for the `pkg/free2kindle/server` package.
+This document outlines the testing strategy for the `internal/server` package.
 
 ## Components to Test
 
@@ -208,20 +208,20 @@ Alternatively, use `github.com/stretchr/testify/mock` for more advanced mocking 
 ## Implementation Phases
 
 ### Phase 1: Foundation (Priority: High)
-1. Create test file `pkg/free2kindle/server/handlers_test.go`
+1. Create test file `internal/server/handlers_test.go`
 2. Implement mock email sender
 3. Add basic tests for `handleHealth`
 4. Add tests for `handleCreateArticle` with mocked service
 
 ### Phase 2: Middleware Tests (Priority: High)
-1. Create test file `pkg/free2kindle/server/middleware_test.go`
+1. Create test file `internal/server/middleware_test.go`
 2. Implement auth middleware tests
 3. Implement request ID middleware tests
 4. Implement logging middleware tests
 5. Implement CORS middleware tests
 
 ### Phase 3: Integration Tests (Priority: Medium)
-1. Create `pkg/free2kindle/server/server_test.go`
+1. Create `internal/server/server_test.go`
 2. Add end-to-end flow tests
 3. Test error scenarios
 4. Test with `SendEnabled` true/false
@@ -236,27 +236,27 @@ Alternatively, use `github.com/stretchr/testify/mock` for more advanced mocking 
 
 ### All Tests
 ```bash
-go test ./pkg/free2kindle/server/...
+go test ./internal/server/...
 ```
 
 ### With Coverage
 ```bash
-go test -cover ./pkg/free2kindle/server/...
+go test -cover ./internal/server/...
 ```
 
 ### Verbose Output
 ```bash
-go test -v ./pkg/free2kindle/server/...
+go test -v ./internal/server/...
 ```
 
 ### Skip Network Tests
 ```bash
-go test -short ./pkg/free2kindle/server/...
+go test -short ./internal/server/...
 ```
 
 ### Run Specific Test
 ```bash
-go test -v -run TestHandleCreateArticleSuccess ./pkg/free2kindle/server/
+go test -v -run TestHandleCreateArticleSuccess ./internal/server/
 ```
 
 ## Open Questions

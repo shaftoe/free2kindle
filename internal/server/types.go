@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
+	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/service"
 )
 
 type articleRequest struct {

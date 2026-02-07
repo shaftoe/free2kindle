@@ -9,7 +9,7 @@ import (
 
 	mailjetLib "github.com/mailjet/mailjet-apiv3-go/v4"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/email"
+	"github.com/shaftoe/free2kindle/internal/email"
 )
 
 // Sender implements the email.Sender interface using Mailjet.

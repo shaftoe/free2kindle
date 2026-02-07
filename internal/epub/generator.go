@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-shiori/go-epub"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
+	"github.com/shaftoe/free2kindle/internal/types"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -26,7 +26,7 @@ func NewGenerator() *Generator {
 	return &Generator{}
 }
 
-func buildMetadataHeader(article *content.Article) string {
+func buildMetadataHeader(article *types.Article) string {
 	var metaLines []string
 
 	sourceInfo := ""
@@ -74,7 +74,7 @@ func buildMetadataHeader(article *content.Article) string {
 }
 
 // Generate creates an EPUB file from the given article and returns its bytes.
-func (g *Generator) Generate(article *content.Article) ([]byte, error) {
+func (g *Generator) Generate(article *types.Article) ([]byte, error) {
 	e, err := epub.NewEpub(article.Title)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EPUB: %w", err)
@@ -116,7 +116,7 @@ func (g *Generator) Generate(article *content.Article) ([]byte, error) {
 }
 
 // GenerateAndWrite generates an EPUB file and writes it to the specified path.
-func (g *Generator) GenerateAndWrite(article *content.Article, outputPath string) error {
+func (g *Generator) GenerateAndWrite(article *types.Article, outputPath string) error {
 	data, err := g.Generate(article)
 	if err != nil {
 		return err

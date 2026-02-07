@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/config"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/content"
-	"github.com/shaftoe/free2kindle/pkg/free2kindle/service"
+	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/service"
 )
 
 func TestHandleHealth(t *testing.T) {

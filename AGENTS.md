@@ -11,7 +11,7 @@
 - Run all tests: `go test ./...`
 - Run tests with coverage: `go test -cover ./...`
 - Run single test: `go test -run <TestName> ./<package>`
-- Run tests in specific package: `go test ./pkg/free2kindle/<package>`
+- Run tests in specific package: `go test ./internal/<package>`
 
 ### Code Quality
 - Format code: `go fmt ./...`
