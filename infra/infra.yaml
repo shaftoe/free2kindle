@@ -86,6 +86,7 @@ Resources:
           MAILJET_API_KEY: !Ref MailjetAPIKey
           MAILJET_API_SECRET: !Ref MailjetAPISecret
           F2K_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
+          F2K_MODE: server
       TracingConfig:
         Mode: PassThrough
 

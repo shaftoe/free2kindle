@@ -17,28 +17,28 @@ const (
 
 // Article represents all article data including content, metadata, and delivery status.
 type Article struct {
-	ID                 string     `json:"id"`
-	Title              string     `json:"title"`
-	Author             string     `json:"author"`
-	Content            string     `json:"content"`
-	HTML               string     `json:"html"`
-	Excerpt            string     `json:"excerpt"`
-	URL                string     `json:"url"`
-	ImageURL           string     `json:"imageUrl"`
-	PublishedAt        *time.Time `json:"publishedAt,omitempty"`
-	ExtractedAt        time.Time  `json:"extractedAt"`
-	WordCount          int        `json:"wordCount"`
-	ReadingTimeMinutes int        `json:"readingTimeMinutes"`
-	SourceDomain       string     `json:"sourceDomain"`
-	SiteName           string     `json:"siteName"`
-	ContentType        string     `json:"contentType"`
-	Language           string     `json:"language"`
+	ID                 string     `json:"id" dynamodbav:"id"`
+	Title              string     `json:"title" dynamodbav:"title"`
+	Author             string     `json:"author" dynamodbav:"author"`
+	Content            string     `json:"content" dynamodbav:"content"`
+	HTML               string     `json:"html" dynamodbav:"html"`
+	Excerpt            string     `json:"excerpt" dynamodbav:"excerpt"`
+	URL                string     `json:"url" dynamodbav:"url"`
+	ImageURL           string     `json:"imageUrl" dynamodbav:"imageUrl"`
+	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt"`
+	ExtractedAt        time.Time  `json:"extractedAt" dynamodbav:"extractedAt"`
+	WordCount          int        `json:"wordCount" dynamodbav:"wordCount"`
+	ReadingTimeMinutes int        `json:"readingTimeMinutes" dynamodbav:"readingTimeMinutes"`
+	SourceDomain       string     `json:"sourceDomain" dynamodbav:"sourceDomain"`
+	SiteName           string     `json:"siteName" dynamodbav:"siteName"`
+	ContentType        string     `json:"contentType" dynamodbav:"contentType"`
+	Language           string     `json:"language" dynamodbav:"language"`
 
-	DeliveryStatus       Status     `json:"deliveryStatus"`
-	DeliveryAttemptCount int        `json:"deliveryAttemptCount"`
-	LastDeliveryAttempt  *time.Time `json:"lastDeliveryAttempt,omitempty"`
-	DeliveryError        string     `json:"deliveryError,omitempty"`
+	DeliveryStatus       Status     `json:"deliveryStatus" dynamodbav:"deliveryStatus"`
+	DeliveryAttemptCount int        `json:"deliveryAttemptCount" dynamodbav:"deliveryAttemptCount"`
+	LastDeliveryAttempt  *time.Time `json:"lastDeliveryAttempt,omitempty" dynamodbav:"lastDeliveryAttempt"`
+	DeliveryError        string     `json:"deliveryError,omitempty" dynamodbav:"deliveryError"`
 
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt" dynamodbav:"updatedAt"`
 }

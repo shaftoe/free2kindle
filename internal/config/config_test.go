@@ -14,92 +14,117 @@ func TestConfigValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config with send enabled",
+			name: "valid CLI config with send enabled",
 			config: &Config{
+				Mode:             ModeCLI,
 				DestEmail:        "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
-				APIKeySecret:     "api-key-secret",
 				SendEnabled:      true,
 			},
 			wantErr: false,
 		},
 		{
-			name: "valid config with send disabled",
+			name: "valid CLI config with send disabled",
 			config: &Config{
+				Mode:        ModeCLI,
+				SendEnabled: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid server config",
+			config: &Config{
+				Mode:          ModeServer,
+				APIKeySecret:   "api-key-secret",
+				DynamoDBTable: "test-table",
+			},
+			wantErr: false,
+		},
+		{
+			name: "server config missing api key",
+			config: &Config{
+				Mode:          ModeServer,
+				DynamoDBTable: "test-table",
+			},
+			wantErr: true,
+		},
+		{
+			name: "server config missing dynamodb table",
+			config: &Config{
+				Mode:          ModeServer,
+				APIKeySecret:   "api-key-secret",
+			},
+			wantErr: true,
+		},
+			wantErr: false,
+		},
+		{
+			name: "server config missing api key",
+			config: &Config{
+				Mode:          ModeServer,
+				DynamoDBTable: "test-table",
+			},
+			wantErr: true,
+		},
+		{
+			name: "server config missing dynamodb table",
+			config: &Config{
+				Mode:         ModeServer,
 				APIKeySecret: "api-key-secret",
-				SendEnabled:  false,
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
-			name: "missing kindle email with send enabled",
+			name: "CLI config missing kindle email with send enabled",
 			config: &Config{
+				Mode:             ModeCLI,
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
-				APIKeySecret:     "api-key-secret",
 				SendEnabled:      true,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing sender email with send enabled",
+			name: "CLI config missing sender email with send enabled",
 			config: &Config{
+				Mode:             ModeCLI,
 				DestEmail:        "test@kindle.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
-				APIKeySecret:     "api-key-secret",
 				SendEnabled:      true,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing mailjet api key with send enabled",
+			name: "CLI config missing mailjet api key with send enabled",
 			config: &Config{
+				Mode:             ModeCLI,
 				DestEmail:        "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPISecret: "api-secret",
-				APIKeySecret:     "api-key-secret",
 				SendEnabled:      true,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing mailjet api secret with send enabled",
+			name: "CLI config missing mailjet api secret with send enabled",
 			config: &Config{
+				Mode:          ModeCLI,
 				DestEmail:     "test@kindle.com",
 				SenderEmail:   "sender@example.com",
 				MailjetAPIKey: "api-key",
-				APIKeySecret:  "api-key-secret",
 				SendEnabled:   true,
 			},
 			wantErr: true,
-		},
-		{
-			name: "missing api key secret",
-			config: &Config{
-				DestEmail:        "test@kindle.com",
-				SenderEmail:      "sender@example.com",
-				MailjetAPIKey:    "api-key",
-				MailjetAPISecret: "api-secret",
-				SendEnabled:      true,
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing email config with send disabled",
-			config: &Config{
-				APIKeySecret: "api-key-secret",
-				SendEnabled:  false,
-			},
-			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Mode = ModeCLI
 			err := tt.config.Validate()
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -109,6 +134,7 @@ func TestConfigValidate(t *testing.T) {
 		})
 	}
 }
+}
 
 func TestLoad(t *testing.T) {
 	_ = os.Setenv("F2K_DEST_EMAIL", "test@kindle.com")
@@ -116,19 +142,48 @@ func TestLoad(t *testing.T) {
 	_ = os.Setenv("MAILJET_API_KEY", "api-key")
 	_ = os.Setenv("MAILJET_API_SECRET", "api-secret")
 	_ = os.Setenv("F2K_API_KEY", "api-key-secret")
+	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
 	defer func() {
 		_ = os.Unsetenv("F2K_DEST_EMAIL")
 		_ = os.Unsetenv("F2K_SENDER_EMAIL")
 		_ = os.Unsetenv("MAILJET_API_KEY")
 		_ = os.Unsetenv("MAILJET_API_SECRET")
 		_ = os.Unsetenv("F2K_API_KEY")
+		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
 	}()
 
-	cfg, err := Load()
+	cfg, err := Load(ModeCLI)
 	assert.NoError(t, err)
 	assert.Equal(t, "test@kindle.com", cfg.DestEmail)
 	assert.Equal(t, "sender@example.com", cfg.SenderEmail)
 	assert.Equal(t, "api-key", cfg.MailjetAPIKey)
 	assert.Equal(t, "api-secret", cfg.MailjetAPISecret)
 	assert.Equal(t, "api-key-secret", cfg.APIKeySecret)
+	assert.Equal(t, "test-table", cfg.DynamoDBTable)
+	assert.Equal(t, ModeCLI, cfg.Mode)
+}
+
+func TestLoadDefaultsToCLI(t *testing.T) {
+	defer func() {
+		_ = os.Unsetenv("F2K_MODE")
+	}()
+
+	cfg, err := Load(ModeCLI)
+	assert.NoError(t, err)
+	assert.Equal(t, ModeCLI, cfg.Mode)
+}
+
+func TestLoadServerMode(t *testing.T) {
+	_ = os.Setenv("F2K_MODE", "server")
+	_ = os.Setenv("F2K_API_KEY", "api-key-secret")
+	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
+	defer func() {
+		_ = os.Unsetenv("F2K_MODE")
+		_ = os.Unsetenv("F2K_API_KEY")
+		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
+	}()
+
+	cfg, err := Load(ModeServer)
+	assert.NoError(t, err)
+	assert.Equal(t, ModeServer, cfg.Mode)
 }

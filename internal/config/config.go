@@ -2,12 +2,25 @@
 package config
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/spf13/viper"
 )
 
-// Config holds the configuration settings for the application.
+// RunMode defines the application execution mode.
+type RunMode string
+
+const (
+	// ModeCLI indicates CLI execution mode.
+	ModeCLI RunMode = "cli"
+	// ModeServer indicates server execution mode.
+	ModeServer RunMode = "server"
+)
+
+// Config holds configuration settings for application.
 type Config struct {
 	DestEmail        string
 	SenderEmail      string
@@ -16,10 +29,13 @@ type Config struct {
 	APIKeySecret     string
 	Debug            bool
 	SendEnabled      bool
+	DynamoDBTable    string
+	Mode             RunMode
+	AWSConfig        *aws.Config
 }
 
 // Load reads configuration from environment variables and returns a Config instance.
-func Load() (*Config, error) {
+func Load(mode RunMode) (*Config, error) {
 	viper.SetEnvPrefix("F2K")
 	viper.AutomaticEnv()
 
@@ -44,6 +60,12 @@ func Load() (*Config, error) {
 	if err := viper.BindEnv("send-enabled", "F2K_SEND_ENABLED"); err != nil {
 		return nil, fmt.Errorf("failed to bind send-enabled env: %w", err)
 	}
+	if err := viper.BindEnv("dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"); err != nil {
+		return nil, fmt.Errorf("failed to bind dynamodb-table env: %w", err)
+	}
+	if err := viper.BindEnv("mode", "F2K_MODE"); err != nil {
+		return nil, fmt.Errorf("failed to bind mode env: %w", err)
+	}
 
 	cfg := &Config{
 		DestEmail:        viper.GetString("destination-email"),
@@ -53,6 +75,8 @@ func Load() (*Config, error) {
 		APIKeySecret:     viper.GetString("api-key-secret"),
 		Debug:            viper.GetBool("debug"),
 		SendEnabled:      viper.GetBool("send-enabled"),
+		DynamoDBTable:    viper.GetString("dynamodb-table"),
+		Mode:             mode,
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -66,8 +90,19 @@ func Load() (*Config, error) {
 func (c *Config) Validate() error {
 	var missing []string
 
-	if c.APIKeySecret == "" {
-		missing = append(missing, "F2K_API_KEY")
+	if c.Mode == ModeServer {
+		if c.APIKeySecret == "" {
+			missing = append(missing, "F2K_API_KEY")
+		}
+		if c.DynamoDBTable == "" {
+			missing = append(missing, "F2K_DYNAMODB_TABLE_NAME")
+		}
+
+		cfg, err := config.LoadDefaultConfig(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to load AWS config: %w", err)
+		}
+		c.AWSConfig = &cfg
 	}
 
 	if c.SendEnabled {

@@ -18,20 +18,7 @@ import (
 )
 
 const (
-	attributeNameID           = "id"
-	attributeNameURL          = "url"
-	attributeNameTitle        = "title"
-	attributeNameAuthor       = "author"
-	attributeNameExcerpt      = "excerpt"
-	attributeNameImageURL     = "imageUrl"
-	attributeNamePublishedAt  = "publishedAt"
-	attributeNameExtractedAt  = "extractedAt"
-	attributeNameWordCount    = "wordCount"
-	attributeNameReadingTime  = "readingTimeMinutes"
-	attributeNameSourceDomain = "sourceDomain"
-	attributeNameSiteName     = "siteName"
-	attributeNameContentType  = "contentType"
-	attributeNameLanguage     = "language"
+	attributeNameID = "id"
 )
 
 // DynamoDB implements Repository interface using AWS DynamoDB.

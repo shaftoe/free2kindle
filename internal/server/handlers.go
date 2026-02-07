@@ -10,6 +10,8 @@ import (
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/email/mailjet"
 	"github.com/shaftoe/free2kindle/internal/epub"
+	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
 )
 
@@ -72,8 +74,18 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	result.Article.DeliveryStatus = model.StatusPending
+
 	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
 	addLogAttr(r.Context(), slog.String("article_id", result.Article.ID))
+	addLogAttr(r.Context(), slog.String("article_status", string(result.Article.DeliveryStatus)))
+
+	repo := repository.NewDynamoDB(h.deps.cfg.AWSConfig, h.deps.cfg.DynamoDBTable)
+	if err = repo.Store(r.Context(), result.Article); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
+		return
+	}
 
 	message := messageSentToKindle
 	if !h.deps.cfg.SendEnabled {
@@ -88,5 +100,6 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		Title:   result.Article.Title,
 		URL:     req.URL,
 		Message: message,
+		Status:  string(result.Article.DeliveryStatus),
 	})
 }

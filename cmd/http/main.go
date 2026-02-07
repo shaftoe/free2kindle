@@ -18,7 +18,7 @@ const (
 )
 
 func main() {
-	cfg, err := config.Load()
+	cfg, err := config.Load(config.ModeServer)
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		os.Exit(1)
