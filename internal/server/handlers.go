@@ -148,10 +148,10 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.enrichArticle(result.Article, id, h.cfg.SendEnabled)
+	h.enrichArticle(result.Article, id)
 	articlesChan <- result.Article
 	close(articlesChan)
-	msg := enrichLogs(r.Context(), result.Article, h.cfg.SendEnabled)
+	msg := h.enrichLogs(r.Context(), result.Article)
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
@@ -165,19 +165,19 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	_ = eg.Wait()
 }
 
-func (h *handlers) enrichArticle(article *model.Article, id *string, sendEnabled bool) {
+func (h *handlers) enrichArticle(article *model.Article, id *string) {
 	article.ID = *id
 
-	if sendEnabled {
+	if h.cfg.SendEnabled {
 		article.DeliveryStatus = model.StatusDelivered
 		article.DeliveredFrom = &h.cfg.SenderEmail
 		article.DeliveredTo = &h.cfg.DestEmail
 	}
 }
 
-func enrichLogs(ctx context.Context, article *model.Article, sendEnabled bool) (msg *string) {
+func (h *handlers) enrichLogs(ctx context.Context, article *model.Article) (msg *string) {
 	message := messageSentToKindle
-	if !sendEnabled {
+	if !h.cfg.SendEnabled {
 		message = messageEmailDisabled
 	}
 	addLogAttr(ctx, slog.String("message", message))
