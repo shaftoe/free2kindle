@@ -59,7 +59,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 
 	cfg, err := config.Load(config.ModeCLI)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

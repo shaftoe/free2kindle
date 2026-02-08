@@ -36,9 +36,9 @@ func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 }
 
-func getArticleIDandCleanURL(r *http.Request) (*string, *string, error) {
+func getArticleIDandCleanURL(r *http.Request) (id, url *string, err error) {
 	var req *articleRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, nil, fmt.Errorf("failed to decode request body: %w", err)
 	}
 
@@ -47,18 +47,20 @@ func getArticleIDandCleanURL(r *http.Request) (*string, *string, error) {
 	}
 
 	var cleaned string
-	cleaned, err := content.CleanURL(req.URL)
+	cleaned, err = content.CleanURL(req.URL)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to clean URL: %w", err)
 	}
+	url = &cleaned
 
 	var articleID string
 	articleID, err = content.ArticleIDFromURL(cleaned)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate article ID: %w", err)
 	}
+	id = &articleID
 
-	return &articleID, &cleaned, nil
+	return id, url, nil
 }
 
 func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Group, articles chan *model.Article) {
@@ -132,7 +134,6 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	result.Article.ID = *id
 
 	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
-	addLogAttr(r.Context(), slog.String("article_id", result.Article.ID))
 
 	if result.Article.DeliveryStatus != "" {
 		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
