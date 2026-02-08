@@ -19,23 +19,23 @@ const (
 type Article struct {
 	ID                 string     `json:"id" dynamodbav:"id"`
 	Title              string     `json:"title" dynamodbav:"title"`
-	Author             string     `json:"author" dynamodbav:"author"`
+	Author             string     `json:"author,omitempty" dynamodbav:"author,omitempty"`
 	Content            string     `json:"content" dynamodbav:"content"`
-	Excerpt            string     `json:"excerpt" dynamodbav:"excerpt"`
+	Excerpt            string     `json:"excerpt,omitempty" dynamodbav:"excerpt,omitempty"`
 	URL                string     `json:"url" dynamodbav:"url"`
-	ImageURL           string     `json:"imageUrl" dynamodbav:"imageUrl"`
+	ImageURL           string     `json:"imageUrl,omitempty" dynamodbav:"imageUrl,omitempty"`
 	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt,omitempty"`
 	WordCount          int        `json:"wordCount" dynamodbav:"wordCount"`
 	ReadingTimeMinutes int        `json:"readingTimeMinutes" dynamodbav:"readingTimeMinutes"`
 	SourceDomain       string     `json:"sourceDomain" dynamodbav:"sourceDomain"`
 	SiteName           string     `json:"siteName" dynamodbav:"siteName"`
-	ContentType        string     `json:"contentType" dynamodbav:"contentType"`
-	Language           string     `json:"language" dynamodbav:"language"`
+	ContentType        string     `json:"contentType,omitempty" dynamodbav:"contentType,omitempty"`
+	Language           string     `json:"language,omitempty" dynamodbav:"language,omitempty"`
 
 	LastDeliveryAttemptAt *time.Time `json:"lastDeliveryAttemptAt,omitempty" dynamodbav:"lastDeliveryAttemptAt,omitempty"`
 	DeliveryStatus        Status     `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
 	DeliveryError         *string    `json:"deliveryError,omitempty" dynamodbav:"deliveryError,omitempty"`
 
-	CreatedAt time.Time  `json:"createdAt" dynamodbav:"extractedAt"`
+	CreatedAt time.Time  `json:"createdAt" dynamodbav:"createdAt"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty" dynamodbav:"updatedAt,omitempty"`
 }
