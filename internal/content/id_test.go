@@ -127,3 +127,124 @@ func TestArticleIDFromURL_HttpVsHttps(t *testing.T) {
 	assert.NoError(t, err2)
 	assert.NotEqual(t, idHTTP, idHTTPS, "HTTP and HTTPS should produce different IDs")
 }
+
+func TestCleanURL(t *testing.T) {
+	tests := []struct {
+		name        string
+		inputURL    string
+		expectedURL string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:        "strips query parameters",
+			inputURL:    "https://example.com/article/123?source=twitter&utm=test",
+			expectedURL: "https://example.com/article/123",
+			wantErr:     false,
+		},
+		{
+			name:        "strips fragment",
+			inputURL:    "https://example.com/article/123#section-1",
+			expectedURL: "https://example.com/article/123",
+			wantErr:     false,
+		},
+		{
+			name:        "strips both query and fragment",
+			inputURL:    "https://example.com/article/123?ref=news#intro",
+			expectedURL: "https://example.com/article/123",
+			wantErr:     false,
+		},
+		{
+			name:        "preserves clean URL",
+			inputURL:    "https://example.com/article/123",
+			expectedURL: "https://example.com/article/123",
+			wantErr:     false,
+		},
+		{
+			name:        "removes trailing slash",
+			inputURL:    "https://example.com/article/123/",
+			expectedURL: "https://example.com/article/123",
+			wantErr:     false,
+		},
+		{
+			name:        "handles root path",
+			inputURL:    "https://example.com/",
+			expectedURL: "https://example.com/",
+			wantErr:     false,
+		},
+		{
+			name:        "handles no path",
+			inputURL:    "https://example.com",
+			expectedURL: "https://example.com/",
+			wantErr:     false,
+		},
+		{
+			name:        "handles HTTP",
+			inputURL:    "http://example.com/article",
+			expectedURL: "http://example.com/article",
+			wantErr:     false,
+		},
+		{
+			name:        "complex path with query",
+			inputURL:    "https://example.com/blog/2023/12/post?id=456&category=tech",
+			expectedURL: "https://example.com/blog/2023/12/post",
+			wantErr:     false,
+		},
+		{
+			name:        "invalid URL",
+			inputURL:    "not-a-url",
+			expectedURL: "",
+			wantErr:     true,
+			errContains: "must have scheme and host",
+		},
+		{
+			name:        "URL without scheme",
+			inputURL:    "example.com/article",
+			expectedURL: "",
+			wantErr:     true,
+			errContains: "must have scheme and host",
+		},
+		{
+			name:        "empty URL",
+			inputURL:    "",
+			expectedURL: "",
+			wantErr:     true,
+			errContains: "must have scheme and host",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanURL, err := CleanURL(tt.inputURL)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				assert.Empty(t, cleanURL)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedURL, cleanURL)
+		})
+	}
+}
+
+func TestCleanURL_Deterministic(t *testing.T) {
+	urls := []string{
+		"https://example.com/article/123?source=twitter",
+		"https://example.com/article/123?utm_source=newsletter#intro",
+		"https://example.com/article/123/",
+		"https://example.com/article/123",
+	}
+
+	expectedCleanURL := "https://example.com/article/123"
+
+	for _, u := range urls {
+		cleanURL, err := CleanURL(u)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedCleanURL, cleanURL)
+	}
+}

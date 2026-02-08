@@ -36,7 +36,7 @@ func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 }
 
-func getArticleIDandRequest(r *http.Request) (*articleRequest, *string, error) {
+func getArticleIDandCleanURL(r *http.Request) (*string, *string, error) {
 	var req *articleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, nil, fmt.Errorf("failed to decode request body: %w", err)
@@ -46,22 +46,28 @@ func getArticleIDandRequest(r *http.Request) (*articleRequest, *string, error) {
 		return nil, nil, errors.New("missing URL in request body")
 	}
 
-	id, err := content.ArticleIDFromURL(req.URL)
+	var cleaned string
+	cleaned, err := content.CleanURL(req.URL)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to clean URL: %w", err)
 	}
 
-	return req, &id, nil
+	var articleID string
+	articleID, err = content.ArticleIDFromURL(cleaned)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate article ID: %w", err)
+	}
+
+	return &articleID, &cleaned, nil
 }
 
-func (h *handlers) processDBArticleUpdates(ctx context.Context) (*errgroup.Group, chan<- *model.Article) {
-	eg := &errgroup.Group{}
-	articles := make(chan *model.Article)
+func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Group, articles chan *model.Article) {
+	eg = &errgroup.Group{}
+	articles = make(chan *model.Article)
 
 	eg.Go(func() error {
-
-		if h.deps.repository != nil {
-			for article := range articles {
+		for article := range articles {
+			if h.deps.repository != nil {
 				if storeErr := h.deps.repository.Store(ctx, article); storeErr != nil {
 					addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
 				}
@@ -75,7 +81,7 @@ func (h *handlers) processDBArticleUpdates(ctx context.Context) (*errgroup.Group
 }
 
 func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
-	req, id, err := getArticleIDandRequest(r)
+	id, cleanURL, err := getArticleIDandCleanURL(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
@@ -83,12 +89,13 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	addLogAttr(r.Context(), slog.String("article_id", *id))
+	addLogAttr(r.Context(), slog.String("article_url", *cleanURL))
 
 	eg, articlesChan := h.processDBArticleUpdates(r.Context())
 
 	articlesChan <- &model.Article{
 		ID:        *id,
-		URL:       req.URL,
+		URL:       *cleanURL,
 		CreatedAt: time.Now(),
 	}
 
@@ -105,7 +112,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	opts := service.NewOptions(h.deps.cfg.SendEnabled, true, "", "")
 
-	result, err := h.deps.serviceRun(r.Context(), d, h.deps.cfg, opts, req.URL)
+	result, err := h.deps.serviceRun(r.Context(), d, h.deps.cfg, opts, *cleanURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
@@ -141,14 +148,14 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	addLogAttr(r.Context(), slog.String("message", message))
 
-	_ = eg.Wait()
-
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
 		ID:             result.Article.ID,
 		Title:          result.Article.Title,
-		URL:            req.URL,
+		URL:            *cleanURL,
 		Message:        message,
 		DeliveryStatus: string(result.Article.DeliveryStatus),
 	})
+
+	_ = eg.Wait()
 }
