@@ -27,30 +27,19 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	var sender email.Sender
-	if cfg != nil && cfg.SendEnabled {
+	if cfg.SendEnabled {
 		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
 	}
 
-	var svc service.Interface
-	if sender != nil {
-		deps := service.NewDeps(
-			content.NewExtractor(),
-			epub.NewGenerator(),
-			sender,
-		)
-		svc = service.New(deps)
-	} else {
-		deps := service.NewDeps(
-			content.NewExtractor(),
-			epub.NewGenerator(),
-			nil,
-		)
-		svc = service.New(deps)
-	}
+	articleService := service.New(service.NewDeps(
+		content.NewExtractor(),
+		epub.NewGenerator(),
+		sender,
+	))
 
 	handlers := newHandlers(
 		cfg,
-		svc,
+		articleService,
 		repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable),
 	)
 
