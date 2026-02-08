@@ -34,7 +34,30 @@ func newHandlers(
 	if serviceRun == nil {
 		serviceRun = service.Run
 	}
-	return &handlers{cfg: cfg, serviceRun: serviceRun, repository: repo}
+
+	var sender email.Sender
+	if cfg != nil && cfg.SendEnabled {
+		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
+	}
+
+	deps := service.NewDeps(
+		content.NewExtractor(),
+		epub.NewGenerator(),
+		sender,
+	)
+
+	var options *service.Options
+	if cfg != nil {
+		options = service.NewOptions(cfg.SendEnabled, true, "", "")
+	}
+
+	return &handlers{
+		cfg:        cfg,
+		serviceRun: serviceRun,
+		repository: repo,
+		deps:       deps,
+		options:    options,
+	}
 }
 
 func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -88,6 +111,11 @@ func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Gr
 	return eg, articles
 }
 
+// handleCreateArticle handles the creation of a new article.
+// It:
+// - downloads/processes the article.
+// - updates/stores metadata in the repository.
+// - (optionally) sends the article to the Kindle.
 func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	id, cleanURL, err := getArticleIDandCleanURL(r)
 	if err != nil {
@@ -107,20 +135,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 
-	var sender email.Sender
-	if h.cfg.SendEnabled {
-		sender = mailjet.NewSender(h.cfg.MailjetAPIKey, h.cfg.MailjetAPISecret, h.cfg.SenderEmail)
-	}
-
-	d := service.NewDeps(
-		content.NewExtractor(),
-		epub.NewGenerator(),
-		sender,
-	)
-
-	opts := service.NewOptions(h.cfg.SendEnabled, true, "", "")
-
-	result, err := h.serviceRun(r.Context(), d, h.cfg, opts, *cleanURL)
+	result, err := h.serviceRun(r.Context(), h.deps, h.cfg, h.options, *cleanURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
@@ -133,36 +148,43 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.cfg.SendEnabled {
-		result.Article.DeliveryStatus = model.StatusDelivered
-	}
-
-	result.Article.ID = *id
-
-	addLogAttr(r.Context(), slog.String("article_title", result.Article.Title))
-
-	if result.Article.DeliveryStatus != "" {
-		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
-	}
-
+	enrichArticle(result.Article, id, h.cfg.SendEnabled)
 	articlesChan <- result.Article
 	close(articlesChan)
-
-	message := messageSentToKindle
-	if !h.cfg.SendEnabled {
-		message = messageEmailDisabled
-	}
-
-	addLogAttr(r.Context(), slog.String("message", message))
+	msg := enrichLogs(r.Context(), result.Article, h.cfg.SendEnabled)
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
 		ID:             result.Article.ID,
 		Title:          result.Article.Title,
 		URL:            *cleanURL,
-		Message:        message,
+		Message:        *msg,
 		DeliveryStatus: string(result.Article.DeliveryStatus),
 	})
 
 	_ = eg.Wait()
+}
+
+func enrichArticle(article *model.Article, id *string, sendEnabled bool) {
+	article.ID = *id
+
+	if sendEnabled {
+		article.DeliveryStatus = model.StatusDelivered
+	}
+}
+
+func enrichLogs(ctx context.Context, article *model.Article, sendEnabled bool) (msg *string) {
+	addLogAttr(ctx, slog.String("article_title", article.Title))
+
+	message := messageSentToKindle
+	if !sendEnabled {
+		message = messageEmailDisabled
+	}
+	addLogAttr(ctx, slog.String("message", message))
+
+	if article.DeliveryStatus != "" {
+		addLogAttr(ctx, slog.String("delivery_status", string(article.DeliveryStatus)))
+	}
+
+	return &message
 }
