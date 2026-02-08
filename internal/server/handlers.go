@@ -148,7 +148,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	enrichArticle(result.Article, id, h.cfg.SendEnabled)
+	h.enrichArticle(result.Article, id, h.cfg.SendEnabled)
 	articlesChan <- result.Article
 	close(articlesChan)
 	msg := enrichLogs(r.Context(), result.Article, h.cfg.SendEnabled)
@@ -165,11 +165,13 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	_ = eg.Wait()
 }
 
-func enrichArticle(article *model.Article, id *string, sendEnabled bool) {
+func (h *handlers) enrichArticle(article *model.Article, id *string, sendEnabled bool) {
 	article.ID = *id
 
 	if sendEnabled {
 		article.DeliveryStatus = model.StatusDelivered
+		article.DeliveredFrom = &h.cfg.SenderEmail
+		article.DeliveredTo = &h.cfg.DestEmail
 	}
 }
 
