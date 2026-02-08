@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/email/mailjet"
 	"github.com/shaftoe/free2kindle/internal/epub"
 	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,11 +26,15 @@ const (
 	messageEmailDisabled = "article processed successfully (email sending disabled)"
 )
 
-func newHandlers(deps *handlerDeps) *handlers {
-	if deps.serviceRun == nil {
-		deps.serviceRun = service.Run
+func newHandlers(
+	cfg *config.Config,
+	serviceRun func(context.Context, *service.Deps, *config.Config, *service.Options, string) (*service.Result, error),
+	repo repository.Repository,
+) *handlers {
+	if serviceRun == nil {
+		serviceRun = service.Run
 	}
-	return &handlers{deps: deps}
+	return &handlers{cfg: cfg, serviceRun: serviceRun, repository: repo}
 }
 
 func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -69,8 +75,8 @@ func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Gr
 
 	eg.Go(func() error {
 		for article := range articles {
-			if h.deps.repository != nil {
-				if storeErr := h.deps.repository.Store(ctx, article); storeErr != nil {
+			if h.repository != nil {
+				if storeErr := h.repository.Store(ctx, article); storeErr != nil {
 					addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
 				}
 			}
@@ -102,8 +108,8 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var sender email.Sender
-	if h.deps.cfg.SendEnabled {
-		sender = mailjet.NewSender(h.deps.cfg.MailjetAPIKey, h.deps.cfg.MailjetAPISecret, h.deps.cfg.SenderEmail)
+	if h.cfg.SendEnabled {
+		sender = mailjet.NewSender(h.cfg.MailjetAPIKey, h.cfg.MailjetAPISecret, h.cfg.SenderEmail)
 	}
 
 	d := service.NewDeps(
@@ -112,9 +118,9 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		sender,
 	)
 
-	opts := service.NewOptions(h.deps.cfg.SendEnabled, true, "", "")
+	opts := service.NewOptions(h.cfg.SendEnabled, true, "", "")
 
-	result, err := h.deps.serviceRun(r.Context(), d, h.deps.cfg, opts, *cleanURL)
+	result, err := h.serviceRun(r.Context(), d, h.cfg, opts, *cleanURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
@@ -127,7 +133,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.deps.cfg.SendEnabled {
+	if h.cfg.SendEnabled {
 		result.Article.DeliveryStatus = model.StatusDelivered
 	}
 
@@ -143,7 +149,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	close(articlesChan)
 
 	message := messageSentToKindle
-	if !h.deps.cfg.SendEnabled {
+	if !h.cfg.SendEnabled {
 		message = messageEmailDisabled
 	}
 

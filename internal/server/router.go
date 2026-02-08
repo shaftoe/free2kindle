@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/repository"
+	"github.com/shaftoe/free2kindle/internal/service"
 )
 
 func jsonContentTypeMiddleware(next http.Handler) http.Handler {
@@ -21,10 +22,11 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 func NewRouter(cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
-	handlers := newHandlers(&handlerDeps{
-		cfg:        cfg,
-		repository: repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable),
-	})
+	handlers := newHandlers(
+		cfg,
+		service.Run,
+		repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable),
+	)
 
 	r.Use(middleware.Recoverer)
 	r.Use(requestIDMiddleware)

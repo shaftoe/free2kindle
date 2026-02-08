@@ -29,14 +29,10 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
-type handlerDeps struct {
+type handlers struct {
 	cfg        *config.Config
 	serviceRun func(context.Context, *service.Deps, *config.Config, *service.Options, string) (*service.Result, error)
 	repository repository.Repository
-}
-
-type handlers struct {
-	deps *handlerDeps
 }
 
 type contextKey string

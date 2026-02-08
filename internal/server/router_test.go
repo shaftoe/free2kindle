@@ -41,17 +41,14 @@ func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 func createTestHandlerWithMock(
 	cfg *config.Config,
 ) *handlers {
-	return newHandlers(&handlerDeps{
-		cfg: cfg,
-		serviceRun: func(
-			_ context.Context, _ *service.Deps, _ *config.Config,
-			_ *service.Options, _ string,
-		) (*service.Result, error) {
-			return &service.Result{
-				Article: &model.Article{Title: testArticleTitle},
-			}, nil
-		},
-	})
+	return newHandlers(cfg, func(
+		_ context.Context, _ *service.Deps, _ *config.Config,
+		_ *service.Options, _ string,
+	) (*service.Result, error) {
+		return &service.Result{
+			Article: &model.Article{Title: testArticleTitle},
+		}, nil
+	}, nil)
 }
 
 func TestNewRouter_RouteRegistration(t *testing.T) {
@@ -250,7 +247,7 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 		SendEnabled:  false,
 	}
 
-	h := newHandlers(&handlerDeps{cfg: cfg})
+	h := newHandlers(cfg, nil, nil)
 	r := chi.NewRouter()
 	r.Use(corsMiddleware)
 	r.Route("/api/v1", func(r chi.Router) {

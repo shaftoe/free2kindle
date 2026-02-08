@@ -14,7 +14,7 @@ import (
 )
 
 func TestHandleHealth(t *testing.T) {
-	h := newHandlers(&handlerDeps{})
+	h := newHandlers(nil, nil, nil)
 
 	req := httptest.NewRequest("GET", "/health", http.NoBody)
 	w := httptest.NewRecorder()
@@ -51,10 +51,7 @@ func TestHandleCreateArticleSuccessWithEmail(t *testing.T) {
 			Article: &model.Article{Title: "Test Article"},
 		}, nil
 	}
-	h := newHandlers(&handlerDeps{
-		cfg:        cfg,
-		serviceRun: mockService,
-	})
+	h := newHandlers(cfg, mockService, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -96,10 +93,7 @@ func TestHandleCreateArticleSuccessWithoutEmail(t *testing.T) {
 			Article: &model.Article{Title: "Test Article"},
 		}, nil
 	}
-	h := newHandlers(&handlerDeps{
-		cfg:        cfg,
-		serviceRun: mockService,
-	})
+	h := newHandlers(cfg, mockService, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -130,7 +124,7 @@ func TestHandleCreateArticleInvalidJSON(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	h := newHandlers(&handlerDeps{cfg: cfg})
+	h := newHandlers(cfg, nil, nil)
 
 	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -157,7 +151,7 @@ func TestHandleCreateArticleMissingURL(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	h := newHandlers(&handlerDeps{cfg: cfg})
+	h := newHandlers(cfg, nil, nil)
 
 	body := articleRequest{URL: ""}
 	bodyBytes, _ := json.Marshal(body)
@@ -191,10 +185,7 @@ func TestHandleCreateArticleServiceError(t *testing.T) {
 	) (*service.Result, error) {
 		return nil, &serviceError{msg: "extraction failed"}
 	}
-	h := newHandlers(&handlerDeps{
-		cfg:        cfg,
-		serviceRun: mockService,
-	})
+	h := newHandlers(cfg, mockService, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -230,10 +221,7 @@ func TestHandleCreateArticleNilArticle(t *testing.T) {
 			Article: nil,
 		}, nil
 	}
-	h := newHandlers(&handlerDeps{
-		cfg:        cfg,
-		serviceRun: mockService,
-	})
+	h := newHandlers(cfg, mockService, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
