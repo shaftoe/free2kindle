@@ -78,7 +78,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 		sender,
 	)
 
-	svc := service.New(d)
+	svc := service.New(d, cfg)
 
 	start := time.Now()
 	result, err := svc.Process(ctx, url)
@@ -91,7 +91,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 
 	var resp *email.SendEmailResponse
 	if sendEmail {
-		resp, err = svc.Send(ctx, cfg, result, emailSubject)
+		resp, err = svc.Send(ctx, result, emailSubject)
 		if err != nil {
 			return fmt.Errorf("failed to send email: %w", err)
 		}

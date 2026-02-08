@@ -126,7 +126,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	var emailResp *email.SendEmailResponse
 	if h.cfg.SendEnabled {
-		emailResp, err = h.service.Send(r.Context(), h.cfg, result, "")
+		emailResp, err = h.service.Send(r.Context(), result, "")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to send email: " + err.Error()})
@@ -154,11 +154,19 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 func (h *handlers) enrichArticle(article *model.Article, id *string, emailResp *email.SendEmailResponse) {
 	article.ID = *id
 
-	if h.cfg.SendEnabled && emailResp != nil {
-		article.DeliveryStatus = model.StatusDelivered
-		article.DeliveredFrom = &h.cfg.SenderEmail
-		article.DeliveredTo = &h.cfg.DestEmail
+	if !h.cfg.SendEnabled {
+		return
 	}
+
+	if emailResp == nil {
+		article.DeliveryStatus = model.StatusFailed
+		return
+	}
+
+	article.DeliveryStatus = model.StatusDelivered
+	article.DeliveredFrom = &h.cfg.SenderEmail
+	article.DeliveredTo = &h.cfg.DestEmail
+	article.DeliveredEmailUUID = &emailResp.EmailUUID
 }
 
 func (h *handlers) enrichLogs(

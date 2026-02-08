@@ -35,7 +35,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 		content.NewExtractor(),
 		epub.NewGenerator(),
 		sender,
-	))
+	), cfg)
 
 	handlers := newHandlers(
 		cfg,

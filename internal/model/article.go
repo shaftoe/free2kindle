@@ -36,7 +36,8 @@ type Article struct {
 	Language    string `json:"language,omitempty" dynamodbav:"language,omitempty"`
 
 	//// email delivery metadata
-	DeliveryStatus Status  `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
-	DeliveredFrom  *string `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
-	DeliveredTo    *string `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
+	DeliveryStatus     Status  `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
+	DeliveredFrom      *string `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
+	DeliveredTo        *string `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
+	DeliveredEmailUUID *string `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"`
 }

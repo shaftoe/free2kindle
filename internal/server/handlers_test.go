@@ -17,7 +17,7 @@ import (
 
 type MockService struct {
 	processFunc func(context.Context, string) (*service.ProcessResult, error)
-	sendFunc    func(context.Context, *config.Config, *service.ProcessResult, string) (*email.SendEmailResponse, error)
+	sendFunc    func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
 	writeFunc   func(*service.ProcessResult, string) error
 }
 
@@ -36,12 +36,11 @@ func (m *MockService) Process(ctx context.Context, url string) (*service.Process
 
 func (m *MockService) Send(
 	ctx context.Context,
-	cfg *config.Config,
 	result *service.ProcessResult,
 	subject string,
 ) (*email.SendEmailResponse, error) {
 	if m.sendFunc != nil {
-		return m.sendFunc(ctx, cfg, result, subject)
+		return m.sendFunc(ctx, result, subject)
 	}
 	return &email.SendEmailResponse{
 		Status:    "success",
@@ -416,7 +415,7 @@ func TestEnrichArticle(t *testing.T) {
 			id := "test-id"
 			article := &model.Article{}
 			var emailResp *email.SendEmailResponse
-			if tt.sendEnabled {
+			if tt.wantDelivered {
 				emailResp = &email.SendEmailResponse{EmailUUID: "test-uuid"}
 			}
 
@@ -445,18 +444,28 @@ func TestEnrichLogs(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendEnabled    bool
+		emailResp      *email.SendEmailResponse
 		wantMessage    string
 		deliveryStatus model.Status
 	}{
 		{
-			name:           "send enabled",
+			name:           "send enabled with email response",
 			sendEnabled:    true,
+			emailResp:      &email.SendEmailResponse{EmailUUID: "test-uuid"},
+			wantMessage:    "article sent to Kindle successfully",
+			deliveryStatus: model.StatusDelivered,
+		},
+		{
+			name:           "send enabled without email response",
+			sendEnabled:    true,
+			emailResp:      nil,
 			wantMessage:    "article sent to Kindle successfully",
 			deliveryStatus: model.StatusDelivered,
 		},
 		{
 			name:           "send disabled",
 			sendEnabled:    false,
+			emailResp:      nil,
 			wantMessage:    "article processed successfully (email sending disabled)",
 			deliveryStatus: "",
 		},
@@ -473,12 +482,8 @@ func TestEnrichLogs(t *testing.T) {
 			article := &model.Article{
 				DeliveryStatus: tt.deliveryStatus,
 			}
-			var emailResp *email.SendEmailResponse
-			if tt.sendEnabled {
-				emailResp = &email.SendEmailResponse{EmailUUID: "test-uuid"}
-			}
 
-			msg := h.enrichLogs(ctx, article, emailResp)
+			msg := h.enrichLogs(ctx, article, tt.emailResp)
 
 			if msg == nil {
 				t.Fatal("expected msg to be non-nil")

@@ -16,7 +16,7 @@ import (
 // Interface defines the contract for service operations.
 type Interface interface {
 	Process(ctx context.Context, url string) (*ProcessResult, error)
-	Send(ctx context.Context, cfg *config.Config, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
+	Send(ctx context.Context, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
 	WriteToFile(result *ProcessResult, outputPath string) error
 }
 
@@ -41,14 +41,16 @@ type Service struct {
 	extractor *content.Extractor
 	generator *epub.Generator
 	sender    email.Sender
+	cfg       *config.Config
 }
 
 // New creates a new Service instance with the given dependencies.
-func New(d *Deps) *Service {
+func New(d *Deps, cfg *config.Config) *Service {
 	return &Service{
 		extractor: d.Extractor,
 		generator: d.Generator,
 		sender:    d.Sender,
+		cfg:       cfg,
 	}
 }
 
@@ -113,7 +115,6 @@ func (s *Service) Process(ctx context.Context, url string) (*ProcessResult, erro
 // Can be called multiple times with the same result.
 func (s *Service) Send(
 	ctx context.Context,
-	cfg *config.Config,
 	result *ProcessResult,
 	subject string,
 ) (*email.SendEmailResponse, error) {
@@ -132,7 +133,7 @@ func (s *Service) Send(
 	emailReq := &email.Request{
 		Article:   result.article,
 		EPUBData:  result.epubData,
-		DestEmail: cfg.DestEmail,
+		DestEmail: s.cfg.DestEmail,
 		Subject:   email.GenerateSubject(result.article.Title, subject),
 	}
 
