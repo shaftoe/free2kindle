@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/shaftoe/free2kindle/internal/config"
@@ -12,50 +13,81 @@ import (
 	"github.com/shaftoe/free2kindle/internal/model"
 )
 
-// Deps holds the external dependencies required by the service.
-type Deps struct {
-	extractor *content.Extractor
-	generator *epub.Generator
-	sender    email.Sender
+// Interface defines the contract for service operations.
+type Interface interface {
+	Process(ctx context.Context, url string) (*ProcessResult, error)
+	Send(ctx context.Context, cfg *config.Config, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
+	WriteToFile(result *ProcessResult, outputPath string) error
 }
 
-// Options holds runtime options for the service execution.
-type Options struct {
-	sendEmail    bool
-	generateEPUB bool
-	subject      string
-	outputPath   string
+// Deps holds the external dependencies required by the service.
+type Deps struct {
+	Extractor *content.Extractor
+	Generator *epub.Generator
+	Sender    email.Sender
 }
 
 // NewDeps creates a new Deps struct with the given components.
 func NewDeps(extractor *content.Extractor, generator *epub.Generator, sender email.Sender) *Deps {
 	return &Deps{
-		extractor: extractor,
-		generator: generator,
-		sender:    sender,
+		Extractor: extractor,
+		Generator: generator,
+		Sender:    sender,
 	}
 }
 
-// NewOptions creates a new Options struct with the given parameters.
-func NewOptions(sendEmail, generateEPUB bool, subject, outputPath string) *Options {
-	return &Options{
-		sendEmail:    sendEmail,
-		generateEPUB: generateEPUB,
-		subject:      subject,
-		outputPath:   outputPath,
+// Service holds stateless dependencies and provides methods to process articles.
+type Service struct {
+	extractor *content.Extractor
+	generator *epub.Generator
+	sender    email.Sender
+}
+
+// New creates a new Service instance with the given dependencies.
+func New(d *Deps) *Service {
+	return &Service{
+		extractor: d.Extractor,
+		generator: d.Generator,
+		sender:    d.Sender,
 	}
 }
 
-// Result contains the output from processing an article.
-type Result struct {
-	Article  *model.Article
-	EPUBData []byte
-	URL      string
+// ProcessResult holds the result of processing an article.
+type ProcessResult struct {
+	article  *model.Article
+	epubData []byte
+	url      string
 }
 
-// Run processes a URL to extract content, generate EPUB, and optionally send email.
-func Run(ctx context.Context, d *Deps, cfg *config.Config, opts *Options, url string) (*Result, error) {
-	article, err := d.extractor.ExtractFromURL(ctx, url)
+// Article returns the extracted article.
+func (r *ProcessResult) Article() *model.Article {
+	return r.article
+}
+
+// EPUBData returns the generated EPUB data.
+func (r *ProcessResult) EPUBData() []byte {
+	return r.epubData
+}
+
+// URL returns the URL that was processed.
+func (r *ProcessResult) URL() string {
+	return r.url
+}
+
+// NewProcessResult creates a new ProcessResult for testing purposes.
+// This is primarily used in tests to create mock results.
+func NewProcessResult(article *model.Article, epubData []byte, url string) *ProcessResult {
+	return &ProcessResult{
+		article:  article,
+		epubData: epubData,
+		url:      url,
+	}
+}
+
+// Process extracts content from a URL and generates EPUB data.
+// Can be called multiple times to re-fetch fresh content.
+func (s *Service) Process(ctx context.Context, url string) (*ProcessResult, error) {
+	article, err := s.extractor.ExtractFromURL(ctx, url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract article: %w", err)
 	}
@@ -64,35 +96,73 @@ func Run(ctx context.Context, d *Deps, cfg *config.Config, opts *Options, url st
 		article.Title = "Untitled"
 	}
 
-	var epubData []byte
-	if opts.sendEmail || opts.generateEPUB {
-		epubData, err = d.generator.Generate(article)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate EPUB: %w", err)
-		}
+	epubData, err := s.generator.Generate(article)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate EPUB: %w", err)
 	}
 
-	if opts.sendEmail {
-		emailReq := &email.Request{
-			Article:   article,
-			EPUBData:  epubData,
-			DestEmail: cfg.DestEmail,
-			Subject:   email.GenerateSubject(article.Title, opts.subject),
-		}
-
-		if _, sendErr := d.sender.SendEmail(ctx, emailReq); sendErr != nil {
-			return nil, fmt.Errorf("failed to send email: %w", sendErr)
-		}
-	}
-
-	if opts.generateEPUB && opts.outputPath != "" {
-		if writeErr := d.generator.GenerateAndWrite(article, opts.outputPath); writeErr != nil {
-			return nil, fmt.Errorf("failed to write EPUB document: %w", writeErr)
-		}
-	}
-
-	return &Result{
-		Article:  article,
-		EPUBData: epubData,
+	return &ProcessResult{
+		article:  article,
+		epubData: epubData,
+		url:      url,
 	}, nil
+}
+
+// Send sends an email with the processed article and EPUB.
+// Returns an error if the result is nil or if sending fails.
+// Can be called multiple times with the same result.
+func (s *Service) Send(
+	ctx context.Context,
+	cfg *config.Config,
+	result *ProcessResult,
+	subject string,
+) (*email.SendEmailResponse, error) {
+	if result == nil {
+		return nil, errors.New("result is nil, must call Process first")
+	}
+
+	if result.article == nil {
+		return nil, errors.New("article is nil, must call Process first")
+	}
+
+	if s.sender == nil {
+		return nil, errors.New("email sender is not configured")
+	}
+
+	emailReq := &email.Request{
+		Article:   result.article,
+		EPUBData:  result.epubData,
+		DestEmail: cfg.DestEmail,
+		Subject:   email.GenerateSubject(result.article.Title, subject),
+	}
+
+	resp, err := s.sender.SendEmail(ctx, emailReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return resp, nil
+}
+
+// WriteToFile writes the EPUB data to a file.
+// Returns an error if the result is nil or if writing fails.
+func (s *Service) WriteToFile(result *ProcessResult, outputPath string) error {
+	if result == nil {
+		return errors.New("result is nil, must call Process first")
+	}
+
+	if result.article == nil {
+		return errors.New("article is nil, must call Process first")
+	}
+
+	if outputPath == "" {
+		return errors.New("output path is empty")
+	}
+
+	err := s.generator.GenerateAndWrite(result.article, outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to write EPUB document: %w", err)
+	}
+
+	return nil
 }

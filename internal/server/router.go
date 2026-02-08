@@ -7,6 +7,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/content"
+	"github.com/shaftoe/free2kindle/internal/email"
+	"github.com/shaftoe/free2kindle/internal/email/mailjet"
+	"github.com/shaftoe/free2kindle/internal/epub"
 	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
 )
@@ -22,9 +26,31 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 func NewRouter(cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
+	var sender email.Sender
+	if cfg != nil && cfg.SendEnabled {
+		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
+	}
+
+	var svc service.Interface
+	if sender != nil {
+		deps := service.NewDeps(
+			content.NewExtractor(),
+			epub.NewGenerator(),
+			sender,
+		)
+		svc = service.New(deps)
+	} else {
+		deps := service.NewDeps(
+			content.NewExtractor(),
+			epub.NewGenerator(),
+			nil,
+		)
+		svc = service.New(deps)
+	}
+
 	handlers := newHandlers(
 		cfg,
-		service.Run,
+		svc,
 		repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable),
 	)
 

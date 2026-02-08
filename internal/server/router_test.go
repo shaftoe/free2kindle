@@ -41,14 +41,14 @@ func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 func createTestHandlerWithMock(
 	cfg *config.Config,
 ) *handlers {
-	return newHandlers(cfg, func(
-		_ context.Context, _ *service.Deps, _ *config.Config,
-		_ *service.Options, _ string,
-	) (*service.Result, error) {
-		return &service.Result{
-			Article: &model.Article{Title: testArticleTitle},
-		}, nil
-	}, nil)
+	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
+		return service.NewProcessResult(
+			&model.Article{Title: testArticleTitle},
+			[]byte("epub data"),
+			testArticleURL,
+		), nil
+	})
+	return newHandlers(cfg, svc, nil)
 }
 
 func TestNewRouter_RouteRegistration(t *testing.T) {

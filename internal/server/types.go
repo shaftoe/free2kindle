@@ -31,10 +31,8 @@ type errorResponse struct {
 
 type handlers struct {
 	cfg        *config.Config
-	serviceRun func(context.Context, *service.Deps, *config.Config, *service.Options, string) (*service.Result, error)
+	service    service.Interface
 	repository repository.Repository
-	deps       *service.Deps
-	options    *service.Options
 }
 
 type contextKey string

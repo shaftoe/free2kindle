@@ -9,10 +9,53 @@ import (
 	"testing"
 
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
 )
+
+type MockService struct {
+	processFunc func(context.Context, string) (*service.ProcessResult, error)
+	sendFunc    func(context.Context, *config.Config, *service.ProcessResult, string) (*email.SendEmailResponse, error)
+	writeFunc   func(*service.ProcessResult, string) error
+}
+
+func newMockService(processFunc func(context.Context, string) (*service.ProcessResult, error)) *MockService {
+	return &MockService{
+		processFunc: processFunc,
+	}
+}
+
+func (m *MockService) Process(ctx context.Context, url string) (*service.ProcessResult, error) {
+	if m.processFunc != nil {
+		return m.processFunc(ctx, url)
+	}
+	return nil, nil
+}
+
+func (m *MockService) Send(
+	ctx context.Context,
+	cfg *config.Config,
+	result *service.ProcessResult,
+	subject string,
+) (*email.SendEmailResponse, error) {
+	if m.sendFunc != nil {
+		return m.sendFunc(ctx, cfg, result, subject)
+	}
+	return &email.SendEmailResponse{
+		Status:    "success",
+		Message:   "sent",
+		EmailUUID: "test-uuid",
+	}, nil
+}
+
+func (m *MockService) WriteToFile(result *service.ProcessResult, outputPath string) error {
+	if m.writeFunc != nil {
+		return m.writeFunc(result, outputPath)
+	}
+	return nil
+}
 
 func TestHandleHealth(t *testing.T) {
 	h := newHandlers(nil, nil, nil)
@@ -44,15 +87,14 @@ func TestHandleCreateArticleSuccessWithEmail(t *testing.T) {
 		MailjetAPISecret: "test-secret",
 		SendEnabled:      true,
 	}
-	mockService := func(
-		_ context.Context, _ *service.Deps, _ *config.Config,
-		_ *service.Options, _ string,
-	) (*service.Result, error) {
-		return &service.Result{
-			Article: &model.Article{Title: "Test Article"},
-		}, nil
-	}
-	h := newHandlers(cfg, mockService, nil)
+	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
+		return service.NewProcessResult(
+			&model.Article{Title: testArticleTitle},
+			[]byte("epub data"),
+			"https://example.com/article",
+		), nil
+	})
+	h := newHandlers(cfg, svc, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -86,15 +128,14 @@ func TestHandleCreateArticleSuccessWithoutEmail(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	mockService := func(
-		_ context.Context, _ *service.Deps, _ *config.Config,
-		_ *service.Options, _ string,
-	) (*service.Result, error) {
-		return &service.Result{
-			Article: &model.Article{Title: "Test Article"},
-		}, nil
-	}
-	h := newHandlers(cfg, mockService, nil)
+	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
+		return service.NewProcessResult(
+			&model.Article{Title: testArticleTitle},
+			[]byte("epub data"),
+			"https://example.com/article",
+		), nil
+	})
+	h := newHandlers(cfg, svc, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -180,13 +221,10 @@ func TestHandleCreateArticleServiceError(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	mockService := func(
-		_ context.Context, _ *service.Deps, _ *config.Config,
-		_ *service.Options, _ string,
-	) (*service.Result, error) {
+	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
 		return nil, &serviceError{msg: "extraction failed"}
-	}
-	h := newHandlers(cfg, mockService, nil)
+	})
+	h := newHandlers(cfg, svc, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -214,15 +252,10 @@ func TestHandleCreateArticleNilArticle(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	mockService := func(
-		_ context.Context, _ *service.Deps, _ *config.Config,
-		_ *service.Options, _ string,
-	) (*service.Result, error) {
-		return &service.Result{
-			Article: nil,
-		}, nil
-	}
-	h := newHandlers(cfg, mockService, nil)
+	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
+		return service.NewProcessResult(nil, []byte("epub data"), "https://example.com/article"), nil
+	})
+	h := newHandlers(cfg, svc, nil)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -382,8 +415,12 @@ func TestEnrichArticle(t *testing.T) {
 
 			id := "test-id"
 			article := &model.Article{}
+			var emailResp *email.SendEmailResponse
+			if tt.sendEnabled {
+				emailResp = &email.SendEmailResponse{EmailUUID: "test-uuid"}
+			}
 
-			h.enrichArticle(article, &id)
+			h.enrichArticle(article, &id, emailResp)
 
 			if article.ID != id {
 				t.Errorf("expected ID %q, got %q", id, article.ID)
@@ -436,8 +473,12 @@ func TestEnrichLogs(t *testing.T) {
 			article := &model.Article{
 				DeliveryStatus: tt.deliveryStatus,
 			}
+			var emailResp *email.SendEmailResponse
+			if tt.sendEnabled {
+				emailResp = &email.SendEmailResponse{EmailUUID: "test-uuid"}
+			}
 
-			msg := h.enrichLogs(ctx, article)
+			msg := h.enrichLogs(ctx, article, emailResp)
 
 			if msg == nil {
 				t.Fatal("expected msg to be non-nil")

@@ -13,8 +13,6 @@ import (
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
-	"github.com/shaftoe/free2kindle/internal/email/mailjet"
-	"github.com/shaftoe/free2kindle/internal/epub"
 	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/shaftoe/free2kindle/internal/repository"
 	"github.com/shaftoe/free2kindle/internal/service"
@@ -28,35 +26,13 @@ const (
 
 func newHandlers(
 	cfg *config.Config,
-	serviceRun func(context.Context, *service.Deps, *config.Config, *service.Options, string) (*service.Result, error),
+	svc service.Interface,
 	repo repository.Repository,
 ) *handlers {
-	if serviceRun == nil {
-		serviceRun = service.Run
-	}
-
-	var sender email.Sender
-	if cfg != nil && cfg.SendEnabled {
-		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
-	}
-
-	deps := service.NewDeps(
-		content.NewExtractor(),
-		epub.NewGenerator(),
-		sender,
-	)
-
-	var options *service.Options
-	if cfg != nil {
-		options = service.NewOptions(cfg.SendEnabled, true, "", "")
-	}
-
 	return &handlers{
 		cfg:        cfg,
-		serviceRun: serviceRun,
+		service:    svc,
 		repository: repo,
-		deps:       deps,
-		options:    options,
 	}
 }
 
@@ -135,47 +111,61 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 
-	result, err := h.serviceRun(r.Context(), h.deps, h.cfg, h.options, *cleanURL)
+	result, err := h.service.Process(r.Context(), *cleanURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
 		return
 	}
 
-	if result.Article == nil {
+	if result.Article() == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: article is nil"})
 		return
 	}
 
-	h.enrichArticle(result.Article, id)
-	articlesChan <- result.Article
+	var emailResp *email.SendEmailResponse
+	if h.cfg.SendEnabled {
+		emailResp, err = h.service.Send(r.Context(), h.cfg, result, "")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to send email: " + err.Error()})
+			return
+		}
+	}
+
+	h.enrichArticle(result.Article(), id, emailResp)
+	articlesChan <- result.Article()
 	close(articlesChan)
-	msg := h.enrichLogs(r.Context(), result.Article)
+	msg := h.enrichLogs(r.Context(), result.Article(), emailResp)
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
-		ID:             result.Article.ID,
-		Title:          result.Article.Title,
+		ID:             result.Article().ID,
+		Title:          result.Article().Title,
 		URL:            *cleanURL,
 		Message:        *msg,
-		DeliveryStatus: string(result.Article.DeliveryStatus),
+		DeliveryStatus: string(result.Article().DeliveryStatus),
 	})
 
 	_ = eg.Wait()
 }
 
-func (h *handlers) enrichArticle(article *model.Article, id *string) {
+func (h *handlers) enrichArticle(article *model.Article, id *string, emailResp *email.SendEmailResponse) {
 	article.ID = *id
 
-	if h.cfg.SendEnabled {
+	if h.cfg.SendEnabled && emailResp != nil {
 		article.DeliveryStatus = model.StatusDelivered
 		article.DeliveredFrom = &h.cfg.SenderEmail
 		article.DeliveredTo = &h.cfg.DestEmail
 	}
 }
 
-func (h *handlers) enrichLogs(ctx context.Context, article *model.Article) (msg *string) {
+func (h *handlers) enrichLogs(
+	ctx context.Context,
+	article *model.Article,
+	emailResp *email.SendEmailResponse,
+) (msg *string) {
 	message := messageSentToKindle
 	if !h.cfg.SendEnabled {
 		message = messageEmailDisabled
@@ -184,6 +174,10 @@ func (h *handlers) enrichLogs(ctx context.Context, article *model.Article) (msg 
 
 	if article.DeliveryStatus != "" {
 		addLogAttr(ctx, slog.String("delivery_status", string(article.DeliveryStatus)))
+	}
+
+	if emailResp != nil && emailResp.EmailUUID != "" {
+		addLogAttr(ctx, slog.String("email_uuid", emailResp.EmailUUID))
 	}
 
 	return &message

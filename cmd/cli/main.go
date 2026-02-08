@@ -78,39 +78,52 @@ func runConvert(_ *cobra.Command, args []string) error {
 		sender,
 	)
 
-	opts := service.NewOptions(sendEmail, true, emailSubject, outputPath)
+	svc := service.New(d)
 
 	start := time.Now()
-	result, err := service.Run(ctx, d, cfg, opts, url)
+	result, err := svc.Process(ctx, url)
 	if err != nil {
 		return fmt.Errorf("failed to process article: %w", err)
 	}
 	fmt.Printf("Processed in %v\n", time.Since(start))
 
 	printVerboseOutput(result)
-	printResult(result, cfg)
+
+	var resp *email.SendEmailResponse
+	if sendEmail {
+		resp, err = svc.Send(ctx, cfg, result, emailSubject)
+		if err != nil {
+			return fmt.Errorf("failed to send email: %w", err)
+		}
+	} else if outputPath != "" {
+		if writeErr := svc.WriteToFile(result, outputPath); writeErr != nil {
+			return fmt.Errorf("failed to write EPUB: %w", writeErr)
+		}
+	}
+
+	printResult(result, cfg, resp)
 
 	return nil
 }
 
-func printVerboseOutput(result *service.Result) {
+func printVerboseOutput(result *service.ProcessResult) {
 	if verbose {
 		fmt.Println("\n--- Extracted Content (HTML) ---")
-		fmt.Println(result.Article.Content)
+		fmt.Println(result.Article().Content)
 		fmt.Println("--- End of Extracted Content ---")
 		fmt.Println()
 	}
 }
 
-func printResult(result *service.Result, cfg *config.Config) {
+func printResult(result *service.ProcessResult, cfg *config.Config, resp *email.SendEmailResponse) {
 	if !sendEmail {
 		if outputPath == "" {
-			outputPath = email.GenerateFilename(result.Article)
+			outputPath = email.GenerateFilename(result.Article())
 		}
 		absPath, _ := filepath.Abs(outputPath)
 		fmt.Printf("\n✓ EPUB saved to: %s\n", absPath)
 	} else {
-		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s)\n", cfg.SenderEmail, cfg.DestEmail)
+		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s, email ID: %s)\n", cfg.SenderEmail, cfg.DestEmail, resp.EmailUUID)
 	}
 }
 
