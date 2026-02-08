@@ -40,4 +40,5 @@ type Article struct {
 	DeliveredFrom      *string `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
 	DeliveredTo        *string `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
 	DeliveredEmailUUID *string `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"`
+	DeliveredBy        *string `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`
 }

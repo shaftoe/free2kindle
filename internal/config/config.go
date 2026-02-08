@@ -32,6 +32,7 @@ type Config struct {
 	DynamoDBTable    string
 	Mode             RunMode
 	AWSConfig        *aws.Config
+	EmailProvider    string
 }
 
 // Load reads configuration from environment variables and returns a Config instance.
@@ -118,6 +119,7 @@ func (c *Config) Validate() error {
 		if c.MailjetAPISecret == "" {
 			missing = append(missing, "MAILJET_API_SECRET")
 		}
+		c.EmailProvider = "MailJet"
 	}
 
 	if len(missing) > 0 {
