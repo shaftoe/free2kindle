@@ -117,11 +117,15 @@ Resources:
     Properties:
       TableName: !Sub "${ProjectName}-articles"
       AttributeDefinitions:
+        - AttributeName: account
+          AttributeType: S
         - AttributeName: id
           AttributeType: S
       KeySchema:
-        - AttributeName: id
+        - AttributeName: account
           KeyType: HASH
+        - AttributeName: id
+          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
   DynamoDBTableAccessPolicy:

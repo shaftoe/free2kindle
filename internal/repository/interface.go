@@ -10,8 +10,7 @@ import (
 // Implementations can use different backends (DynamoDB, PostgreSQL, etc.).
 type Repository interface {
 	Store(ctx context.Context, article *model.Article) error
-	GetByID(ctx context.Context, id string) (*model.Article, error)
-	GetByURL(ctx context.Context, url string) (*model.Article, error)
-	// UpdateDeliveryStatus(ctx context.Context, id, status string, attemptCount int, errorMsg string) error
-	ListRecent(ctx context.Context, limit int) ([]*model.Article, error)
+	GetByAccountAndID(ctx context.Context, account, id string) (*model.Article, error)
+	GetByAccount(ctx context.Context, account string) ([]*model.Article, error)
+	DeleteByAccountAndID(ctx context.Context, account, id string) error
 }

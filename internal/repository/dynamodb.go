@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,12 +12,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 const (
-	attributeNameID = "id"
+	attributeNameAccount = "account"
+	attributeNameID      = "id"
 )
 
 // DynamoDB implements Repository interface using AWS DynamoDB.
@@ -43,6 +42,10 @@ func NewDynamoDB(awsConfig *aws.Config, tableName string) *DynamoDB {
 func (d *DynamoDB) Store(ctx context.Context, article *model.Article) error {
 	now := time.Now()
 
+	if article.Account == "" {
+		return errors.New("account field is required")
+	}
+
 	if article.CreatedAt.IsZero() {
 		article.CreatedAt = now
 	}
@@ -63,12 +66,13 @@ func (d *DynamoDB) Store(ctx context.Context, article *model.Article) error {
 	return nil
 }
 
-// GetByID implements Repository.GetByID.
-func (d *DynamoDB) GetByID(ctx context.Context, id string) (*model.Article, error) {
+// GetByAccountAndID implements Repository.GetByAccountAndID.
+func (d *DynamoDB) GetByAccountAndID(ctx context.Context, account, id string) (*model.Article, error) {
 	resp, err := d.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(d.tableName),
 		Key: map[string]types.AttributeValue{
-			attributeNameID: &types.AttributeValueMemberS{Value: id},
+			attributeNameAccount: &types.AttributeValueMemberS{Value: account},
+			attributeNameID:      &types.AttributeValueMemberS{Value: id},
 		},
 	})
 	if err != nil {
@@ -87,36 +91,20 @@ func (d *DynamoDB) GetByID(ctx context.Context, id string) (*model.Article, erro
 	return &article, nil
 }
 
-// GetByURL implements Repository.GetByURL.
-func (d *DynamoDB) GetByURL(ctx context.Context, url string) (*model.Article, error) {
-	id, err := content.ArticleIDFromURL(url)
+// GetByAccount implements Repository.GetByAccount.
+func (d *DynamoDB) GetByAccount(ctx context.Context, account string) ([]*model.Article, error) {
+	resp, err := d.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(d.tableName),
+		KeyConditionExpression: aws.String("#account = :account"),
+		ExpressionAttributeNames: map[string]string{
+			"#account": attributeNameAccount,
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":account": &types.AttributeValueMemberS{Value: account},
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate article ID: %w", err)
-	}
-
-	return d.GetByID(ctx, id)
-}
-
-// ListRecent implements Repository.ListRecent.
-func (d *DynamoDB) ListRecent(ctx context.Context, limit int) ([]*model.Article, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-
-	if limit > math.MaxInt32 {
-		limit = math.MaxInt32
-	}
-
-	scanInput := &dynamodb.ScanInput{
-		TableName:            aws.String(d.tableName),
-		Limit:                aws.Int32(int32(limit)), // #nosec G115 -- limit is already checked against MaxInt32
-		ScanFilter:           nil,
-		ProjectionExpression: aws.String("id, url, title, extractedAt, deliveryStatus"),
-	}
-
-	resp, err := d.client.Scan(ctx, scanInput)
-	if err != nil {
-		return nil, fmt.Errorf("failed to scan articles: %w", err)
+		return nil, fmt.Errorf("failed to query articles: %w", err)
 	}
 
 	var articles []*model.Article
@@ -129,6 +117,22 @@ func (d *DynamoDB) ListRecent(ctx context.Context, limit int) ([]*model.Article,
 	}
 
 	return articles, nil
+}
+
+// DeleteByAccountAndID implements Repository.DeleteByAccountAndID.
+func (d *DynamoDB) DeleteByAccountAndID(ctx context.Context, account, id string) error {
+	_, err := d.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(d.tableName),
+		Key: map[string]types.AttributeValue{
+			attributeNameAccount: &types.AttributeValueMemberS{Value: account},
+			attributeNameID:      &types.AttributeValueMemberS{Value: id},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete article: %w", err)
+	}
+
+	return nil
 }
 
 // ErrNotFound is returned when an article is not found.

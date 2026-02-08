@@ -17,6 +17,7 @@ const (
 
 // Article represents all article data including content, metadata, and delivery status.
 type Article struct {
+	Account            string     `json:"account" dynamodbav:"account"`
 	ID                 string     `json:"id" dynamodbav:"id"`
 	URL                string     `json:"url" dynamodbav:"url"`
 	Title              string     `json:"title" dynamodbav:"title"`

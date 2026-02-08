@@ -106,6 +106,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	eg, articlesChan := h.processDBArticleUpdates(r.Context())
 
 	articlesChan <- &model.Article{
+		Account:   h.cfg.Account,
 		ID:        *id,
 		URL:       *cleanURL,
 		CreatedAt: time.Now(),
@@ -152,6 +153,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handlers) enrichArticle(article *model.Article, id *string, emailResp *email.SendEmailResponse) {
+	article.Account = h.cfg.Account
 	article.ID = *id
 
 	if !h.cfg.SendEnabled {

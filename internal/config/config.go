@@ -22,6 +22,7 @@ const (
 
 // Config holds configuration settings for application.
 type Config struct {
+	Account          string
 	DestEmail        string
 	SenderEmail      string
 	MailjetAPIKey    string
@@ -67,8 +68,12 @@ func Load(mode RunMode) (*Config, error) {
 	if err := viper.BindEnv("mode", "F2K_MODE"); err != nil {
 		return nil, fmt.Errorf("failed to bind mode env: %w", err)
 	}
+	if err := viper.BindEnv("account", "F2K_ACCOUNT"); err != nil {
+		return nil, fmt.Errorf("failed to bind account env: %w", err)
+	}
 
 	cfg := &Config{
+		Account:          viper.GetString("account"),
 		DestEmail:        viper.GetString("destination-email"),
 		SenderEmail:      viper.GetString("sender-email"),
 		MailjetAPIKey:    viper.GetString("api-key"),
@@ -78,6 +83,10 @@ func Load(mode RunMode) (*Config, error) {
 		SendEnabled:      viper.GetBool("send-enabled"),
 		DynamoDBTable:    viper.GetString("dynamodb-table"),
 		Mode:             mode,
+	}
+
+	if cfg.Account == "" {
+		cfg.Account = "admin@example.com"
 	}
 
 	if err := cfg.Validate(); err != nil {

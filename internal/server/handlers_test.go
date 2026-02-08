@@ -509,16 +509,16 @@ func (m *mockRepository) Store(_ context.Context, _ *model.Article) error {
 	return nil
 }
 
-func (m *mockRepository) GetByID(_ context.Context, _ string) (*model.Article, error) {
+func (m *mockRepository) GetByAccountAndID(_ context.Context, _, _ string) (*model.Article, error) {
 	return nil, nil
 }
 
-func (m *mockRepository) GetByURL(_ context.Context, _ string) (*model.Article, error) {
+func (m *mockRepository) GetByAccount(_ context.Context, _ string) ([]*model.Article, error) {
 	return nil, nil
 }
 
-func (m *mockRepository) ListRecent(_ context.Context, _ int) ([]*model.Article, error) {
-	return nil, nil
+func (m *mockRepository) DeleteByAccountAndID(_ context.Context, _, _ string) error {
+	return nil
 }
 
 func contains(s, substr string) bool {
