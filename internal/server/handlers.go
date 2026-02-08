@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
@@ -83,11 +84,12 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	addLogAttr(r.Context(), slog.String("article_id", *id))
 
-	eg, artChan := h.processDBArticleUpdates(r.Context())
+	eg, articlesChan := h.processDBArticleUpdates(r.Context())
 
-	artChan <- &model.Article{
-		ID:  *id,
-		URL: req.URL,
+	articlesChan <- &model.Article{
+		ID:        *id,
+		URL:       req.URL,
+		CreatedAt: time.Now(),
 	}
 
 	var sender email.Sender
@@ -129,8 +131,8 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
 	}
 
-	artChan <- result.Article
-	close(artChan)
+	articlesChan <- result.Article
+	close(articlesChan)
 
 	message := messageSentToKindle
 	if !h.deps.cfg.SendEnabled {
