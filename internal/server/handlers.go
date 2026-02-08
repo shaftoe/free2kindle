@@ -174,8 +174,6 @@ func enrichArticle(article *model.Article, id *string, sendEnabled bool) {
 }
 
 func enrichLogs(ctx context.Context, article *model.Article, sendEnabled bool) (msg *string) {
-	addLogAttr(ctx, slog.String("article_title", article.Title))
-
 	message := messageSentToKindle
 	if !sendEnabled {
 		message = messageEmailDisabled

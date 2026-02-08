@@ -53,9 +53,9 @@ func buildMetadataHeader(article *model.Article) string {
 			fmt.Sprintf("<p><strong>Published:</strong> %s</p>", article.PublishedAt.Format("2006-01-02")))
 	}
 
-	if !article.ExtractedAt.IsZero() {
+	if !article.CreatedAt.IsZero() {
 		metaLines = append(metaLines,
-			fmt.Sprintf("<p><strong>Extracted:</strong> %s</p>", article.ExtractedAt.Format("2006-01-02")))
+			fmt.Sprintf("<p><strong>Added:</strong> %s</p>", article.CreatedAt.Format("2006-01-02")))
 	}
 
 	if article.ContentType != "" {

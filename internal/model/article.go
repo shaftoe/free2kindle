@@ -25,7 +25,6 @@ type Article struct {
 	URL                string     `json:"url" dynamodbav:"url"`
 	ImageURL           string     `json:"imageUrl" dynamodbav:"imageUrl"`
 	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt,omitempty"`
-	ExtractedAt        time.Time  `json:"extractedAt" dynamodbav:"extractedAt"`
 	WordCount          int        `json:"wordCount" dynamodbav:"wordCount"`
 	ReadingTimeMinutes int        `json:"readingTimeMinutes" dynamodbav:"readingTimeMinutes"`
 	SourceDomain       string     `json:"sourceDomain" dynamodbav:"sourceDomain"`
@@ -37,6 +36,6 @@ type Article struct {
 	DeliveryStatus        Status     `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
 	DeliveryError         *string    `json:"deliveryError,omitempty" dynamodbav:"deliveryError,omitempty"`
 
-	CreatedAt time.Time  `json:"createdAt" dynamodbav:"createdAt"`
+	CreatedAt time.Time  `json:"createdAt" dynamodbav:"extractedAt"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty" dynamodbav:"updatedAt,omitempty"`
 }
