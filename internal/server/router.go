@@ -48,10 +48,11 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	)
 
 	r.Use(middleware.Recoverer)
+	r.Use(auth.NewMiddleware(cfg))
 	r.Use(requestIDMiddleware)
 	r.Use(corsMiddleware)
-	r.Use(loggingMiddleware)
 	r.Use(jsonContentTypeMiddleware)
+	r.Use(loggingMiddleware)
 
 	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -64,12 +65,10 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Unauthenticated routes
 		r.Get("/health", handlers.handleHealth)
 
-		// Authenticated routes
 		r.Route("/articles", func(r chi.Router) {
-			r.Use(auth.NewMiddleware(cfg))
+			r.Use(auth.EnsureAutheticatedMiddleware)
 			r.Post("/", handlers.handleCreateArticle)
 		})
 	})

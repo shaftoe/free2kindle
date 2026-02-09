@@ -46,13 +46,23 @@ func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			apiKey := r.Header.Get(apiKeyHeader)
 			if apiKey == "" || apiKey != apiKeySecret {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				_ = json.NewEncoder(w).Encode(errorResponse{Message: "Invalid API key"})
+				next.ServeHTTP(w, r)
 				return
 			}
 			ctx := context.WithValue(r.Context(), userIDKey, adminAccountID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accountID := GetAccountID(r.Context())
+		if accountID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(errorResponse{Message: "Unauthorized"})
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

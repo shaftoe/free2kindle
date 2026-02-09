@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/shaftoe/free2kindle/internal/auth"
 )
 
 type responseStatusRecorder struct {
@@ -74,6 +75,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 
 		requestID, _ := r.Context().Value(contextKey(requestIDKey)).(string)
+		userID := auth.GetAccountID(r.Context())
 
 		level := slog.LevelInfo
 		record := slog.NewRecord(time.Now(), level, "request completed", 0)
@@ -81,6 +83,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 			slog.String("request_id", requestID),
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
+			slog.String("user_id", userID),
 		)
 
 		ctx := context.WithValue(r.Context(), logRecordKey, &logRecord{Record: &record})
