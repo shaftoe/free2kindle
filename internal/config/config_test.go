@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +17,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "valid CLI config with send enabled",
 			config: &Config{
-				Mode:             ModeCLI,
+				Mode:             constant.ModeCLI,
 				DestEmail:        "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
@@ -28,7 +29,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "valid CLI config with send disabled",
 			config: &Config{
-				Mode:        ModeCLI,
+				Mode:        constant.ModeCLI,
 				SendEnabled: false,
 			},
 			wantErr: false,
@@ -36,32 +37,45 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "valid server config",
 			config: &Config{
-				Mode:          ModeServer,
+				Mode:          constant.ModeServer,
 				APIKeySecret:  "api-key-secret",
 				DynamoDBTable: "test-table",
+				AuthBackend:   constant.AuthBackendSharedAPIKey,
 			},
 			wantErr: false,
 		},
 		{
 			name: "server config missing api key",
 			config: &Config{
-				Mode:          ModeServer,
+				Mode:          constant.ModeServer,
 				DynamoDBTable: "test-table",
+				AuthBackend:   constant.AuthBackendSharedAPIKey,
 			},
 			wantErr: true,
 		},
 		{
 			name: "server config missing dynamodb table",
 			config: &Config{
-				Mode:         ModeServer,
+				Mode:         constant.ModeServer,
 				APIKeySecret: "api-key-secret",
+				AuthBackend:  constant.AuthBackendSharedAPIKey,
+			},
+			wantErr: true,
+		},
+		{
+			name: "server config with invalid auth backend",
+			config: &Config{
+				Mode:          constant.ModeServer,
+				APIKeySecret:  "api-key-secret",
+				DynamoDBTable: "test-table",
+				AuthBackend:   "invalid_backend",
 			},
 			wantErr: true,
 		},
 		{
 			name: "CLI config missing kindle email with send enabled",
 			config: &Config{
-				Mode:             ModeCLI,
+				Mode:             constant.ModeCLI,
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
@@ -72,7 +86,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing sender email with send enabled",
 			config: &Config{
-				Mode:             ModeCLI,
+				Mode:             constant.ModeCLI,
 				DestEmail:        "test@kindle.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
@@ -83,7 +97,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing mailjet api key with send enabled",
 			config: &Config{
-				Mode:             ModeCLI,
+				Mode:             constant.ModeCLI,
 				DestEmail:        "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPISecret: "api-secret",
@@ -94,7 +108,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing mailjet api secret with send enabled",
 			config: &Config{
-				Mode:          ModeCLI,
+				Mode:          constant.ModeCLI,
 				DestEmail:     "test@kindle.com",
 				SenderEmail:   "sender@example.com",
 				MailjetAPIKey: "api-key",
@@ -132,7 +146,7 @@ func TestLoad(t *testing.T) {
 		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
 	}()
 
-	cfg, err := Load(ModeCLI)
+	cfg, err := Load(constant.ModeCLI)
 	assert.NoError(t, err)
 	assert.Equal(t, "test@kindle.com", cfg.DestEmail)
 	assert.Equal(t, "sender@example.com", cfg.SenderEmail)
@@ -140,13 +154,13 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, "api-secret", cfg.MailjetAPISecret)
 	assert.Equal(t, "api-key-secret", cfg.APIKeySecret)
 	assert.Equal(t, "test-table", cfg.DynamoDBTable)
-	assert.Equal(t, ModeCLI, cfg.Mode)
+	assert.Equal(t, constant.ModeCLI, cfg.Mode)
 }
 
 func TestLoadDefaultsToCLI(t *testing.T) {
-	cfg, err := Load(ModeCLI)
+	cfg, err := Load(constant.ModeCLI)
 	assert.NoError(t, err)
-	assert.Equal(t, ModeCLI, cfg.Mode)
+	assert.Equal(t, constant.ModeCLI, cfg.Mode)
 }
 
 func TestLoadServerMode(t *testing.T) {
@@ -157,7 +171,7 @@ func TestLoadServerMode(t *testing.T) {
 		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
 	}()
 
-	cfg, err := Load(ModeServer)
+	cfg, err := Load(constant.ModeServer)
 	assert.NoError(t, err)
-	assert.Equal(t, ModeServer, cfg.Mode)
+	assert.Equal(t, constant.ModeServer, cfg.Mode)
 }

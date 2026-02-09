@@ -121,69 +121,6 @@ func TestCorsMiddleware_NoOrigin(t *testing.T) {
 	}
 }
 
-func TestAuthMiddleware_ValidAPIKey(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	req.Header.Set("X-API-Key", "valid-key")
-	w := httptest.NewRecorder()
-
-	authMiddleware("valid-key")(next).ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
-	}
-}
-
-func TestAuthMiddleware_MissingAPIKey(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	w := httptest.NewRecorder()
-
-	authMiddleware("valid-key")(next).ServeHTTP(w, req)
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestAuthMiddleware_WrongAPIKey(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	req.Header.Set("X-API-Key", "wrong-key")
-	w := httptest.NewRecorder()
-
-	authMiddleware("valid-key")(next).ServeHTTP(w, req)
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
-func TestAuthMiddleware_EmptyAPIKey(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	req.Header.Set("X-API-Key", "")
-	w := httptest.NewRecorder()
-
-	authMiddleware("valid-key")(next).ServeHTTP(w, req)
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
-	}
-}
-
 func TestRequestIDMiddleware_LambdaContext(t *testing.T) {
 	var gotRequestID string
 

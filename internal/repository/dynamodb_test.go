@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -302,7 +303,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 		Title:              "Updated Article 9",
 		Content:            "<p>Updated content 9</p>",
 		CreatedAt:          original.CreatedAt,
-		DeliveryStatus:     model.StatusDelivered,
+		DeliveryStatus:     constant.StatusDelivered,
 		DeliveredFrom:      stringPtr("sender@example.com"),
 		DeliveredTo:        stringPtr("kindle@example.com"),
 		DeliveredEmailUUID: stringPtr("email-uuid-123"),
@@ -317,7 +318,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Article 9", retrieved.Title)
-	assert.Equal(t, model.StatusDelivered, retrieved.DeliveryStatus)
+	assert.Equal(t, constant.StatusDelivered, retrieved.DeliveryStatus)
 	assert.Equal(t, "sender@example.com", *retrieved.DeliveredFrom)
 }
 

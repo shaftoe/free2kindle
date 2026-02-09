@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/model"
@@ -161,11 +162,11 @@ func (h *handlers) enrichArticle(article *model.Article, id *string, emailResp *
 	}
 
 	if emailResp == nil {
-		article.DeliveryStatus = model.StatusFailed
+		article.DeliveryStatus = constant.StatusFailed
 		return
 	}
 
-	article.DeliveryStatus = model.StatusDelivered
+	article.DeliveryStatus = constant.StatusDelivered
 	article.DeliveredFrom = &h.cfg.SenderEmail
 	article.DeliveredTo = &h.cfg.DestEmail
 	article.DeliveredEmailUUID = &emailResp.EmailUUID

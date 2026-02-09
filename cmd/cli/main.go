@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/email/mailjet"
@@ -57,7 +58,7 @@ var convertCmd = &cobra.Command{
 func runConvert(_ *cobra.Command, args []string) error {
 	url := args[0]
 
-	cfg, err := config.Load(config.ModeCLI)
+	cfg, err := config.Load(constant.ModeCLI)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}

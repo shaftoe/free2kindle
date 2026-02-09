@@ -7,17 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/spf13/viper"
-)
-
-// RunMode defines the application execution mode.
-type RunMode string
-
-const (
-	// ModeCLI indicates CLI execution mode.
-	ModeCLI RunMode = "cli"
-	// ModeServer indicates server execution mode.
-	ModeServer RunMode = "server"
 )
 
 // Config holds configuration settings for application.
@@ -31,13 +22,14 @@ type Config struct {
 	Debug            bool
 	SendEnabled      bool
 	DynamoDBTable    string
-	Mode             RunMode
+	Mode             constant.RunMode
 	AWSConfig        *aws.Config
 	EmailProvider    string
+	AuthBackend      constant.AuthBackend
 }
 
 // Load reads configuration from environment variables and returns a Config instance.
-func Load(mode RunMode) (*Config, error) {
+func Load(mode constant.RunMode) (*Config, error) {
 	viper.SetEnvPrefix("F2K")
 	viper.AutomaticEnv()
 
@@ -65,9 +57,12 @@ func Load(mode RunMode) (*Config, error) {
 	if err := viper.BindEnv("dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"); err != nil {
 		return nil, fmt.Errorf("failed to bind dynamodb-table env: %w", err)
 	}
+	if err := viper.BindEnv("auth-backend", "F2K_AUTH_BACKEND"); err != nil {
+		return nil, fmt.Errorf("failed to bind auth-backend env: %w", err)
+	}
 
 	cfg := &Config{
-		Account:          "free2kindle", // currently hardcoded, auth work in progress
+		Account:          "free2kindle",
 		DestEmail:        viper.GetString("destination-email"),
 		SenderEmail:      viper.GetString("sender-email"),
 		MailjetAPIKey:    viper.GetString("api-key"),
@@ -77,6 +72,11 @@ func Load(mode RunMode) (*Config, error) {
 		SendEnabled:      viper.GetBool("send-enabled"),
 		DynamoDBTable:    viper.GetString("dynamodb-table"),
 		Mode:             mode,
+		AuthBackend:      constant.AuthBackend(viper.GetString("auth-backend")),
+	}
+
+	if cfg.AuthBackend == "" {
+		cfg.AuthBackend = constant.AuthBackendSharedAPIKey
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -90,12 +90,16 @@ func Load(mode RunMode) (*Config, error) {
 func (c *Config) Validate() error {
 	var missing []string
 
-	if c.Mode == ModeServer {
+	if c.Mode == constant.ModeServer {
 		if c.APIKeySecret == "" {
 			missing = append(missing, "F2K_API_KEY")
 		}
 		if c.DynamoDBTable == "" {
 			missing = append(missing, "F2K_DYNAMODB_TABLE_NAME")
+		}
+
+		if c.AuthBackend != constant.AuthBackendSharedAPIKey {
+			return fmt.Errorf("unsupported auth backend: %s", c.AuthBackend)
 		}
 
 		cfg, err := config.LoadDefaultConfig(context.Background())
@@ -106,6 +110,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.SendEnabled {
+		c.EmailProvider = "MailJet"
 		if c.DestEmail == "" {
 			missing = append(missing, "F2K_DEST_EMAIL")
 		}
@@ -118,7 +123,6 @@ func (c *Config) Validate() error {
 		if c.MailjetAPISecret == "" {
 			missing = append(missing, "MAILJET_API_SECRET")
 		}
-		c.EmailProvider = "MailJet"
 	}
 
 	if len(missing) > 0 {

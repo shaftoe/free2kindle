@@ -1,18 +1,10 @@
 // Package model provides data models used throughout the application.
 package model
 
-import "time"
+import (
+	"time"
 
-// Status represents the delivery status of an article.
-type Status string
-
-const (
-	// StatusPending indicates that the article is pending delivery.
-	StatusPending Status = "pending"
-	// StatusDelivered indicates that the article has been successfully delivered.
-	StatusDelivered Status = "delivered"
-	// StatusFailed indicates that the article delivery has failed.
-	StatusFailed Status = "failed"
+	"github.com/shaftoe/free2kindle/internal/constant"
 )
 
 // Article represents all article data including content, metadata, and delivery status.
@@ -36,10 +28,10 @@ type Article struct {
 	ContentType string `json:"contentType,omitempty" dynamodbav:"contentType,omitempty"`
 	Language    string `json:"language,omitempty" dynamodbav:"language,omitempty"`
 
-	//// email delivery metadata
-	DeliveryStatus     Status  `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
-	DeliveredFrom      *string `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
-	DeliveredTo        *string `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
-	DeliveredEmailUUID *string `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"`
-	DeliveredBy        *string `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`
+	// email delivery metadata
+	DeliveryStatus     constant.Status `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
+	DeliveredFrom      *string         `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
+	DeliveredTo        *string         `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
+	DeliveredEmailUUID *string         `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"`
+	DeliveredBy        *string         `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`
 }

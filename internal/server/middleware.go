@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -22,7 +21,6 @@ func (r *responseStatusRecorder) WriteHeader(code int) {
 }
 
 const (
-	apiKeyHeader = "X-API-Key" //nolint:gosec // G101: This is a header name constant, not a hardcoded credential
 	requestIDKey = "request_id"
 )
 
@@ -43,21 +41,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func authMiddleware(apiKeySecret string) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			apiKey := r.Header.Get(apiKeyHeader)
-			if apiKey == "" || apiKey != apiKeySecret {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				_ = json.NewEncoder(w).Encode(errorResponse{Message: "Invalid API key"})
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
 }
 
 func requestIDMiddleware(next http.Handler) http.Handler {

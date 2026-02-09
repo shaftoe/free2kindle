@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/shaftoe/free2kindle/internal/auth"
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/shaftoe/free2kindle/internal/service"
@@ -31,7 +32,7 @@ func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 	r.Use(jsonContentTypeMiddleware)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
-			r.Use(authMiddleware(cfg.APIKeySecret))
+			r.Use(auth.NewMiddleware(cfg))
 			r.Post("/", h.handleCreateArticle)
 		})
 	})
@@ -252,7 +253,7 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 	r.Use(corsMiddleware)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
-			r.Use(authMiddleware(cfg.APIKeySecret))
+			r.Use(auth.NewMiddleware(cfg))
 			r.Post("/", h.handleCreateArticle)
 		})
 	})

@@ -7,11 +7,12 @@ import (
 
 	"github.com/akrylysov/algnhsa"
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/server"
 )
 
 func main() {
-	cfg, err := config.Load(config.ModeServer)
+	cfg, err := config.Load(constant.ModeServer)
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		os.Exit(1)

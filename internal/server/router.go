@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/shaftoe/free2kindle/internal/auth"
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
@@ -68,7 +69,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 
 		// Authenticated routes
 		r.Route("/articles", func(r chi.Router) {
-			r.Use(authMiddleware(cfg.APIKeySecret))
+			r.Use(auth.NewMiddleware(cfg))
 			r.Post("/", handlers.handleCreateArticle)
 		})
 	})

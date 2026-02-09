@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/model"
 	"github.com/shaftoe/free2kindle/internal/repository"
@@ -384,7 +385,7 @@ func TestEnrichArticle(t *testing.T) {
 		sendEnabled   bool
 		senderEmail   string
 		destEmail     string
-		wantStatus    model.Status
+		wantStatus    constant.Status
 		wantDelivered bool
 	}{
 		{
@@ -392,7 +393,7 @@ func TestEnrichArticle(t *testing.T) {
 			sendEnabled:   true,
 			senderEmail:   "sender@example.com",
 			destEmail:     "dest@example.com",
-			wantStatus:    model.StatusDelivered,
+			wantStatus:    constant.StatusDelivered,
 			wantDelivered: true,
 		},
 		{
@@ -446,21 +447,21 @@ func TestEnrichLogs(t *testing.T) {
 		sendEnabled    bool
 		emailResp      *email.SendEmailResponse
 		wantMessage    string
-		deliveryStatus model.Status
+		deliveryStatus constant.Status
 	}{
 		{
 			name:           "send enabled with email response",
 			sendEnabled:    true,
 			emailResp:      &email.SendEmailResponse{EmailUUID: "test-uuid"},
 			wantMessage:    "article sent to Kindle successfully",
-			deliveryStatus: model.StatusDelivered,
+			deliveryStatus: constant.StatusDelivered,
 		},
 		{
 			name:           "send enabled without email response",
 			sendEnabled:    true,
 			emailResp:      nil,
 			wantMessage:    "article sent to Kindle successfully",
-			deliveryStatus: model.StatusDelivered,
+			deliveryStatus: constant.StatusDelivered,
 		},
 		{
 			name:           "send disabled",
