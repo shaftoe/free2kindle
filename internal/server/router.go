@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,6 +26,7 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 
 // NewRouter creates and configures a new chi router with all middleware and routes.
 func NewRouter(cfg *config.Config) *chi.Mux {
+	setupLogging(cfg)
 	r := chi.NewRouter()
 
 	var sender email.Sender
@@ -71,4 +74,14 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	})
 
 	return r
+}
+
+func setupLogging(cfg *config.Config) {
+	level := slog.LevelInfo
+	if cfg.Debug {
+		level = slog.LevelDebug
+	}
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	})))
 }

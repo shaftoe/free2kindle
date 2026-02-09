@@ -144,21 +144,15 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadDefaultsToCLI(t *testing.T) {
-	defer func() {
-		_ = os.Unsetenv("F2K_MODE")
-	}()
-
 	cfg, err := Load(ModeCLI)
 	assert.NoError(t, err)
 	assert.Equal(t, ModeCLI, cfg.Mode)
 }
 
 func TestLoadServerMode(t *testing.T) {
-	_ = os.Setenv("F2K_MODE", "server")
 	_ = os.Setenv("F2K_API_KEY", "api-key-secret")
 	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
 	defer func() {
-		_ = os.Unsetenv("F2K_MODE")
 		_ = os.Unsetenv("F2K_API_KEY")
 		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
 	}()

@@ -56,7 +56,7 @@ func Load(mode RunMode) (*Config, error) {
 	if err := viper.BindEnv("api-key-secret", "F2K_API_KEY"); err != nil {
 		return nil, fmt.Errorf("failed to bind api-key-secret env: %w", err)
 	}
-	if err := viper.BindEnv("debug", "DEBUG"); err != nil {
+	if err := viper.BindEnv("debug", "F2K_DEBUG"); err != nil {
 		return nil, fmt.Errorf("failed to bind debug env: %w", err)
 	}
 	if err := viper.BindEnv("send-enabled", "F2K_SEND_ENABLED"); err != nil {
@@ -64,9 +64,6 @@ func Load(mode RunMode) (*Config, error) {
 	}
 	if err := viper.BindEnv("dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"); err != nil {
 		return nil, fmt.Errorf("failed to bind dynamodb-table env: %w", err)
-	}
-	if err := viper.BindEnv("mode", "F2K_MODE"); err != nil {
-		return nil, fmt.Errorf("failed to bind mode env: %w", err)
 	}
 	if err := viper.BindEnv("account", "F2K_ACCOUNT"); err != nil {
 		return nil, fmt.Errorf("failed to bind account env: %w", err)

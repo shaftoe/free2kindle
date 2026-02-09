@@ -78,15 +78,14 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          DEBUG: !Ref Debug
           F2K_API_KEY: !Ref APIKeySecret
+          F2K_DEBUG: !Ref Debug
           F2K_DEST_EMAIL: !Ref DestEmail
+          F2K_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
           F2K_SENDER_EMAIL: !Ref SenderEmail
           F2K_SEND_ENABLED: !Ref SendEnabled
           MAILJET_API_KEY: !Ref MailjetAPIKey
           MAILJET_API_SECRET: !Ref MailjetAPISecret
-          F2K_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
-          F2K_MODE: server
       TracingConfig:
         Mode: PassThrough
 
