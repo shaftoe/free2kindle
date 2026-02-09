@@ -13,7 +13,6 @@ import (
 
 // Config holds configuration settings for application.
 type Config struct {
-	Account          string
 	DestEmail        string
 	SenderEmail      string
 	MailjetAPIKey    string
@@ -62,7 +61,6 @@ func Load(mode constant.RunMode) (*Config, error) {
 	}
 
 	cfg := &Config{
-		Account:          "free2kindle",
 		DestEmail:        viper.GetString("destination-email"),
 		SenderEmail:      viper.GetString("sender-email"),
 		MailjetAPIKey:    viper.GetString("api-key"),

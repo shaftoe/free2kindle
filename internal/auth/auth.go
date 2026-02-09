@@ -2,6 +2,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -10,7 +11,14 @@ import (
 )
 
 const (
-	apiKeyHeader = "X-API-Key" //nolint:gosec // G101: This is a header name constant, not a hardcoded credential
+	apiKeyHeader   = "X-API-Key" //nolint:gosec // G101: This is a header name constant, not a hardcoded credential
+	adminAccountID = "admin"
+)
+
+type contextKey string
+
+const (
+	userIDKey contextKey = "user_id"
 )
 
 type errorResponse struct {
@@ -27,6 +35,12 @@ func NewMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	}
 }
 
+// GetAccountID retrieves the authenticated account ID from the context.
+func GetAccountID(ctx context.Context) string {
+	accountID, _ := ctx.Value(userIDKey).(string)
+	return accountID
+}
+
 func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +51,8 @@ func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler
 				_ = json.NewEncoder(w).Encode(errorResponse{Message: "Invalid API key"})
 				return
 			}
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), userIDKey, adminAccountID)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

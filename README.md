@@ -9,7 +9,8 @@ Deploy the Free2Kindle API to AWS Lambda using CloudFormation.
 ### Prerequisites
 
 1. Install AWS CLI and configure credentials
-2. Set required environment variables in `.env`, e.g:
+1. Install [Just command runner](https://just.systems/)
+1. Set required environment variables in `.env`, e.g:
 ```bash
 export F2K_API_KEY="your_api_key_secret"
 export F2K_DEST_EMAIL="your-kindle@kindle.com"
@@ -20,14 +21,16 @@ export MAILJET_API_SECRET="your_mailjet_api_secret"
 
 ### Deployment
 
+Deploy the Free2Kindle API to AWS Lambda using aws CLI.
+
 ```bash
 # Full deployment
-just deploy-all free2kindle
+just deploy free2kindle
 
 # Get the Function URL
 just get-url free2kindle
 
-# View logs
+# Tail lambda logs
 just logs free2kindle
 
 # Destroy infrastructure
@@ -149,26 +152,6 @@ Email sent successfully. Message ID: 1234567890, UUID: abc123-def456-ghi789
 ✓ Article sent to Kindle
 ```
 
-## Project Structure
-
-```
-free2kindle/
-├── pkg/
-│   └── free2kindle/           # Shared business logic library
-│       ├── content/          # Content extraction
-│       ├── epub/             # EPUB generation
-│       ├── service/          # Business logic orchestration
-│       └── email/            # Email sending
-│           ├── mailjet/       # Mailjet provider
-│           └── sender.go      # Generic email interface
-├── cmd/
-│   ├── lambda/               # Lambda functions
-│   └── cli/                  # CLI tool
-│       └── main.go
-├── cloudformation/            # AWS CloudFormation templates
-└── README.md
-```
-
 ## License
 
-See LICENSE file for details.
+See [LICENSE](LICENSE) file for details.

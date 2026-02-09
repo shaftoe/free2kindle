@@ -420,7 +420,7 @@ func TestEnrichArticle(t *testing.T) {
 				emailResp = &email.SendEmailResponse{EmailUUID: "test-uuid"}
 			}
 
-			h.enrichArticle(article, &id, emailResp)
+			h.enrichArticle(article, &id, emailResp, "admin")
 
 			if article.ID != id {
 				t.Errorf("expected ID %q, got %q", id, article.ID)

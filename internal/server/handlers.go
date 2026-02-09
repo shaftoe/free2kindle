@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/shaftoe/free2kindle/internal/auth"
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/content"
@@ -107,7 +108,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	eg, articlesChan := h.processDBArticleUpdates(r.Context())
 
 	articlesChan <- &model.Article{
-		Account:   h.cfg.Account,
+		Account:   auth.GetAccountID(r.Context()),
 		ID:        *id,
 		URL:       *cleanURL,
 		CreatedAt: time.Now(),
@@ -136,7 +137,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.enrichArticle(result.Article(), id, emailResp)
+	h.enrichArticle(result.Article(), id, emailResp, auth.GetAccountID(r.Context()))
 	articlesChan <- result.Article()
 	close(articlesChan)
 	msg := h.enrichLogs(r.Context(), result.Article(), emailResp)
@@ -153,8 +154,13 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	_ = eg.Wait()
 }
 
-func (h *handlers) enrichArticle(article *model.Article, id *string, emailResp *email.SendEmailResponse) {
-	article.Account = h.cfg.Account
+func (h *handlers) enrichArticle(
+	article *model.Article,
+	id *string,
+	emailResp *email.SendEmailResponse,
+	accountID string,
+) {
+	article.Account = accountID
 	article.ID = *id
 
 	if !h.cfg.SendEnabled {
