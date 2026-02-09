@@ -28,9 +28,10 @@ const (
 
 func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
+	r.Use(auth.NewUserIDMiddleware(cfg))
+	r.Use(requestIDMiddleware)
 	r.Use(corsMiddleware)
 	r.Use(jsonContentTypeMiddleware)
-	r.Use(auth.NewUserIDMiddleware(cfg))
 	r.Use(loggingMiddleware)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
