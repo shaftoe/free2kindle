@@ -42,6 +42,21 @@ Parameters:
     Description: Enable email sending
     Default: "false"
 
+  Auth0Domain:
+    Type: String
+    Description: Auth0 domain
+    Default: ""
+
+  Auth0Audience:
+    Type: String
+    Description: Auth0 audience
+    Default: ""
+
+  AuthBackend:
+    Type: String
+    Description: Auth backend
+    Default: ""
+
   Debug:
     Type: String
     Description: Debug flag
@@ -86,6 +101,9 @@ Resources:
           F2K_SEND_ENABLED: !Ref SendEnabled
           MAILJET_API_KEY: !Ref MailjetAPIKey
           MAILJET_API_SECRET: !Ref MailjetAPISecret
+          F2K_AUTH0_DOMAIN: !Ref Auth0Domain
+          F2K_AUTH0_AUDIENCE: !Ref Auth0Audience
+          F2K_AUTH_BACKEND: !Ref AuthBackend
       TracingConfig:
         Mode: PassThrough
 

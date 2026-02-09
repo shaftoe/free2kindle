@@ -47,14 +47,17 @@ deploy-api:
         --stack-name {{ project_name }}-infra \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-            ProjectName={{ project_name }} \
-            SourceBucketName={{ bucket_name }} \
-            SourceBucketKey={{ lambda_archive }} \
+            APIKeySecret="$F2K_API_KEY" \
+            Auth0Audience="$F2K_AUTH0_AUDIENCE" \
+            Auth0Domain="$F2K_AUTH0_DOMAIN" \
+            AuthBackend="$F2K_AUTH_BACKEND" \
+            DestEmail="$F2K_DEST_EMAIL" \
             MailjetAPIKey="$MAILJET_API_KEY" \
             MailjetAPISecret="$MAILJET_API_SECRET" \
-            APIKeySecret="$F2K_API_KEY" \
-            DestEmail="$F2K_DEST_EMAIL" \
+            ProjectName={{ project_name }} \
             SenderEmail="$F2K_SENDER_EMAIL" \
+            SourceBucketKey={{ lambda_archive }} \
+            SourceBucketName={{ bucket_name }} \
             SendEnabled="true" \
             Debug="true"
 
