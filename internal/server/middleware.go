@@ -93,6 +93,11 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 		latency := time.Since(start)
 		statusCode := recorder.status
+		authErr := auth.GetAuthError(r.Context())
+
+		if authErr != nil {
+			record.AddAttrs(slog.String("auth_error", authErr.Error()))
+		}
 
 		if statusCode >= http.StatusInternalServerError {
 			record.Level = slog.LevelError

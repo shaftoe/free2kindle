@@ -4,12 +4,12 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	jwtmiddleware "github.com/auth0/go-jwt-middleware/v3"
 	"github.com/auth0/go-jwt-middleware/v3/jwks"
 	"github.com/auth0/go-jwt-middleware/v3/validator"
 	"github.com/shaftoe/free2kindle/internal/config"
@@ -26,7 +26,8 @@ const (
 type contextKey string
 
 const (
-	userIDKey contextKey = "user_id"
+	userIDKey    contextKey = "user_id"
+	authErrorKey contextKey = "auth_error"
 )
 
 type errorResponse struct {
@@ -52,19 +53,26 @@ func GetAccountID(ctx context.Context) string {
 	return accountID
 }
 
+// GetAuthError retrieves the authentication error from the context, if any.
+func GetAuthError(ctx context.Context) error {
+	authError, found := ctx.Value(authErrorKey).(string)
+	if found {
+		return errors.New(authError)
+	}
+	return nil
+}
+
 func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			auth := r.Header.Get(authHeader)
 			if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
-				ctx := addUserIDToContext(r.Context(), anonymousUserID)
-				next.ServeHTTP(w, r.WithContext(ctx))
+				handleAuthError(r.Context(), next, w, r, "Missing or malformed auth header")
 				return
 			}
 			token := strings.TrimPrefix(auth, "Bearer ")
 			if token != apiKeySecret {
-				ctx := addUserIDToContext(r.Context(), anonymousUserID)
-				next.ServeHTTP(w, r.WithContext(ctx))
+				handleAuthError(r.Context(), next, w, r, "Invalid API key")
 				return
 			}
 			ctx := addUserIDToContext(r.Context(), adminAccountID)
@@ -97,26 +105,31 @@ func auth0Middleware(domain, audience string) func(http.Handler) http.Handler {
 		panic("failed to create JWT validator: " + err.Error())
 	}
 
-	middleware, err := jwtmiddleware.New(
-		jwtmiddleware.WithValidator(jwtValidator),
-		jwtmiddleware.WithCredentialsOptional(true),
-	)
-	if err != nil {
-		panic("failed to create JWT middleware: " + err.Error())
-	}
-
 	return func(next http.Handler) http.Handler {
-		return middleware.CheckJWT(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			claims, claimsErr := jwtmiddleware.GetClaims[*validator.ValidatedClaims](r.Context())
-			if claimsErr != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			auth := r.Header.Get(authHeader)
+			if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
 				ctx := addUserIDToContext(r.Context(), anonymousUserID)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
-			ctx := addUserIDToContext(r.Context(), claims.RegisteredClaims.Subject)
+			token := strings.TrimPrefix(auth, "Bearer ")
+			claims, validateErr := jwtValidator.ValidateToken(r.Context(), token)
+			if validateErr != nil {
+				handleAuthError(r.Context(), next, w, r, "Invalid JWT token: "+validateErr.Error())
+				return
+			}
+
+			validatedClaims, ok := claims.(*validator.ValidatedClaims)
+			if !ok {
+				handleAuthError(r.Context(), next, w, r, "Failed to parse JWT claims")
+				return
+			}
+
+			ctx := addUserIDToContext(r.Context(), validatedClaims.RegisteredClaims.Subject)
 			next.ServeHTTP(w, r.WithContext(ctx))
-		}))
+		})
 	}
 }
 
@@ -124,16 +137,29 @@ func auth0Middleware(domain, audience string) func(http.Handler) http.Handler {
 // proceeding to the next handler.
 func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := GetAuthError(r.Context()); err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
+			return
+		}
+
 		accountID := GetAccountID(r.Context())
 		if accountID == "" || accountID == anonymousUserID {
 			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Unauthorized"})
+			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Unauthorized (missing account ID)"})
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
 
 func addUserIDToContext(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, userIDKey, userID)
+}
+
+func handleAuthError(ctx context.Context, next http.Handler, w http.ResponseWriter, r *http.Request, msg string) {
+	ctx = context.WithValue(ctx, authErrorKey, msg)
+
+	next.ServeHTTP(w, r.WithContext(ctx))
 }

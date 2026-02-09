@@ -109,3 +109,9 @@ scan-table TABLE_NAME="free2kindle-articles":
         --table-name {{ TABLE_NAME }} \
         --output json \
         --query 'Items[*].{ID:id.S,URL:url.S,Title:title.S,Author:author.S,Status:deliveryStatus.S,Created:createdAt.S}'
+
+auth0-create-api:
+    auth0 apis create \
+    --name {{ project_name }} \
+    --identifier "$F2K_AUTH0_AUDIENCE" \
+    --signing-alg "RS256"

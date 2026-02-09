@@ -56,17 +56,17 @@ func bindEnvVars() error {
 		key    string
 		envVar string
 	}{
-		{"destination-email", "F2K_DEST_EMAIL"},
-		{"sender-email", "F2K_SENDER_EMAIL"},
 		{"api-key", "MAILJET_API_KEY"},
-		{"api-secret", "MAILJET_API_SECRET"},
 		{"api-key-secret", "F2K_API_KEY"},
-		{"debug", "F2K_DEBUG"},
-		{"send-enabled", "F2K_SEND_ENABLED"},
-		{"dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"},
+		{"api-secret", "MAILJET_API_SECRET"},
 		{"auth-backend", "F2K_AUTH_BACKEND"},
-		{"auth0-domain", "F2K_AUTH0_DOMAIN"},
 		{"auth0-audience", "F2K_AUTH0_AUDIENCE"},
+		{"auth0-domain", "F2K_AUTH0_DOMAIN"},
+		{"debug", "F2K_DEBUG"},
+		{"destination-email", "F2K_DEST_EMAIL"},
+		{"dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"},
+		{"send-enabled", "F2K_SEND_ENABLED"},
+		{"sender-email", "F2K_SENDER_EMAIL"},
 	}
 
 	for _, ev := range envVars {
