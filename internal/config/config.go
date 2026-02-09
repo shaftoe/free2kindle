@@ -24,7 +24,7 @@ type Config struct {
 	DynamoDBTable    string
 	Mode             constant.RunMode
 	AWSConfig        *aws.Config
-	EmailProvider    string
+	EmailProvider    constant.EmailProvider
 	AuthBackend      constant.AuthBackend
 }
 
@@ -110,7 +110,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.SendEnabled {
-		c.EmailProvider = "MailJet"
+		c.EmailProvider = constant.EmailProviderMailjet
 		if c.DestEmail == "" {
 			missing = append(missing, "F2K_DEST_EMAIL")
 		}

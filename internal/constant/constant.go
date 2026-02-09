@@ -42,3 +42,11 @@ const (
 	// IdleTimeout is the maximum amount of time to wait for the next request when keep-alives are enabled.
 	IdleTimeout = 15 * time.Second
 )
+
+// EmailProvider defines the email provider type.
+type EmailProvider string
+
+const (
+	// EmailProviderMailjet indicates MailJet email provider.
+	EmailProviderMailjet EmailProvider = "mailjet"
+)

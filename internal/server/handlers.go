@@ -170,7 +170,7 @@ func (h *handlers) enrichArticle(article *model.Article, id *string, emailResp *
 	article.DeliveredFrom = &h.cfg.SenderEmail
 	article.DeliveredTo = &h.cfg.DestEmail
 	article.DeliveredEmailUUID = &emailResp.EmailUUID
-	article.DeliveredBy = &h.cfg.EmailProvider
+	article.DeliveredBy = h.cfg.EmailProvider
 }
 
 func (h *handlers) enrichLogs(
@@ -190,7 +190,7 @@ func (h *handlers) enrichLogs(
 
 	if emailResp != nil && emailResp.EmailUUID != "" {
 		addLogAttr(ctx, slog.String("email_uuid", emailResp.EmailUUID))
-		addLogAttr(ctx, slog.String("email_provider", h.cfg.EmailProvider))
+		addLogAttr(ctx, slog.String("email_provider", string(h.cfg.EmailProvider)))
 	}
 
 	return &message

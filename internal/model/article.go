@@ -29,9 +29,9 @@ type Article struct {
 	Language    string `json:"language,omitempty" dynamodbav:"language,omitempty"`
 
 	// email delivery metadata
-	DeliveryStatus     constant.Status `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
-	DeliveredFrom      *string         `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
-	DeliveredTo        *string         `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
-	DeliveredEmailUUID *string         `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"`
-	DeliveredBy        *string         `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`
+	DeliveryStatus     constant.Status        `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
+	DeliveredFrom      *string                `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
+	DeliveredTo        *string                `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
+	DeliveredEmailUUID *string                `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"` //nolint:lll // tag string is long due to json and dynamodb tags
+	DeliveredBy        constant.EmailProvider `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`               //nolint:lll // tag string is long due to json and dynamodb tags
 }
