@@ -73,6 +73,37 @@ func TestConfigValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "server config with auth0 backend valid",
+			config: &Config{
+				Mode:          constant.ModeServer,
+				AuthBackend:   constant.AuthBackendAuth0,
+				Auth0Domain:   "example.auth0.com",
+				Auth0Audience: "test-audience",
+				DynamoDBTable: "test-table",
+			},
+			wantErr: false,
+		},
+		{
+			name: "server config with auth0 missing domain",
+			config: &Config{
+				Mode:          constant.ModeServer,
+				AuthBackend:   constant.AuthBackendAuth0,
+				Auth0Audience: "test-audience",
+				DynamoDBTable: "test-table",
+			},
+			wantErr: true,
+		},
+		{
+			name: "server config with auth0 missing audience",
+			config: &Config{
+				Mode:          constant.ModeServer,
+				AuthBackend:   constant.AuthBackendAuth0,
+				Auth0Domain:   "example.auth0.com",
+				DynamoDBTable: "test-table",
+			},
+			wantErr: true,
+		},
+		{
 			name: "CLI config missing kindle email with send enabled",
 			config: &Config{
 				Mode:             constant.ModeCLI,
@@ -174,4 +205,24 @@ func TestLoadServerMode(t *testing.T) {
 	cfg, err := Load(constant.ModeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, constant.ModeServer, cfg.Mode)
+}
+
+func TestLoadServerModeAuth0(t *testing.T) {
+	_ = os.Setenv("F2K_AUTH_BACKEND", "auth0")
+	_ = os.Setenv("F2K_AUTH0_DOMAIN", "example.auth0.com")
+	_ = os.Setenv("F2K_AUTH0_AUDIENCE", "test-audience")
+	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
+	defer func() {
+		_ = os.Unsetenv("F2K_AUTH_BACKEND")
+		_ = os.Unsetenv("F2K_AUTH0_DOMAIN")
+		_ = os.Unsetenv("F2K_AUTH0_AUDIENCE")
+		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
+	}()
+
+	cfg, err := Load(constant.ModeServer)
+	assert.NoError(t, err)
+	assert.Equal(t, constant.ModeServer, cfg.Mode)
+	assert.Equal(t, constant.AuthBackendAuth0, cfg.AuthBackend)
+	assert.Equal(t, "example.auth0.com", cfg.Auth0Domain)
+	assert.Equal(t, "test-audience", cfg.Auth0Audience)
 }

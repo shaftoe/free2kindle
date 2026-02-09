@@ -34,7 +34,7 @@ func TestCorsMiddleware_GET(t *testing.T) {
 			w.Header().Get("Access-Control-Allow-Origin"))
 	}
 
-	allowedHeaders := "Content-Type, X-API-Key"
+	allowedHeaders := "Content-Type, Authorization"
 	if w.Header().Get("Access-Control-Allow-Headers") != allowedHeaders {
 		t.Errorf("expected Access-Control-Allow-Headers '%s', got '%s'",
 			allowedHeaders, w.Header().Get("Access-Control-Allow-Headers"))

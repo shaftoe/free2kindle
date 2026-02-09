@@ -19,6 +19,8 @@ type AuthBackend string
 const (
 	// AuthBackendSharedAPIKey indicates shared API key authentication.
 	AuthBackendSharedAPIKey AuthBackend = "shared_api_key"
+	// AuthBackendAuth0 indicates Auth0 JWT authentication.
+	AuthBackendAuth0 AuthBackend = "auth0"
 )
 
 // Status represents the delivery status of an article.

@@ -18,6 +18,8 @@ type Config struct {
 	MailjetAPIKey    string
 	MailjetAPISecret string
 	APIKeySecret     string
+	Auth0Domain      string
+	Auth0Audience    string
 	Debug            bool
 	SendEnabled      bool
 	DynamoDBTable    string
@@ -32,46 +34,11 @@ func Load(mode constant.RunMode) (*Config, error) {
 	viper.SetEnvPrefix("F2K")
 	viper.AutomaticEnv()
 
-	if err := viper.BindEnv("destination-email", "F2K_DEST_EMAIL"); err != nil {
-		return nil, fmt.Errorf("failed to bind destination-email env: %w", err)
-	}
-	if err := viper.BindEnv("sender-email", "F2K_SENDER_EMAIL"); err != nil {
-		return nil, fmt.Errorf("failed to bind sender-email env: %w", err)
-	}
-	if err := viper.BindEnv("api-key", "MAILJET_API_KEY", "MJ_APIKEY_PUBLIC"); err != nil {
-		return nil, fmt.Errorf("failed to bind api-key env: %w", err)
-	}
-	if err := viper.BindEnv("api-secret", "MAILJET_API_SECRET", "MJ_APIKEY_PRIVATE"); err != nil {
-		return nil, fmt.Errorf("failed to bind api-secret env: %w", err)
-	}
-	if err := viper.BindEnv("api-key-secret", "F2K_API_KEY"); err != nil {
-		return nil, fmt.Errorf("failed to bind api-key-secret env: %w", err)
-	}
-	if err := viper.BindEnv("debug", "F2K_DEBUG"); err != nil {
-		return nil, fmt.Errorf("failed to bind debug env: %w", err)
-	}
-	if err := viper.BindEnv("send-enabled", "F2K_SEND_ENABLED"); err != nil {
-		return nil, fmt.Errorf("failed to bind send-enabled env: %w", err)
-	}
-	if err := viper.BindEnv("dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"); err != nil {
-		return nil, fmt.Errorf("failed to bind dynamodb-table env: %w", err)
-	}
-	if err := viper.BindEnv("auth-backend", "F2K_AUTH_BACKEND"); err != nil {
-		return nil, fmt.Errorf("failed to bind auth-backend env: %w", err)
+	if err := bindEnvVars(); err != nil {
+		return nil, err
 	}
 
-	cfg := &Config{
-		DestEmail:        viper.GetString("destination-email"),
-		SenderEmail:      viper.GetString("sender-email"),
-		MailjetAPIKey:    viper.GetString("api-key"),
-		MailjetAPISecret: viper.GetString("api-secret"),
-		APIKeySecret:     viper.GetString("api-key-secret"),
-		Debug:            viper.GetBool("debug"),
-		SendEnabled:      viper.GetBool("send-enabled"),
-		DynamoDBTable:    viper.GetString("dynamodb-table"),
-		Mode:             mode,
-		AuthBackend:      constant.AuthBackend(viper.GetString("auth-backend")),
-	}
+	cfg := loadConfig(mode)
 
 	if cfg.AuthBackend == "" {
 		cfg.AuthBackend = constant.AuthBackendSharedAPIKey
@@ -84,43 +51,67 @@ func Load(mode constant.RunMode) (*Config, error) {
 	return cfg, nil
 }
 
+func bindEnvVars() error {
+	envVars := []struct {
+		key    string
+		envVar string
+	}{
+		{"destination-email", "F2K_DEST_EMAIL"},
+		{"sender-email", "F2K_SENDER_EMAIL"},
+		{"api-key", "MAILJET_API_KEY"},
+		{"api-secret", "MAILJET_API_SECRET"},
+		{"api-key-secret", "F2K_API_KEY"},
+		{"debug", "F2K_DEBUG"},
+		{"send-enabled", "F2K_SEND_ENABLED"},
+		{"dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"},
+		{"auth-backend", "F2K_AUTH_BACKEND"},
+		{"auth0-domain", "F2K_AUTH0_DOMAIN"},
+		{"auth0-audience", "F2K_AUTH0_AUDIENCE"},
+	}
+
+	for _, ev := range envVars {
+		if err := viper.BindEnv(ev.key, ev.envVar); err != nil {
+			return fmt.Errorf("failed to bind %s env: %w", ev.key, err)
+		}
+	}
+	return nil
+}
+
+func loadConfig(mode constant.RunMode) *Config {
+	cfg := &Config{
+		DestEmail:        viper.GetString("destination-email"),
+		SenderEmail:      viper.GetString("sender-email"),
+		MailjetAPIKey:    viper.GetString("api-key"),
+		MailjetAPISecret: viper.GetString("api-secret"),
+		APIKeySecret:     viper.GetString("api-key-secret"),
+		Auth0Domain:      viper.GetString("auth0-domain"),
+		Auth0Audience:    viper.GetString("auth0-audience"),
+		Debug:            viper.GetBool("debug"),
+		SendEnabled:      viper.GetBool("send-enabled"),
+		DynamoDBTable:    viper.GetString("dynamodb-table"),
+		Mode:             mode,
+		AuthBackend:      constant.AuthBackend(viper.GetString("auth-backend")),
+	}
+
+	_ = viper.BindEnv("api-key", "MJ_APIKEY_PUBLIC")
+	_ = viper.BindEnv("api-secret", "MJ_APIKEY_PRIVATE")
+
+	return cfg
+}
+
 // Validate checks that all required configuration fields are set.
 func (c *Config) Validate() error {
 	var missing []string
 
 	if c.Mode == constant.ModeServer {
-		if c.APIKeySecret == "" {
-			missing = append(missing, "F2K_API_KEY")
+		if err := c.validateServerConfig(&missing); err != nil {
+			return err
 		}
-		if c.DynamoDBTable == "" {
-			missing = append(missing, "F2K_DYNAMODB_TABLE_NAME")
-		}
-
-		if c.AuthBackend != constant.AuthBackendSharedAPIKey {
-			return fmt.Errorf("unsupported auth backend: %s", c.AuthBackend)
-		}
-
-		cfg, err := config.LoadDefaultConfig(context.Background())
-		if err != nil {
-			return fmt.Errorf("failed to load AWS config: %w", err)
-		}
-		c.AWSConfig = &cfg
 	}
 
 	if c.SendEnabled {
 		c.EmailProvider = constant.EmailBackendMailjet
-		if c.DestEmail == "" {
-			missing = append(missing, "F2K_DEST_EMAIL")
-		}
-		if c.SenderEmail == "" {
-			missing = append(missing, "F2K_SENDER_EMAIL")
-		}
-		if c.MailjetAPIKey == "" {
-			missing = append(missing, "MAILJET_API_KEY")
-		}
-		if c.MailjetAPISecret == "" {
-			missing = append(missing, "MAILJET_API_SECRET")
-		}
+		c.validateSendEnabledConfig(&missing)
 	}
 
 	if len(missing) > 0 {
@@ -128,4 +119,47 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (c *Config) validateServerConfig(missing *[]string) error {
+	switch c.AuthBackend {
+	case constant.AuthBackendSharedAPIKey:
+		if c.APIKeySecret == "" {
+			*missing = append(*missing, "F2K_API_KEY")
+		}
+	case constant.AuthBackendAuth0:
+		if c.Auth0Domain == "" {
+			*missing = append(*missing, "F2K_AUTH0_DOMAIN")
+		}
+		if c.Auth0Audience == "" {
+			*missing = append(*missing, "F2K_AUTH0_AUDIENCE")
+		}
+	default:
+		return fmt.Errorf("unsupported auth backend: %s", c.AuthBackend)
+	}
+	if c.DynamoDBTable == "" {
+		*missing = append(*missing, "F2K_DYNAMODB_TABLE_NAME")
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
+	}
+	c.AWSConfig = &cfg
+	return nil
+}
+
+func (c *Config) validateSendEnabledConfig(missing *[]string) {
+	if c.DestEmail == "" {
+		*missing = append(*missing, "F2K_DEST_EMAIL")
+	}
+	if c.SenderEmail == "" {
+		*missing = append(*missing, "F2K_SENDER_EMAIL")
+	}
+	if c.MailjetAPIKey == "" {
+		*missing = append(*missing, "MAILJET_API_KEY")
+	}
+	if c.MailjetAPISecret == "" {
+		*missing = append(*missing, "MAILJET_API_SECRET")
+	}
 }

@@ -223,7 +223,7 @@ func TestArticleCreationFlow_Authenticated(t *testing.T) {
 	bodyBytes, _ := json.Marshal(body)
 	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-API-Key", testAPIKey)
+	req.Header.Set("Authorization", "Bearer "+testAPIKey)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -288,7 +288,7 @@ func TestArticleCreationFlow_EmailDisabled(t *testing.T) {
 	bodyBytes, _ := json.Marshal(body)
 	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-API-Key", testAPIKey)
+	req.Header.Set("Authorization", "Bearer "+testAPIKey)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)

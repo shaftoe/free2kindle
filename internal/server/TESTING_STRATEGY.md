@@ -12,7 +12,6 @@ This document outlines the testing strategy for the `internal/server` package.
 
 ### 2. Middleware (`middleware.go`)
 - `corsMiddleware` - CORS headers and OPTIONS handling
-- `authMiddleware` - X-API-Key header validation
 - `requestIDMiddleware` - Request ID generation/extraction
 - `loggingMiddleware` - Request/response logging with status-based levels
 
@@ -126,10 +125,6 @@ Handlers create dependencies directly:
 | `corsMiddleware` - OPTIONS | Unit | Medium | Returns 204 No Content |
 | `corsMiddleware` - origin header | Unit | Medium | Uses origin from header |
 | `corsMiddleware` - no origin | Unit | Medium | Uses "*" as origin |
-| `authMiddleware` - valid API key | Unit | High | Calls next handler |
-| `authMiddleware` - missing API key | Unit | High | Returns 401 with error |
-| `authMiddleware` - wrong API key | Unit | High | Returns 401 with error |
-| `authMiddleware` - empty API key | Unit | High | Returns 401 with error |
 | `requestIDMiddleware` - lambda context | Unit | Medium | Uses AWS Request ID |
 | `requestIDMiddleware` - X-Request-ID header | Unit | Medium | Uses header value |
 | `requestIDMiddleware` - x-amzn-request-id header | Unit | Medium | Uses header value |
@@ -147,8 +142,8 @@ Handlers create dependencies directly:
 | `NewRouter` - 405 handler | HTTP E2E | Medium | Returns 405 for wrong methods |
 | **Integration** | | | |
 | Health check flow | HTTP E2E | High | Public health endpoint works |
-| Article creation flow (authenticated) | HTTP E2E | High | Full flow with valid API key |
-| Article creation flow (unauthenticated) | HTTP E2E | High | Returns 401 without API key |
+| Article creation flow (authenticated) | HTTP E2E | High | Full flow with valid Authorization header |
+| Article creation flow (unauthenticated) | HTTP E2E | High | Returns 401 without Authorization header |
 | Article creation flow (email disabled) | HTTP E2E | High | Processes without sending email |
 | CORS preflight flow | HTTP E2E | Medium | OPTIONS request handled correctly |
 

@@ -87,7 +87,7 @@ logs:
 test-url *URL:
     curl -X POST http://localhost:8080/api/v1/articles \
       -H "Content-Type: application/json" \
-      -H "X-API-Key: $F2K_API_KEY" \
+      -H "Authorization: Bearer $F2K_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"
 
 deploy-lambda: build-lambda-zip upload-zip
