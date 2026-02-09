@@ -65,12 +65,9 @@ func Load(mode RunMode) (*Config, error) {
 	if err := viper.BindEnv("dynamodb-table", "F2K_DYNAMODB_TABLE_NAME"); err != nil {
 		return nil, fmt.Errorf("failed to bind dynamodb-table env: %w", err)
 	}
-	if err := viper.BindEnv("account", "F2K_ACCOUNT"); err != nil {
-		return nil, fmt.Errorf("failed to bind account env: %w", err)
-	}
 
 	cfg := &Config{
-		Account:          viper.GetString("account"),
+		Account:          "free2kindle", // currently hardcoded, auth work in progress
 		DestEmail:        viper.GetString("destination-email"),
 		SenderEmail:      viper.GetString("sender-email"),
 		MailjetAPIKey:    viper.GetString("api-key"),
@@ -80,10 +77,6 @@ func Load(mode RunMode) (*Config, error) {
 		SendEnabled:      viper.GetBool("send-enabled"),
 		DynamoDBTable:    viper.GetString("dynamodb-table"),
 		Mode:             mode,
-	}
-
-	if cfg.Account == "" {
-		cfg.Account = "admin@example.com"
 	}
 
 	if err := cfg.Validate(); err != nil {
