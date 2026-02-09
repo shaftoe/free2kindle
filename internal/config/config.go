@@ -108,7 +108,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.SendEnabled {
-		c.EmailProvider = constant.EmailProviderMailjet
+		c.EmailProvider = constant.EmailBackendMailjet
 		if c.DestEmail == "" {
 			missing = append(missing, "F2K_DEST_EMAIL")
 		}

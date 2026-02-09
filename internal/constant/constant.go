@@ -47,6 +47,6 @@ const (
 type EmailProvider string
 
 const (
-	// EmailProviderMailjet indicates MailJet email provider.
-	EmailProviderMailjet EmailProvider = "mailjet"
+	// EmailBackendMailjet indicates MailJet email backend.
+	EmailBackendMailjet EmailProvider = "mailjet"
 )

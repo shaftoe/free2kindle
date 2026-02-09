@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shaftoe/free2kindle/internal/auth"
 	"github.com/shaftoe/free2kindle/internal/config"
+	"github.com/shaftoe/free2kindle/internal/constant"
 	"github.com/shaftoe/free2kindle/internal/content"
 	"github.com/shaftoe/free2kindle/internal/email"
 	"github.com/shaftoe/free2kindle/internal/email/mailjet"
@@ -28,22 +29,12 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 // NewRouter creates and configures a new chi router with all middleware and routes.
 func NewRouter(cfg *config.Config) *chi.Mux {
 	setupLogging(cfg)
+
 	r := chi.NewRouter()
-
-	var sender email.Sender
-	if cfg.SendEnabled {
-		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
-	}
-
-	articleService := service.New(service.NewDeps(
-		content.NewExtractor(),
-		epub.NewGenerator(),
-		sender,
-	), cfg)
-
+	srv := newService(cfg)
 	handlers := newHandlers(
 		cfg,
-		articleService,
+		srv,
 		repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable),
 	)
 
@@ -84,4 +75,22 @@ func setupLogging(cfg *config.Config) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	})))
+}
+
+func newService(cfg *config.Config) *service.Service {
+	var sender email.Sender
+	if cfg.SendEnabled {
+		switch cfg.EmailProvider {
+		case constant.EmailBackendMailjet:
+			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
+		default:
+			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
+		}
+	}
+
+	return service.New(service.NewDeps(
+		content.NewExtractor(),
+		epub.NewGenerator(),
+		sender,
+	), cfg)
 }
