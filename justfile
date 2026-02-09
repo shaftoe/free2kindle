@@ -16,9 +16,9 @@ run *ARGS: build-cli
 lint:
     golangci-lint run
 
-# Run tests
+# Run tests (skip DynamoDB integration tests)
 test:
-    go test ./...
+    go test ./... -short
 
 # Build Lambda binary for Linux
 build-lambda:

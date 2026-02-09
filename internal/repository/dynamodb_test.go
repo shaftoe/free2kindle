@@ -307,7 +307,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 		DeliveredFrom:      stringPtr("sender@example.com"),
 		DeliveredTo:        stringPtr("kindle@example.com"),
 		DeliveredEmailUUID: stringPtr("email-uuid-123"),
-		DeliveredBy:        constant.EmailProviderMailjet,
+		DeliveredBy:        constant.EmailBackendMailjet,
 	}
 
 	err = repo.Store(ctx, updated)

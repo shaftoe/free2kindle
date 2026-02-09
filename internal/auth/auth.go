@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	apiKeyHeader   = "X-API-Key" //nolint:gosec // G101: This is a header name constant, not a hardcoded credential
-	adminAccountID = "admin"
+	apiKeyHeader    = "X-API-Key" //nolint:gosec // G101: This is a header name constant, not a hardcoded credential
+	adminAccountID  = "admin"
+	anonymousUserID = "-"
 )
 
 type contextKey string
@@ -25,8 +26,9 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
-// NewMiddleware returns authentication middleware based on the configured auth backend.
-func NewMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
+// NewUserIDMiddleware returns authentication middleware based on the configured auth backend.
+// Ensure the userID is set in the context (`anonymousUserID` string for anonymous users).
+func NewUserIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	switch cfg.AuthBackend {
 	case constant.AuthBackendSharedAPIKey:
 		return sharedAPIKeyMiddleware(cfg.APIKeySecret)
@@ -46,7 +48,8 @@ func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			apiKey := r.Header.Get(apiKeyHeader)
 			if apiKey == "" || apiKey != apiKeySecret {
-				next.ServeHTTP(w, r)
+				ctx := context.WithValue(r.Context(), userIDKey, anonymousUserID)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 			ctx := context.WithValue(r.Context(), userIDKey, adminAccountID)
@@ -55,12 +58,14 @@ func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler
 	}
 }
 
+// EnsureAutheticatedMiddleware ensures that the request is authenticated before
+// proceeding to the next handler.
 func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accountID := GetAccountID(r.Context())
-		if accountID == "" {
+		if accountID == "" || accountID == anonymousUserID {
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(errorResponse{Message: "Unauthorized"})
+			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Unauthorized"})
 			return
 		}
 		next.ServeHTTP(w, r)

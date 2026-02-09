@@ -30,9 +30,11 @@ func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(corsMiddleware)
 	r.Use(jsonContentTypeMiddleware)
+	r.Use(auth.NewUserIDMiddleware(cfg))
+	r.Use(loggingMiddleware)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
-			r.Use(auth.NewMiddleware(cfg))
+			r.Use(auth.EnsureAutheticatedMiddleware)
 			r.Post("/", h.handleCreateArticle)
 		})
 	})
@@ -248,12 +250,13 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 		SendEnabled:  false,
 	}
 
-	h := newHandlers(cfg, nil, nil)
+	h := createTestHandlerWithMock(cfg)
 	r := chi.NewRouter()
 	r.Use(corsMiddleware)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
-			r.Use(auth.NewMiddleware(cfg))
+			r.Use(auth.EnsureAutheticatedMiddleware)
+			r.Use(auth.NewUserIDMiddleware(cfg))
 			r.Post("/", h.handleCreateArticle)
 		})
 	})

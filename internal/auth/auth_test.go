@@ -15,7 +15,7 @@ func TestNewMiddleware_SharedAPIKey(t *testing.T) {
 		APIKeySecret: "valid-key",
 	}
 
-	middleware := NewMiddleware(cfg)
+	middleware := NewUserIDMiddleware(cfg)
 
 	if middleware == nil {
 		t.Fatal("expected middleware to not be nil")
@@ -46,7 +46,8 @@ func TestSharedAPIKeyMiddleware_MissingAPIKey(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test", http.NoBody)
 	w := httptest.NewRecorder()
 
-	sharedAPIKeyMiddleware("valid-key")(next).ServeHTTP(w, req)
+	middlewareChain := EnsureAutheticatedMiddleware(sharedAPIKeyMiddleware("valid-key")(next))
+	middlewareChain.ServeHTTP(w, req)
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
@@ -62,7 +63,8 @@ func TestSharedAPIKeyMiddleware_WrongAPIKey(t *testing.T) {
 	req.Header.Set("X-API-Key", "wrong-key")
 	w := httptest.NewRecorder()
 
-	sharedAPIKeyMiddleware("valid-key")(next).ServeHTTP(w, req)
+	middlewareChain := EnsureAutheticatedMiddleware(sharedAPIKeyMiddleware("valid-key")(next))
+	middlewareChain.ServeHTTP(w, req)
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
@@ -78,7 +80,8 @@ func TestSharedAPIKeyMiddleware_EmptyAPIKey(t *testing.T) {
 	req.Header.Set("X-API-Key", "")
 	w := httptest.NewRecorder()
 
-	sharedAPIKeyMiddleware("valid-key")(next).ServeHTTP(w, req)
+	middlewareChain := EnsureAutheticatedMiddleware(sharedAPIKeyMiddleware("valid-key")(next))
+	middlewareChain.ServeHTTP(w, req)
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
@@ -95,7 +98,7 @@ func TestNewMiddleware_DefaultBackend(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	middleware := NewMiddleware(cfg)
+	middleware := NewUserIDMiddleware(cfg)
 
 	req := httptest.NewRequest("GET", "/test", http.NoBody)
 	req.Header.Set("X-API-Key", "valid-key")
