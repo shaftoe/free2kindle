@@ -26,7 +26,7 @@ type healthResponse struct {
 }
 
 type errorResponse struct {
-	Message string `json:"message"`
+	Error string `json:"error"`
 }
 
 type handlers struct {

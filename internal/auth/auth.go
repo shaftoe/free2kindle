@@ -123,7 +123,7 @@ func auth0Middleware(domain, audience string) func(http.Handler) http.Handler {
 
 			validatedClaims, ok := claims.(*validator.ValidatedClaims)
 			if !ok {
-				handleAuthError(r.Context(), next, w, r, "Failed to parse JWT claims")
+				handleAuthError(r.Context(), next, w, r, "failed to parse JWT claims")
 				return
 			}
 

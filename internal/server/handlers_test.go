@@ -184,8 +184,8 @@ func TestHandleCreateArticleInvalidJSON(t *testing.T) {
 	}
 
 	expectedMsg := "failed to decode request body: invalid character 'i' looking for beginning of value"
-	if resp.Message != expectedMsg {
-		t.Errorf("expected message '%s', got '%s'", expectedMsg, resp.Message)
+	if resp.Error != expectedMsg {
+		t.Errorf("expected message '%s', got '%s'", expectedMsg, resp.Error)
 	}
 }
 
@@ -212,8 +212,8 @@ func TestHandleCreateArticleMissingURL(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "missing URL in request body" {
-		t.Errorf("expected message 'missing URL in request body', got '%s'", resp.Message)
+	if resp.Error != "missing URL in request body" {
+		t.Errorf("expected message 'missing URL in request body', got '%s'", resp.Error)
 	}
 }
 
@@ -243,8 +243,8 @@ func TestHandleCreateArticleServiceError(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "Failed to process article: extraction failed" {
-		t.Errorf("expected message 'Failed to process article: extraction failed', got '%s'", resp.Message)
+	if resp.Error != "failed to process article: extraction failed" {
+		t.Errorf("expected message 'failed to process article: extraction failed', got '%s'", resp.Error)
 	}
 }
 
@@ -274,8 +274,8 @@ func TestHandleCreateArticleNilArticle(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "Failed to process article: article is nil" {
-		t.Errorf("expected message 'Failed to process article: article is nil', got '%s'", resp.Message)
+	if resp.Error != "failed to process article: article is nil" {
+		t.Errorf("expected message 'failed to process article: article is nil', got '%s'", resp.Error)
 	}
 }
 

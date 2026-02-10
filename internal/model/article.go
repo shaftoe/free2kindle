@@ -9,24 +9,25 @@ import (
 
 // Article represents all article data including content, metadata, and delivery status.
 type Article struct {
-	Account            string     `json:"account" dynamodbav:"account"`
-	ID                 string     `json:"id" dynamodbav:"id"`
-	URL                string     `json:"url" dynamodbav:"url"`
-	Title              string     `json:"title" dynamodbav:"title"`
-	Content            string     `json:"content" dynamodbav:"content"`
-	SiteName           string     `json:"siteName" dynamodbav:"siteName"`
-	SourceDomain       string     `json:"sourceDomain" dynamodbav:"sourceDomain"`
-	WordCount          int        `json:"wordCount" dynamodbav:"wordCount"`
-	ReadingTimeMinutes int        `json:"readingTimeMinutes" dynamodbav:"readingTimeMinutes"`
-	CreatedAt          time.Time  `json:"createdAt" dynamodbav:"createdAt"`
-	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt,omitempty"`
+	Account   string    `json:"account" dynamodbav:"account"`
+	ID        string    `json:"id" dynamodbav:"id"`
+	URL       string    `json:"url" dynamodbav:"url"`
+	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
 
 	// optional metadata
-	Author      string `json:"author,omitempty" dynamodbav:"author,omitempty"`
-	Excerpt     string `json:"excerpt,omitempty" dynamodbav:"excerpt,omitempty"`
-	ImageURL    string `json:"imageUrl,omitempty" dynamodbav:"imageUrl,omitempty"`
-	ContentType string `json:"contentType,omitempty" dynamodbav:"contentType,omitempty"`
-	Language    string `json:"language,omitempty" dynamodbav:"language,omitempty"`
+	Title              string     `json:"title,omitempty" dynamodbav:"title,omitempty"`
+	Content            string     `json:"content,omitempty" dynamodbav:"content,omitempty"`
+	Author             string     `json:"author,omitempty" dynamodbav:"author,omitempty"`
+	SiteName           string     `json:"siteName,omitempty" dynamodbav:"siteName,omitempty"`
+	SourceDomain       string     `json:"sourceDomain,omitempty" dynamodbav:"sourceDomain,omitempty"`
+	Excerpt            string     `json:"excerpt,omitempty" dynamodbav:"excerpt,omitempty"`
+	ImageURL           string     `json:"imageUrl,omitempty" dynamodbav:"imageUrl,omitempty"`
+	ContentType        string     `json:"contentType,omitempty" dynamodbav:"contentType,omitempty"`
+	Language           string     `json:"language,omitempty" dynamodbav:"language,omitempty"`
+	Error              string     `json:"error,omitempty" dynamodbav:"error,omitempty"`
+	WordCount          int        `json:"wordCount,omitempty" dynamodbav:"wordCount,omitempty"`
+	ReadingTimeMinutes int        `json:"readingTimeMinutes,omitempty" dynamodbav:"readingTimeMinutes,omitempty"`
+	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt,omitempty"`
 
 	// email delivery metadata
 	DeliveryStatus     constant.Status        `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`

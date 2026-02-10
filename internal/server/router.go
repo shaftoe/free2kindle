@@ -47,12 +47,12 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 
 	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: "not_found"})
+		_ = json.NewEncoder(w).Encode(errorResponse{Error: "not_found"})
 	})
 
 	r.MethodNotAllowed(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: "method_not_allowed"})
+		_ = json.NewEncoder(w).Encode(errorResponse{Error: "method_not_allowed"})
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {

@@ -124,8 +124,8 @@ func TestNewRouter_404Handler(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "not_found" {
-		t.Errorf("expected message 'not_found', got '%s'", resp.Message)
+	if resp.Error != "not_found" {
+		t.Errorf("expected message 'not_found', got '%s'", resp.Error)
 	}
 }
 
@@ -149,8 +149,8 @@ func TestNewRouter_405Handler(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Message != "method_not_allowed" {
-		t.Errorf("expected message 'method_not_allowed', got '%s'", resp.Message)
+	if resp.Error != "method_not_allowed" {
+		t.Errorf("expected message 'method_not_allowed', got '%s'", resp.Error)
 	}
 }
 

@@ -98,32 +98,35 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	id, cleanURL, err := getArticleIDandCleanURL(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
+		_ = json.NewEncoder(w).Encode(errorResponse{Error: err.Error()})
 		return
 	}
 
 	addLogAttr(r.Context(), slog.String("article_id", *id))
 	addLogAttr(r.Context(), slog.String("article_url", *cleanURL))
-
-	eg, articlesChan := h.processDBArticleUpdates(r.Context())
-
-	articlesChan <- &model.Article{
+	article := &model.Article{
 		Account:   auth.GetAccountID(r.Context()),
 		ID:        *id,
 		URL:       *cleanURL,
 		CreatedAt: time.Now(),
 	}
 
+	eg, articlesChan := h.processDBArticleUpdates(r.Context())
+	defer func() {
+		close(articlesChan)
+		_ = eg.Wait()
+	}()
+	articlesChan <- article
+
 	result, err := h.service.Process(r.Context(), *cleanURL)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: " + err.Error()})
+		h.processArticleError(article, articlesChan, w, r, fmt.Errorf("failed to process article: %v", err))
 		return
 	}
 
 	if result.Article() == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to process article: article is nil"})
+		h.processArticleError(
+			article, articlesChan, w, r, errors.New("failed to process article: article is nil"))
 		return
 	}
 
@@ -131,15 +134,13 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	if h.cfg.SendEnabled {
 		emailResp, err = h.service.Send(r.Context(), result, "")
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Failed to send email: " + err.Error()})
+			h.processArticleError(article, articlesChan, w, r, err)
 			return
 		}
 	}
 
 	h.enrichArticle(result.Article(), id, emailResp, auth.GetAccountID(r.Context()))
 	articlesChan <- result.Article()
-	close(articlesChan)
 	msg := h.enrichLogs(r.Context(), result.Article(), emailResp)
 
 	w.WriteHeader(http.StatusCreated)
@@ -150,8 +151,17 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		Message:        *msg,
 		DeliveryStatus: string(result.Article().DeliveryStatus),
 	})
+}
 
-	_ = eg.Wait()
+func (h *handlers) processArticleError(
+	article *model.Article, ch chan *model.Article, w http.ResponseWriter, r *http.Request, err error) {
+	article.Error = err.Error()
+	ch <- article
+
+	addLogAttr(r.Context(), slog.String("error", err.Error()))
+
+	w.WriteHeader(http.StatusInternalServerError)
+	_ = json.NewEncoder(w).Encode(errorResponse{Error: err.Error()})
 }
 
 func (h *handlers) enrichArticle(
