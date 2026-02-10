@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 const (

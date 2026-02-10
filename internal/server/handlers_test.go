@@ -8,12 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/constant"
-	"github.com/shaftoe/free2kindle/internal/email"
-	"github.com/shaftoe/free2kindle/internal/model"
-	"github.com/shaftoe/free2kindle/internal/repository"
-	"github.com/shaftoe/free2kindle/internal/service"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/email"
+	"github.com/shaftoe/savetoink/internal/model"
+	"github.com/shaftoe/savetoink/internal/repository"
+	"github.com/shaftoe/savetoink/internal/service"
 )
 
 type MockService struct {

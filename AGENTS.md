@@ -1,4 +1,4 @@
-# Agent Guidelines for free2kindle
+# Agent Guidelines for savetoink
 
 - **ALWAYS** run `just lint test` and fix issues before considering a change ready for user review.
 - **ALWAYS** add new tests for any new functionality.

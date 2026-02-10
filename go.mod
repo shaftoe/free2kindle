@@ -1,4 +1,4 @@
-module github.com/shaftoe/free2kindle
+module github.com/shaftoe/savetoink
 
 go 1.25.6
 

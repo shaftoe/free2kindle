@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/akrylysov/algnhsa"
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/constant"
-	"github.com/shaftoe/free2kindle/internal/server"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/server"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-# Free2Kindle Firefox Extension
+# savetoink Firefox Extension
 
 A simple Firefox extension to send web articles to your Kindle device.
 
@@ -19,7 +19,7 @@ A simple Firefox extension to send web articles to your Kindle device.
 
 Before using the extension, you need to configure:
 
-1. **API URL**: The URL of your deployed Free2Kindle Lambda function
+1. **API URL**: The URL of your deployed savetoink Lambda function
 2. **API Key**: Your secret API key for authentication
 
 To configure settings:
@@ -34,7 +34,7 @@ The extension will verify your settings by making a health check request to your
 
 ### Send Current Page
 1. Navigate to any article or web page
-2. Click the Free2Kindle extension icon
+2. Click the savetoink extension icon
 3. Click "Send to Kindle"
 4. Wait for confirmation message
 
@@ -45,7 +45,7 @@ The extension will verify your settings by making a health check request to your
 
 ## API Compatibility
 
-This extension works with the Free2Kindle backend API:
+This extension works with the savetoink backend API:
 
 - `POST /api/v1/articles` - Queue article for Kindle delivery
 - `GET /api/v1/health` - Health check endpoint
@@ -83,4 +83,4 @@ You can use any PNG images for these icons. A simple book or Kindle icon would w
 
 ## License
 
-Same as the main Free2Kindle project.
+Same as the main savetoink project.

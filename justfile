@@ -1,16 +1,16 @@
 set dotenv-load := true
 
-project_name := 'free2kindle'
+project_name := 'savetoink'
 lambda_archive := 'lambda-source.zip'
-bucket_name := 'free2kindle-lambda-source'
+bucket_name := 'savetoink-lambda-source'
 
 # Build CLI binary
 build-cli:
-    go build -o bin/free2kindle ./cmd/cli
+    go build -o bin/savetoink ./cmd/cli
 
 # Build CLI and convert URL into EPUB
 run *ARGS: build-cli
-    ./bin/free2kindle convert {{ ARGS }}
+    ./bin/savetoink convert {{ ARGS }}
 
 # Run linter
 lint:
@@ -107,7 +107,7 @@ update-deps:
     go get -u all
 
 # Scan DynamoDB article table and print all records
-scan-table TABLE_NAME="free2kindle-articles":
+scan-table TABLE_NAME="savetoink-articles":
     aws dynamodb scan \
         --table-name {{ TABLE_NAME }} \
         --output json \

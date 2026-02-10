@@ -4,7 +4,7 @@ package model
 import (
 	"time"
 
-	"github.com/shaftoe/free2kindle/internal/constant"
+	"github.com/shaftoe/savetoink/internal/constant"
 )
 
 // Article represents all article data including content, metadata, and delivery status.

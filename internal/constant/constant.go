@@ -1,4 +1,4 @@
-// Package constant provides shared constants used across the free2kindle application.
+// Package constant provides shared constants used across the savetoink application.
 package constant
 
 import "time"

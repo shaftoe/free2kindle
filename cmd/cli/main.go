@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/constant"
-	"github.com/shaftoe/free2kindle/internal/content"
-	"github.com/shaftoe/free2kindle/internal/email"
-	"github.com/shaftoe/free2kindle/internal/email/mailjet"
-	"github.com/shaftoe/free2kindle/internal/epub"
-	"github.com/shaftoe/free2kindle/internal/service"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/content"
+	"github.com/shaftoe/savetoink/internal/email"
+	"github.com/shaftoe/savetoink/internal/email/mailjet"
+	"github.com/shaftoe/savetoink/internal/epub"
+	"github.com/shaftoe/savetoink/internal/service"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,7 +32,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "free2kindle",
+	Use:   "savetoink",
 	Short: "Convert web articles to EPUB format",
 	Long:  `A CLI tool to fetch web articles and convert them to EPUB format for Kindle devices.`,
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/shaftoe/free2kindle/internal/constant"
+	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/stretchr/testify/assert"
 )
 

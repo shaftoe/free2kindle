@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shaftoe/free2kindle/internal/constant"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -329,7 +329,7 @@ func stringPtr(s string) *string {
 func setupTestDynamoDB(t *testing.T) *DynamoDB {
 	t.Helper()
 
-	tableName := "test-free2kindle-articles"
+	tableName := "test-savetoink-articles"
 	repo := NewDynamoDB(nil, tableName)
 
 	t.Cleanup(func() {

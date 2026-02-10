@@ -1,4 +1,4 @@
-# Free2Kindle Specification
+# savetoink Specification
 
 ## Overview
 
@@ -35,7 +35,7 @@ A self-hosted / CLI application that allows users to save web links from the ter
 **Convert URL to local EPUB:**
 
 ```bash
-./bin/free2kindle convert https://example.com/article -o article.epub
+./bin/savetoink convert https://example.com/article -o article.epub
 ```
 
 **Send URL to Kindle via email:**
@@ -45,7 +45,7 @@ export F2K_SENDER_EMAIL="sender@example.com"
 export MAILJET_API_KEY="your_api_key"
 export MAILJET_API_SECRET="your_api_secret"
 
-./bin/free2kindle convert --send https://example.com/article
+./bin/savetoink convert --send https://example.com/article
 ```
 
 ### Backend Components (AWS Lambda)
@@ -302,9 +302,9 @@ type EmailRequest struct {
 ## Project Structure
 
 ```
-free2kindle/
+savetoink/
 ├── pkg/
-│   └── free2kindle/           # Shared business logic library
+│   └── savetoink/           # Shared business logic library
 │       ├── content/          # Content extraction
 │       ├── epub/             # EPUB generation
 │       └── email/            # Email sending

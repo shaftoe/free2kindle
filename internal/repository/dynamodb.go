@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 const (

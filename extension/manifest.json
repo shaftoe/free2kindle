@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Free2Kindle",
+  "name": "savetoink",
   "version": "1.0.0",
   "description": "Send web articles to your Kindle with one click",
   "icons": {

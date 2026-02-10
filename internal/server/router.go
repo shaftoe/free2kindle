@@ -8,16 +8,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/shaftoe/free2kindle/internal/auth"
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/constant"
-	"github.com/shaftoe/free2kindle/internal/content"
-	"github.com/shaftoe/free2kindle/internal/email"
-	"github.com/shaftoe/free2kindle/internal/email/mailjet"
-	"github.com/shaftoe/free2kindle/internal/epub"
-	"github.com/shaftoe/free2kindle/internal/model"
-	"github.com/shaftoe/free2kindle/internal/repository"
-	"github.com/shaftoe/free2kindle/internal/service"
+	"github.com/shaftoe/savetoink/internal/auth"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/content"
+	"github.com/shaftoe/savetoink/internal/email"
+	"github.com/shaftoe/savetoink/internal/email/mailjet"
+	"github.com/shaftoe/savetoink/internal/epub"
+	"github.com/shaftoe/savetoink/internal/model"
+	"github.com/shaftoe/savetoink/internal/repository"
+	"github.com/shaftoe/savetoink/internal/service"
 )
 
 func jsonContentTypeMiddleware(next http.Handler) http.Handler {

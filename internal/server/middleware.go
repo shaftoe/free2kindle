@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/shaftoe/free2kindle/internal/auth"
+	"github.com/shaftoe/savetoink/internal/auth"
 )
 
 type responseStatusRecorder struct {

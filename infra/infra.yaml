@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Lambda function with Function URL for Free2Kindle API
+Description: Lambda function with Function URL for savetoink API
 
 Parameters:
   ProjectName:
@@ -82,7 +82,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${ProjectName}-api"
-      Description: Free2Kindle API - Article conversion and delivery service
+      Description: savetoink API - Article conversion and delivery service
       Runtime: provided.al2023
       Handler: bootstrap
       Role: !GetAtt LambdaExecutionRole.Arn

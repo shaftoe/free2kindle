@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 // Repository defines the interface for article persistence.

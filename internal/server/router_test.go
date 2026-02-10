@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/shaftoe/free2kindle/internal/auth"
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/model"
-	"github.com/shaftoe/free2kindle/internal/service"
+	"github.com/shaftoe/savetoink/internal/auth"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/model"
+	"github.com/shaftoe/savetoink/internal/service"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-shiori/go-epub"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-shiori/dom"
 	"github.com/markusmobius/go-trafilatura"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 const (

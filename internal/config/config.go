@@ -1,4 +1,4 @@
-// Package config provides configuration for the free2kindle application.
+// Package config provides configuration for the savetoink application.
 package config
 
 import (
@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/shaftoe/free2kindle/internal/constant"
+	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/spf13/viper"
 )
 

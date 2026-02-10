@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/content"
-	"github.com/shaftoe/free2kindle/internal/email"
-	"github.com/shaftoe/free2kindle/internal/epub"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/content"
+	"github.com/shaftoe/savetoink/internal/email"
+	"github.com/shaftoe/savetoink/internal/epub"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 // Interface defines the contract for service operations.

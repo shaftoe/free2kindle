@@ -1,6 +1,6 @@
 # CloudFormation Templates
 
-This directory contains AWS CloudFormation templates for deploying Free2Kindle to AWS Lambda.
+This directory contains AWS CloudFormation templates for deploying savetoink to AWS Lambda.
 
 ## Templates
 
@@ -40,7 +40,7 @@ export F2K_SENDER_EMAIL="sender@example.com"
 
 **Full deployment (recommended):**
 ```bash
-just deploy-all free2kindle
+just deploy-all savetoink
 ```
 
 This will:
@@ -52,28 +52,28 @@ This will:
 **Step-by-step deployment:**
 ```bash
 # Deploy S3 bucket
-just deploy-bucket free2kindle
+just deploy-bucket savetoink
 
 # Upload Lambda source code
-just upload-zip free2kindle
+just upload-zip savetoink
 
 # Deploy Lambda infrastructure
-just deploy free2kindle
+just deploy savetoink
 ```
 
 ### Get Function URL
 ```bash
-just get-url free2kindle
+just get-url savetoink
 ```
 
 ### View Logs
 ```bash
-just logs free2kindle
+just logs savetoink
 ```
 
 ### Destroy
 ```bash
-just destroy free2kindle
+just destroy savetoink
 ```
 
 ## Environment Variables

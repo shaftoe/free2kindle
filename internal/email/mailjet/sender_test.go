@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/shaftoe/free2kindle/internal/email"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/email"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 func TestNewSender(t *testing.T) {

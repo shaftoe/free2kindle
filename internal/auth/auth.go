@@ -1,4 +1,4 @@
-// Package auth provides pluggable authentication backends for the free2kindle application.
+// Package auth provides pluggable authentication backends for the savetoink application.
 package auth
 
 import (
@@ -12,9 +12,9 @@ import (
 
 	"github.com/auth0/go-jwt-middleware/v3/jwks"
 	"github.com/auth0/go-jwt-middleware/v3/validator"
-	"github.com/shaftoe/free2kindle/internal/config"
-	"github.com/shaftoe/free2kindle/internal/constant"
-	"github.com/shaftoe/free2kindle/internal/model"
+	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/model"
 )
 
 const (
