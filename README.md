@@ -1,6 +1,6 @@
-# Send To Ink
+# Save To Ink
 
-Self-hosted read-later service with native Kindle delivery. Save articles, send to your e-reader, keep them forever. Open-source alternative to Pocket + Send-to-Kindle.
+Self-hosted read-later service with native Kindle delivery. Save articles in the cloud, send to your e-reader, keep them forever. Open-source alternative to Pocket + Send-to-Kindle.
 
 **DISCLAIMER**: This project is under development (alpha)and not affiliated with Amazon or Kindle. Use at your own risk.
 
