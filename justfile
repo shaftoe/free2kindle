@@ -98,6 +98,7 @@ destroy:
     aws cloudformation wait stack-delete-complete --stack-name {{ project_name }}-bucket
     aws cloudformation delete-stack --stack-name {{ project_name }}-cert --region us-east-1
     aws cloudformation wait stack-delete-complete --stack-name {{ project_name }}-cert --region us-east-1
+    auth0 apis delete {{ project_name }}-api
 
 # Get Lambda function URL
 get-url:

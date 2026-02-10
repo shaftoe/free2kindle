@@ -2,38 +2,34 @@
 
 Self-hosted read-later service with native Kindle delivery. Save articles, send to your e-reader, keep them forever. Open-source alternative to Pocket + Send-to-Kindle.
 
-DISCLAIMER: This project is under development (alpha)and not affiliated with Amazon or Kindle. Use at your own risk.
+**DISCLAIMER**: This project is under development (alpha)and not affiliated with Amazon or Kindle. Use at your own risk.
 
-## AWS Lambda Deployment
+## Features
 
-Deploy the API to AWS Lambda using CloudFormation.
+- Fetch web articles, strip markup with [go-trafilatura](https://github.com/markusmobius/go-trafilatura) and save main readable content as HTML
+- Run as web service (API) or as [CLI tool](#cli-tool)
+- Convert content to EPUB format with [go-epub](https://github.com/go-shiori/go-epub) for e-reader devices
+- Optionally send directly to Kindle via email backend (only [MailJet](https://www.mailjet.com/) supported at the moment)
+
+### Backend
+
+- generic Go HTTP server with Lambda adapter
+- by default deployed as AWS Lambda Function + CloudFront for custom domain, DynamoDB for storage
+- pluggable user backend
+  -  single-user shared API key
+  -  multi-user with Auth0
 
 ### Prerequisites
 
 1. Install AWS CLI and configure credentials
 1. Install [Just command runner](https://just.systems/)
-1. Set required environment variables in `.env`, e.g:
-```bash
-export SENDTOINK_API_KEY="your_api_key_secret"
-export SENDTOINK_DEST_EMAIL="your-kindle@kindle.com"
-export SENDTOINK_SENDER_EMAIL="sender@example.com"
-export SENDTOINK_MAILJET_API_KEY="your_mailjet_api_key"
-export SENDTOINK_MAILJET_API_SECRET="your_mailjet_api_secret"
-```
+1. Set required environment variables in `.env` (see [internal/config/config.go](internal/config/config.go) for details)
 
 ### Deployment
-
-Deploy the sendtoink API to AWS Lambda using aws CLI.
 
 ```bash
 # Full deployment
 just deploy
-
-# Get the Function URL
-just get-url
-
-# Tail lambda logs
-just logs
 
 # Destroy infrastructure
 just destroy
