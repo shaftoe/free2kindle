@@ -23,11 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     apiUrl = apiUrl.replace(/\/$/, '');
 
     try {
-      const response = await fetch(`${apiUrl}/api/v1/health`, {
-        method: 'GET',
-        headers: {
-          'X-API-Key': apiKey
-        }
+      const response = await makeApiRequest('/api/v1/health', {
+        method: 'GET'
       });
 
       if (response.ok) {

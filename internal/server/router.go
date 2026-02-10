@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -95,12 +94,4 @@ func newService(cfg *config.Config) *service.Service {
 		epub.NewGenerator(),
 		sender,
 	), cfg)
-}
-
-func getRequestIDFromContext(ctx context.Context) *string {
-	requestID, ok := ctx.Value(contextKey(requestIDKey)).(string)
-	if !ok {
-		return nil
-	}
-	return &requestID
 }

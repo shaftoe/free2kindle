@@ -11,7 +11,7 @@
   "permissions": ["storage", "contextMenus", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["api.js", "background.js"]
   },
   "action": {
     "default_popup": "popup.html",

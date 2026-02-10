@@ -9,21 +9,10 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'sendToKindle' && info.linkUrl) {
     try {
-      const data = await chrome.storage.local.get(['apiKey', 'apiUrl']);
-      
-      if (!data.apiKey || !data.apiUrl) {
-        chrome.tabs.sendMessage(tab.id, { 
-          type: 'error', 
-          message: 'Please configure API settings in extension options' 
-        });
-        return;
-      }
-
-      const response = await fetch(`${data.apiUrl}/api/v1/articles`, {
+      const response = await makeApiRequest('/api/v1/articles', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': data.apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ url: info.linkUrl })
       });

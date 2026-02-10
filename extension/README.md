@@ -50,7 +50,7 @@ This extension works with the Free2Kindle backend API:
 - `POST /api/v1/articles` - Queue article for Kindle delivery
 - `GET /api/v1/health` - Health check endpoint
 
-Authentication is done via the `X-API-Key` header.
+Authentication is done via the `Authorization` header with `Bearer` prefix.
 
 ## Security
 

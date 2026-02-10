@@ -16,22 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
   sendBtn.addEventListener('click', async () => {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      const data = await chrome.storage.local.get(['apiKey', 'apiUrl']);
-      
-      if (!data.apiKey || !data.apiUrl) {
-        showStatus('Please configure API settings', true);
-        return;
-      }
 
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending...';
 
-      const response = await fetch(`${data.apiUrl}/api/v1/articles`, {
+      const response = await makeApiRequest('/api/v1/articles', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': data.apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ url: tab.url })
       });
