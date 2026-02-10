@@ -1,10 +1,11 @@
-# Free2Kindle
+# Send To Ink
 
-Send web links to Kindle - a self-hosted replacement for read-later services.
+Save web links for later consumption, built in delivery to Kindle devices.
+A self-hosted replacement for read-later / send-to-kindle services.
 
 ## AWS Lambda Deployment
 
-Deploy the Free2Kindle API to AWS Lambda using CloudFormation.
+Deploy the API to AWS Lambda using CloudFormation.
 
 ### Prerequisites
 
@@ -25,16 +26,16 @@ Deploy the Free2Kindle API to AWS Lambda using aws CLI.
 
 ```bash
 # Full deployment
-just deploy free2kindle
+just deploy
 
 # Get the Function URL
-just get-url free2kindle
+just get-url
 
 # Tail lambda logs
-just logs free2kindle
+just logs
 
 # Destroy infrastructure
-just destroy free2kindle
+just destroy
 ```
 
 ## CLI Tool
