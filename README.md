@@ -1,7 +1,6 @@
 # Send To Ink
 
-Save web links for later consumption, built in delivery to Kindle devices.
-A self-hosted replacement for read-later / send-to-kindle services.
+Self-hosted read-later service with native Kindle delivery. Save articles, send to your e-reader, keep them forever. Open-source alternative to Pocket + Send-to-Kindle.
 
 ## AWS Lambda Deployment
 
