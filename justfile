@@ -38,12 +38,12 @@ deploy-bucket:
 
 # Deploy ACM certificate (must be deployed to us-east-1)
 deploy-cert:
-    @echo "Open https://us-east-1.console.aws.amazon.com/acm/certificates/ and add DNS validation records for $SENDTOINK_DOMAIN"
+    @echo "Open https://us-east-1.console.aws.amazon.com/acm/certificates/ and add DNS validation records for $SAVETOINK_DOMAIN"
     aws cloudformation deploy \
         --template-file infra/cert.yaml \
         --stack-name {{ project_name }}-cert \
         --region us-east-1 \
-        --parameter-overrides ProjectName={{ project_name }} DomainName="$SENDTOINK_DOMAIN"
+        --parameter-overrides ProjectName={{ project_name }} DomainName="$SAVETOINK_DOMAIN"
 
 # Get certificate ARN
 get-cert-arn:
@@ -64,18 +64,18 @@ deploy-api:
         --stack-name {{ project_name }}-infra \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-            APIKeySecret="$SENDTOINK_API_KEY" \
-            Auth0Audience="$SENDTOINK_AUTH0_AUDIENCE" \
-            Auth0Domain="$SENDTOINK_AUTH0_DOMAIN" \
-            AuthBackend="$SENDTOINK_AUTH_BACKEND" \
+            APIKeySecret="$SAVETOINK_API_KEY" \
+            Auth0Audience="$SAVETOINK_AUTH0_AUDIENCE" \
+            Auth0Domain="$SAVETOINK_AUTH0_DOMAIN" \
+            AuthBackend="$SAVETOINK_AUTH_BACKEND" \
             CertificateArn=$(just get-cert-arn) \
-            DestEmail="$SENDTOINK_DEST_EMAIL" \
-            DomainName="$SENDTOINK_DOMAIN" \
-            MailjetAPIKey="$SENDTOINK_MAILJET_API_KEY" \
-            MailjetAPISecret="$SENDTOINK_MAILJET_API_SECRET" \
+            DestEmail="$SAVETOINK_DEST_EMAIL" \
+            DomainName="$SAVETOINK_DOMAIN" \
+            MailjetAPIKey="$SAVETOINK_MAILJET_API_KEY" \
+            MailjetAPISecret="$SAVETOINK_MAILJET_API_SECRET" \
             ProjectName={{ project_name }} \
             SendEnabled="true" \
-            SenderEmail="$SENDTOINK_SENDER_EMAIL" \
+            SenderEmail="$SAVETOINK_SENDER_EMAIL" \
             SourceBucketKey={{ lambda_archive }} \
             SourceBucketName={{ bucket_name }} \
             Debug="true"
@@ -87,7 +87,7 @@ deploy: build-lambda-zip
     just deploy-cert
     just deploy-lambda
     just deploy-api
-    @echo "Add DNS record: $SENDTOINK_DOMAIN" A $(just get-distribution-url)."
+    @echo "Add DNS record: $SAVETOINK_DOMAIN" A $(just get-distribution-url)."
 
 # Destroy Lambda infrastructure
 destroy:
@@ -122,7 +122,7 @@ logs:
 test-url *URL:
     curl -X POST http://localhost:8080/v1/articles \
       -H "Content-Type: application/json" \
-      -H "Authorization: Bearer $SENDTOINK_API_KEY" \
+      -H "Authorization: Bearer $SAVETOINK_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"
 
 deploy-lambda: build-lambda-zip upload-zip
@@ -148,5 +148,5 @@ scan-table TABLE_NAME="savetoink-articles":
 auth0-create-api:
     auth0 apis create \
     --name {{ project_name }} \
-    --identifier "$SENDTOINK_AUTH0_AUDIENCE" \
+    --identifier "$SAVETOINK_AUTH0_AUDIENCE" \
     --signing-alg "RS256"

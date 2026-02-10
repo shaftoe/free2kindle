@@ -31,7 +31,7 @@ type Config struct {
 
 // Load reads configuration from environment variables and returns a Config instance.
 func Load(mode constant.RunMode) (*Config, error) {
-	viper.SetEnvPrefix("SENDTOINK")
+	viper.SetEnvPrefix("SAVETOINK")
 	viper.AutomaticEnv()
 
 	if err := bindEnvVars(); err != nil {
@@ -56,17 +56,17 @@ func bindEnvVars() error {
 		key    string
 		envVar string
 	}{
-		{"api-key", "SENDTOINK_MAILJET_API_KEY"},
-		{"api-key-secret", "SENDTOINK_API_KEY"},
-		{"api-secret", "SENDTOINK_MAILJET_API_SECRET"},
-		{"auth-backend", "SENDTOINK_AUTH_BACKEND"},
-		{"auth0-audience", "SENDTOINK_AUTH0_AUDIENCE"},
-		{"auth0-domain", "SENDTOINK_AUTH0_DOMAIN"},
-		{"debug", "SENDTOINK_DEBUG"},
-		{"destination-email", "SENDTOINK_DEST_EMAIL"},
-		{"dynamodb-table", "SENDTOINK_DYNAMODB_TABLE_NAME"},
-		{"send-enabled", "SENDTOINK_SEND_ENABLED"},
-		{"sender-email", "SENDTOINK_SENDER_EMAIL"},
+		{"api-key", "SAVETOINK_MAILJET_API_KEY"},
+		{"api-key-secret", "SAVETOINK_API_KEY"},
+		{"api-secret", "SAVETOINK_MAILJET_API_SECRET"},
+		{"auth-backend", "SAVETOINK_AUTH_BACKEND"},
+		{"auth0-audience", "SAVETOINK_AUTH0_AUDIENCE"},
+		{"auth0-domain", "SAVETOINK_AUTH0_DOMAIN"},
+		{"debug", "SAVETOINK_DEBUG"},
+		{"destination-email", "SAVETOINK_DEST_EMAIL"},
+		{"dynamodb-table", "SAVETOINK_DYNAMODB_TABLE_NAME"},
+		{"send-enabled", "SAVETOINK_SEND_ENABLED"},
+		{"sender-email", "SAVETOINK_SENDER_EMAIL"},
 	}
 
 	for _, ev := range envVars {
@@ -122,20 +122,20 @@ func (c *Config) validateServerConfig(missing *[]string) error {
 	switch c.AuthBackend {
 	case constant.AuthBackendSharedAPIKey:
 		if c.APIKeySecret == "" {
-			*missing = append(*missing, "SENDTOINK_API_KEY")
+			*missing = append(*missing, "SAVETOINK_API_KEY")
 		}
 	case constant.AuthBackendAuth0:
 		if c.Auth0Domain == "" {
-			*missing = append(*missing, "SENDTOINK_AUTH0_DOMAIN")
+			*missing = append(*missing, "SAVETOINK_AUTH0_DOMAIN")
 		}
 		if c.Auth0Audience == "" {
-			*missing = append(*missing, "SENDTOINK_AUTH0_AUDIENCE")
+			*missing = append(*missing, "SAVETOINK_AUTH0_AUDIENCE")
 		}
 	default:
 		return fmt.Errorf("unsupported auth backend: %s", c.AuthBackend)
 	}
 	if c.DynamoDBTable == "" {
-		*missing = append(*missing, "SENDTOINK_DYNAMODB_TABLE_NAME")
+		*missing = append(*missing, "SAVETOINK_DYNAMODB_TABLE_NAME")
 	}
 
 	cfg, err := config.LoadDefaultConfig(context.Background())
@@ -148,10 +148,10 @@ func (c *Config) validateServerConfig(missing *[]string) error {
 
 func (c *Config) validateSendEnabledConfig(missing *[]string) {
 	if c.DestEmail == "" {
-		*missing = append(*missing, "SENDTOINK_DEST_EMAIL")
+		*missing = append(*missing, "SAVETOINK_DEST_EMAIL")
 	}
 	if c.SenderEmail == "" {
-		*missing = append(*missing, "SENDTOINK_SENDER_EMAIL")
+		*missing = append(*missing, "SAVETOINK_SENDER_EMAIL")
 	}
 	if c.MailjetAPIKey == "" {
 		*missing = append(*missing, "MAILJET_API_KEY")

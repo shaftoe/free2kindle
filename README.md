@@ -42,7 +42,7 @@ The CLI tool allows you to convert web articles to EPUB format and send them to 
 ### Installation
 
 ```bash
-go build -o bin/sendtoink cmd/cli
+go build -o bin/savetoink cmd/cli
 ```
 
 ### Usage
@@ -50,31 +50,31 @@ go build -o bin/sendtoink cmd/cli
 **Convert a URL to EPUB (save locally):**
 
 ```bash
-./bin/sendtoink convert https://example.com
+./bin/savetoink convert https://example.com
 ```
 
 **Send directly to Kindle via email:**
 
 ```bash
-./bin/sendtoink convert https://example.com --send
+./bin/savetoink convert https://example.com --send
 ```
 
 **Specify an output file:**
 
 ```bash
-./bin/sendtoink convert https://example.com -o my-book.epub
+./bin/savetoink convert https://example.com -o my-book.epub
 ```
 
 **Set a custom timeout:**
 
 ```bash
-./bin/sendtoink convert https://example.com -t 1m
+./bin/savetoink convert https://example.com -t 1m
 ```
 
 **Show extracted HTML content (verbose mode):**
 
 ```bash
-./bin/sendtoink convert https://example.com -v
+./bin/savetoink convert https://example.com -v
 ```
 
 ### Browser Extension
@@ -101,20 +101,20 @@ go build -o bin/sendtoink cmd/cli
 **Save to local file:**
 
 ```bash
-$ ./bin/sendtoink convert https://golang.org/doc/effective_go.html -o effective_go.epub
+$ ./bin/savetoink convert https://golang.org/doc/effective_go.html -o effective_go.epub
 Fetching article from: https://golang.org/doc/effective_go.html
 Extracted in 828ms
 Title: Effective Go
 Generating EPUB: effective_go.epub
 Generated in 7ms
 
-✓ EPUB saved to: /Users/alex/git/sendtoink/effective_go.epub
+✓ EPUB saved to: /Users/alex/git/savetoink/effective_go.epub
 ```
 
 **Send to Kindle via email:**
 
 ```bash
-$ ./bin/sendtoink convert https://golang.org/doc/effective_go.html --send
+$ ./bin/savetoink convert https://golang.org/doc/effective_go.html --send
 Fetching article from: https://golang.org/doc/effective_go.html
 Extracted in 828ms
 Title: Effective Go

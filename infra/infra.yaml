@@ -106,17 +106,17 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          SENDTOINK_API_KEY: !Ref APIKeySecret
-          SENDTOINK_AUTH0_AUDIENCE: !Ref Auth0Audience
-          SENDTOINK_AUTH0_DOMAIN: !Ref Auth0Domain
-          SENDTOINK_AUTH_BACKEND: !Ref AuthBackend
-          SENDTOINK_DEBUG: !Ref Debug
-          SENDTOINK_DEST_EMAIL: !Ref DestEmail
-          SENDTOINK_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
-          SENDTOINK_MAILJET_API_KEY: !Ref MailjetAPIKey
-          SENDTOINK_MAILJET_API_SECRET: !Ref MailjetAPISecret
-          SENDTOINK_SENDER_EMAIL: !Ref SenderEmail
-          SENDTOINK_SEND_ENABLED: !Ref SendEnabled
+          SAVETOINK_API_KEY: !Ref APIKeySecret
+          SAVETOINK_AUTH0_AUDIENCE: !Ref Auth0Audience
+          SAVETOINK_AUTH0_DOMAIN: !Ref Auth0Domain
+          SAVETOINK_AUTH_BACKEND: !Ref AuthBackend
+          SAVETOINK_DEBUG: !Ref Debug
+          SAVETOINK_DEST_EMAIL: !Ref DestEmail
+          SAVETOINK_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
+          SAVETOINK_MAILJET_API_KEY: !Ref MailjetAPIKey
+          SAVETOINK_MAILJET_API_SECRET: !Ref MailjetAPISecret
+          SAVETOINK_SENDER_EMAIL: !Ref SenderEmail
+          SAVETOINK_SEND_ENABLED: !Ref SendEnabled
       TracingConfig:
         Mode: PassThrough
 
