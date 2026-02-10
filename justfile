@@ -38,12 +38,12 @@ deploy-bucket:
 
 # Deploy ACM certificate (must be deployed to us-east-1)
 deploy-cert:
-    @echo "Open https://us-east-1.console.aws.amazon.com/acm/certificates/ and add DNS validation records for $F2K_DOMAIN"
+    @echo "Open https://us-east-1.console.aws.amazon.com/acm/certificates/ and add DNS validation records for $SENDTOINK_DOMAIN"
     aws cloudformation deploy \
         --template-file infra/cert.yaml \
         --stack-name {{ project_name }}-cert \
         --region us-east-1 \
-        --parameter-overrides ProjectName={{ project_name }} DomainName="$F2K_DOMAIN"
+        --parameter-overrides ProjectName={{ project_name }} DomainName="$SENDTOINK_DOMAIN"
 
 # Get certificate ARN
 get-cert-arn:
@@ -64,18 +64,18 @@ deploy-api:
         --stack-name {{ project_name }}-infra \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-            APIKeySecret="$F2K_API_KEY" \
-            Auth0Audience="$F2K_AUTH0_AUDIENCE" \
-            Auth0Domain="$F2K_AUTH0_DOMAIN" \
-            AuthBackend="$F2K_AUTH_BACKEND" \
+            APIKeySecret="$SENDTOINK_API_KEY" \
+            Auth0Audience="$SENDTOINK_AUTH0_AUDIENCE" \
+            Auth0Domain="$SENDTOINK_AUTH0_DOMAIN" \
+            AuthBackend="$SENDTOINK_AUTH_BACKEND" \
             CertificateArn=$(just get-cert-arn) \
-            DestEmail="$F2K_DEST_EMAIL" \
-            DomainName="$F2K_DOMAIN" \
-            MailjetAPIKey="$MAILJET_API_KEY" \
-            MailjetAPISecret="$MAILJET_API_SECRET" \
+            DestEmail="$SENDTOINK_DEST_EMAIL" \
+            DomainName="$SENDTOINK_DOMAIN" \
+            MailjetAPIKey="$SENDTOINK_MAILJET_API_KEY" \
+            MailjetAPISecret="$SENDTOINK_MAILJET_API_SECRET" \
             ProjectName={{ project_name }} \
             SendEnabled="true" \
-            SenderEmail="$F2K_SENDER_EMAIL" \
+            SenderEmail="$SENDTOINK_SENDER_EMAIL" \
             SourceBucketKey={{ lambda_archive }} \
             SourceBucketName={{ bucket_name }} \
             Debug="true"
@@ -87,7 +87,7 @@ deploy: build-lambda-zip
     just deploy-cert
     just deploy-lambda
     just deploy-api
-    @echo "Add DNS record: $F2K_DOMAIN" A $(just get-distribution-url)."
+    @echo "Add DNS record: $SENDTOINK_DOMAIN" A $(just get-distribution-url)."
 
 # Destroy Lambda infrastructure
 destroy:
@@ -121,7 +121,7 @@ logs:
 test-url *URL:
     curl -X POST http://localhost:8080/v1/articles \
       -H "Content-Type: application/json" \
-      -H "Authorization: Bearer $F2K_API_KEY" \
+      -H "Authorization: Bearer $SENDTOINK_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"
 
 deploy-lambda: build-lambda-zip upload-zip
@@ -147,5 +147,5 @@ scan-table TABLE_NAME="savetoink-articles":
 auth0-create-api:
     auth0 apis create \
     --name {{ project_name }} \
-    --identifier "$F2K_AUTH0_AUDIENCE" \
+    --identifier "$SENDTOINK_AUTH0_AUDIENCE" \
     --signing-alg "RS256"

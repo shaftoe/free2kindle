@@ -106,17 +106,17 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          F2K_API_KEY: !Ref APIKeySecret
-          F2K_DEBUG: !Ref Debug
-          F2K_DEST_EMAIL: !Ref DestEmail
-          F2K_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
-          F2K_SENDER_EMAIL: !Ref SenderEmail
-          F2K_SEND_ENABLED: !Ref SendEnabled
-          MAILJET_API_KEY: !Ref MailjetAPIKey
-          MAILJET_API_SECRET: !Ref MailjetAPISecret
-          F2K_AUTH0_DOMAIN: !Ref Auth0Domain
-          F2K_AUTH0_AUDIENCE: !Ref Auth0Audience
-          F2K_AUTH_BACKEND: !Ref AuthBackend
+          SENDTOINK_API_KEY: !Ref APIKeySecret
+          SENDTOINK_AUTH0_AUDIENCE: !Ref Auth0Audience
+          SENDTOINK_AUTH0_DOMAIN: !Ref Auth0Domain
+          SENDTOINK_AUTH_BACKEND: !Ref AuthBackend
+          SENDTOINK_DEBUG: !Ref Debug
+          SENDTOINK_DEST_EMAIL: !Ref DestEmail
+          SENDTOINK_DYNAMODB_TABLE_NAME: !Ref DynamoDBTable
+          SENDTOINK_MAILJET_API_KEY: !Ref MailjetAPIKey
+          SENDTOINK_MAILJET_API_SECRET: !Ref MailjetAPISecret
+          SENDTOINK_SENDER_EMAIL: !Ref SenderEmail
+          SENDTOINK_SEND_ENABLED: !Ref SendEnabled
       TracingConfig:
         Mode: PassThrough
 

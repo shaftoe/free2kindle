@@ -2,6 +2,8 @@
 
 Self-hosted read-later service with native Kindle delivery. Save articles, send to your e-reader, keep them forever. Open-source alternative to Pocket + Send-to-Kindle.
 
+DISCLAIMER: This project is under development (alpha)and not affiliated with Amazon or Kindle. Use at your own risk.
+
 ## AWS Lambda Deployment
 
 Deploy the API to AWS Lambda using CloudFormation.
@@ -12,16 +14,16 @@ Deploy the API to AWS Lambda using CloudFormation.
 1. Install [Just command runner](https://just.systems/)
 1. Set required environment variables in `.env`, e.g:
 ```bash
-export F2K_API_KEY="your_api_key_secret"
-export F2K_DEST_EMAIL="your-kindle@kindle.com"
-export F2K_SENDER_EMAIL="sender@example.com"
-export MAILJET_API_KEY="your_mailjet_api_key"
-export MAILJET_API_SECRET="your_mailjet_api_secret"
+export SENDTOINK_API_KEY="your_api_key_secret"
+export SENDTOINK_DEST_EMAIL="your-kindle@kindle.com"
+export SENDTOINK_SENDER_EMAIL="sender@example.com"
+export SENDTOINK_MAILJET_API_KEY="your_mailjet_api_key"
+export SENDTOINK_MAILJET_API_SECRET="your_mailjet_api_secret"
 ```
 
 ### Deployment
 
-Deploy the Free2Kindle API to AWS Lambda using aws CLI.
+Deploy the sendtoink API to AWS Lambda using aws CLI.
 
 ```bash
 # Full deployment
@@ -44,7 +46,7 @@ The CLI tool allows you to convert web articles to EPUB format and send them to 
 ### Installation
 
 ```bash
-go build -o bin/free2kindle cmd/cli
+go build -o bin/sendtoink cmd/cli
 ```
 
 ### Usage
@@ -52,45 +54,32 @@ go build -o bin/free2kindle cmd/cli
 **Convert a URL to EPUB (save locally):**
 
 ```bash
-./bin/free2kindle convert https://example.com
+./bin/sendtoink convert https://example.com
 ```
 
 **Send directly to Kindle via email:**
 
 ```bash
-export F2K_DEST_EMAIL="your-kindle@kindle.com"
-export F2K_SENDER_EMAIL="sender@example.com"
-export MAILJET_API_KEY="your_api_key"
-export MAILJET_API_SECRET="your_api_secret"
-
-./bin/free2kindle convert https://example.com --send
+./bin/sendtoink convert https://example.com --send
 ```
 
 **Specify an output file:**
 
 ```bash
-./bin/free2kindle convert https://example.com -o my-book.epub
+./bin/sendtoink convert https://example.com -o my-book.epub
 ```
 
 **Set a custom timeout:**
 
 ```bash
-./bin/free2kindle convert https://example.com -t 1m
+./bin/sendtoink convert https://example.com -t 1m
 ```
 
 **Show extracted HTML content (verbose mode):**
 
 ```bash
-./bin/free2kindle convert https://example.com -v
+./bin/sendtoink convert https://example.com -v
 ```
-
-### Features
-
-- **Content Extraction**: Uses go-trafilatura to extract clean article content
-- **EPUB Generation**: Creates Kindle-compatible EPUB files
-- **Email Delivery**: Send EPUBs directly to Kindle via email
-- **Multiple Providers**: Supports Mailjet (with extensible architecture for SES, SendGrid, etc.)
-- **Environment Variables**: Configure via flags or environment variables
 
 ### Browser Extension
 
@@ -111,35 +100,25 @@ export MAILJET_API_SECRET="your_api_secret"
 4. The extension stores your API key and URL securely using Chrome storage API
 5. CORS headers are properly configured for cross-origin requests to your Lambda function
 
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|----------|
-| `F2K_API_KEY` | Shared API Key secret | - |
-| `F2K_DEST_EMAIL` | Your Kindle email address | - |
-| `F2K_SENDER_EMAIL` | Verified sender email address | - |
-| `MAILJET_API_KEY` | Mailjet API key | - |
-| `MAILJET_API_SECRET` | Mailjet API secret | - |
-
 ### Examples
 
 **Save to local file:**
 
 ```bash
-$ ./bin/free2kindle convert https://golang.org/doc/effective_go.html -o effective_go.epub
+$ ./bin/sendtoink convert https://golang.org/doc/effective_go.html -o effective_go.epub
 Fetching article from: https://golang.org/doc/effective_go.html
 Extracted in 828ms
 Title: Effective Go
 Generating EPUB: effective_go.epub
 Generated in 7ms
 
-✓ EPUB saved to: /Users/alex/git/free2kindle/effective_go.epub
+✓ EPUB saved to: /Users/alex/git/sendtoink/effective_go.epub
 ```
 
 **Send to Kindle via email:**
 
 ```bash
-$ ./bin/free2kindle convert https://golang.org/doc/effective_go.html --send
+$ ./bin/sendtoink convert https://golang.org/doc/effective_go.html --send
 Fetching article from: https://golang.org/doc/effective_go.html
 Extracted in 828ms
 Title: Effective Go

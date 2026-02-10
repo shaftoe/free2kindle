@@ -162,19 +162,29 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	_ = os.Setenv("F2K_DEST_EMAIL", "test@kindle.com")
-	_ = os.Setenv("F2K_SENDER_EMAIL", "sender@example.com")
-	_ = os.Setenv("MAILJET_API_KEY", "api-key")
-	_ = os.Setenv("MAILJET_API_SECRET", "api-secret")
-	_ = os.Setenv("F2K_API_KEY", "api-key-secret")
-	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
+	_ = os.Unsetenv("SENDTOINK_DEST_EMAIL")
+	_ = os.Unsetenv("SENDTOINK_SENDER_EMAIL")
+	_ = os.Unsetenv("SENDTOINK_MAILJET_API_KEY")
+	_ = os.Unsetenv("SENDTOINK_MAILJET_API_SECRET")
+	_ = os.Unsetenv("SENDTOINK_API_KEY")
+	_ = os.Unsetenv("SENDTOINK_DYNAMODB_TABLE_NAME")
+	_ = os.Unsetenv("SENDTOINK_AUTH_BACKEND")
+	_ = os.Unsetenv("SENDTOINK_AUTH0_DOMAIN")
+	_ = os.Unsetenv("SENDTOINK_AUTH0_AUDIENCE")
+
+	_ = os.Setenv("SENDTOINK_DEST_EMAIL", "test@kindle.com")
+	_ = os.Setenv("SENDTOINK_SENDER_EMAIL", "sender@example.com")
+	_ = os.Setenv("SENDTOINK_MAILJET_API_KEY", "api-key")
+	_ = os.Setenv("SENDTOINK_MAILJET_API_SECRET", "api-secret")
+	_ = os.Setenv("SENDTOINK_API_KEY", "api-key-secret")
+	_ = os.Setenv("SENDTOINK_DYNAMODB_TABLE_NAME", "test-table")
 	defer func() {
-		_ = os.Unsetenv("F2K_DEST_EMAIL")
-		_ = os.Unsetenv("F2K_SENDER_EMAIL")
-		_ = os.Unsetenv("MAILJET_API_KEY")
-		_ = os.Unsetenv("MAILJET_API_SECRET")
-		_ = os.Unsetenv("F2K_API_KEY")
-		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
+		_ = os.Unsetenv("SENDTOINK_DEST_EMAIL")
+		_ = os.Unsetenv("SENDTOINK_SENDER_EMAIL")
+		_ = os.Unsetenv("SENDTOINK_MAILJET_API_KEY")
+		_ = os.Unsetenv("SENDTOINK_MAILJET_API_SECRET")
+		_ = os.Unsetenv("SENDTOINK_API_KEY")
+		_ = os.Unsetenv("SENDTOINK_DYNAMODB_TABLE_NAME")
 	}()
 
 	cfg, err := Load(constant.ModeCLI)
@@ -189,17 +199,28 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadDefaultsToCLI(t *testing.T) {
+	_ = os.Unsetenv("SENDTOINK_DEST_EMAIL")
+	_ = os.Unsetenv("SENDTOINK_SENDER_EMAIL")
+	_ = os.Unsetenv("SENDTOINK_MAILJET_API_KEY")
+	_ = os.Unsetenv("SENDTOINK_MAILJET_API_SECRET")
+	_ = os.Unsetenv("SENDTOINK_API_KEY")
+	_ = os.Unsetenv("SENDTOINK_DYNAMODB_TABLE_NAME")
+	_ = os.Unsetenv("SENDTOINK_AUTH_BACKEND")
+	_ = os.Unsetenv("SENDTOINK_AUTH0_DOMAIN")
+	_ = os.Unsetenv("SENDTOINK_AUTH0_AUDIENCE")
+
 	cfg, err := Load(constant.ModeCLI)
 	assert.NoError(t, err)
 	assert.Equal(t, constant.ModeCLI, cfg.Mode)
 }
 
 func TestLoadServerMode(t *testing.T) {
-	_ = os.Setenv("F2K_API_KEY", "api-key-secret")
-	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
+	_ = os.Setenv("SENDTOINK_API_KEY", "api-key-secret")
+	_ = os.Setenv("SENDTOINK_DYNAMODB_TABLE_NAME", "test-table")
+	_ = os.Unsetenv("SENDTOINK_AUTH_BACKEND")
 	defer func() {
-		_ = os.Unsetenv("F2K_API_KEY")
-		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
+		_ = os.Unsetenv("SENDTOINK_API_KEY")
+		_ = os.Unsetenv("SENDTOINK_DYNAMODB_TABLE_NAME")
 	}()
 
 	cfg, err := Load(constant.ModeServer)
@@ -208,15 +229,25 @@ func TestLoadServerMode(t *testing.T) {
 }
 
 func TestLoadServerModeAuth0(t *testing.T) {
-	_ = os.Setenv("F2K_AUTH_BACKEND", "auth0")
-	_ = os.Setenv("F2K_AUTH0_DOMAIN", "example.auth0.com")
-	_ = os.Setenv("F2K_AUTH0_AUDIENCE", "test-audience")
-	_ = os.Setenv("F2K_DYNAMODB_TABLE_NAME", "test-table")
+	_ = os.Unsetenv("SENDTOINK_DEST_EMAIL")
+	_ = os.Unsetenv("SENDTOINK_SENDER_EMAIL")
+	_ = os.Unsetenv("SENDTOINK_MAILJET_API_KEY")
+	_ = os.Unsetenv("SENDTOINK_MAILJET_API_SECRET")
+	_ = os.Unsetenv("SENDTOINK_API_KEY")
+	_ = os.Unsetenv("SENDTOINK_DYNAMODB_TABLE_NAME")
+	_ = os.Unsetenv("SENDTOINK_AUTH_BACKEND")
+	_ = os.Unsetenv("SENDTOINK_AUTH0_DOMAIN")
+	_ = os.Unsetenv("SENDTOINK_AUTH0_AUDIENCE")
+
+	_ = os.Setenv("SENDTOINK_AUTH_BACKEND", "auth0")
+	_ = os.Setenv("SENDTOINK_AUTH0_DOMAIN", "example.auth0.com")
+	_ = os.Setenv("SENDTOINK_AUTH0_AUDIENCE", "test-audience")
+	_ = os.Setenv("SENDTOINK_DYNAMODB_TABLE_NAME", "test-table")
 	defer func() {
-		_ = os.Unsetenv("F2K_AUTH_BACKEND")
-		_ = os.Unsetenv("F2K_AUTH0_DOMAIN")
-		_ = os.Unsetenv("F2K_AUTH0_AUDIENCE")
-		_ = os.Unsetenv("F2K_DYNAMODB_TABLE_NAME")
+		_ = os.Unsetenv("SENDTOINK_AUTH_BACKEND")
+		_ = os.Unsetenv("SENDTOINK_AUTH0_DOMAIN")
+		_ = os.Unsetenv("SENDTOINK_AUTH0_AUDIENCE")
+		_ = os.Unsetenv("SENDTOINK_DYNAMODB_TABLE_NAME")
 	}()
 
 	cfg, err := Load(constant.ModeServer)
