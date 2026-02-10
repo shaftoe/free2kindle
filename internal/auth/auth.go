@@ -18,8 +18,8 @@ import (
 
 const (
 	authHeader       = "Authorization"
+	authHeaderPrefix = "Bearer "
 	adminAccountID   = "admin"
-	anonymousUserID  = "-"
 	allowedClockSkew = 30 * time.Second
 )
 
@@ -31,11 +31,11 @@ const (
 )
 
 type errorResponse struct {
-	Message string `json:"message"`
+	Message string `json:"error"`
 }
 
 // NewUserIDMiddleware returns authentication middleware based on the configured auth backend.
-// Ensure the userID is set in the context (`anonymousUserID` string for anonymous users).
+// Ensure the userID is set in the context, adds authentication error to the context if any.
 func NewUserIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	switch cfg.AuthBackend {
 	case constant.AuthBackendSharedAPIKey:
@@ -66,13 +66,13 @@ func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			auth := r.Header.Get(authHeader)
-			if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
-				handleAuthError(r.Context(), next, w, r, "Missing or malformed auth header")
+			if auth == "" || !strings.HasPrefix(auth, authHeaderPrefix) {
+				handleAuthError(r.Context(), next, w, r, "missing or malformed auth header")
 				return
 			}
-			token := strings.TrimPrefix(auth, "Bearer ")
+			token := strings.TrimPrefix(auth, authHeaderPrefix)
 			if token != apiKeySecret {
-				handleAuthError(r.Context(), next, w, r, "Invalid API key")
+				handleAuthError(r.Context(), next, w, r, "invalid API key")
 				return
 			}
 			ctx := addUserIDToContext(r.Context(), adminAccountID)
@@ -108,16 +108,15 @@ func auth0Middleware(domain, audience string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			auth := r.Header.Get(authHeader)
-			if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
-				ctx := addUserIDToContext(r.Context(), anonymousUserID)
-				next.ServeHTTP(w, r.WithContext(ctx))
+			if auth == "" || !strings.HasPrefix(auth, authHeaderPrefix) {
+				next.ServeHTTP(w, r)
 				return
 			}
 
-			token := strings.TrimPrefix(auth, "Bearer ")
+			token := strings.TrimPrefix(auth, authHeaderPrefix)
 			claims, validateErr := jwtValidator.ValidateToken(r.Context(), token)
 			if validateErr != nil {
-				handleAuthError(r.Context(), next, w, r, "Invalid JWT token: "+validateErr.Error())
+				handleAuthError(r.Context(), next, w, r, "invalid JWT token: "+validateErr.Error())
 				return
 			}
 
@@ -144,9 +143,9 @@ func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
 		}
 
 		accountID := GetAccountID(r.Context())
-		if accountID == "" || accountID == anonymousUserID {
+		if accountID == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(errorResponse{Message: "Unauthorized (missing account ID)"})
+			_ = json.NewEncoder(w).Encode(errorResponse{Message: "unauthorized"})
 			return
 		}
 

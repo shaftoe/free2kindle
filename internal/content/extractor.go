@@ -167,7 +167,7 @@ func countWords(text string) int {
 
 func validateURL(urlStr string) error {
 	if urlStr == "" {
-		return errors.New("URL cannot be empty")
+		return errors.New("url cannot be empty")
 	}
 
 	u, err := url.Parse(urlStr)
@@ -176,11 +176,11 @@ func validateURL(urlStr string) error {
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return errors.New("URL must use http or https scheme")
+		return errors.New("url must use http or https scheme")
 	}
 
 	if u.Host == "" {
-		return errors.New("URL must have a host")
+		return errors.New("url must have a host")
 	}
 
 	return nil

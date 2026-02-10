@@ -15,11 +15,11 @@ import (
 func CleanURL(rawURL string) (string, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return "", fmt.Errorf("URL must be valid: %w", err)
+		return "", fmt.Errorf("url must be valid: %w", err)
 	}
 
 	if parsedURL.Scheme == "" || parsedURL.Host == "" {
-		return "", errors.New("URL must have scheme and host")
+		return "", errors.New("url must have scheme and host")
 	}
 
 	path := strings.TrimSuffix(parsedURL.Path, "/")

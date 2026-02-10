@@ -120,7 +120,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.Process(r.Context(), *cleanURL)
 	if err != nil {
-		h.processArticleError(article, articlesChan, w, r, fmt.Errorf("failed to process article: %v", err))
+		h.processArticleError(article, articlesChan, w, r, fmt.Errorf("failed to process article: %w", err))
 		return
 	}
 

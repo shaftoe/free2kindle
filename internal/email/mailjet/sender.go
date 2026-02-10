@@ -97,10 +97,10 @@ func (s *Sender) SendEmail(_ context.Context, req *email.Request) (*email.SendEm
 
 func (s *Sender) validateConfig() error {
 	if s.apiKey == "" {
-		return errors.New("API key is required")
+		return errors.New("api key is required")
 	}
 	if s.apiSecret == "" {
-		return errors.New("API secret is required")
+		return errors.New("api secret is required")
 	}
 	if s.senderEmail == "" {
 		return errors.New("sender email is required")
@@ -113,10 +113,10 @@ func (s *Sender) validateRequest(req *email.Request) error {
 		return errors.New("kindle email is required")
 	}
 	if req.EPUBData == nil {
-		return errors.New("EPUB data is required")
+		return errors.New("epub data is required")
 	}
 	if len(req.EPUBData) == 0 {
-		return errors.New("EPUB data is empty")
+		return errors.New("epub data is empty")
 	}
 	if req.Article == nil {
 		return errors.New("article is required")

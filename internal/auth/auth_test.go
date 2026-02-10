@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	errorMsgMissingOrMalformedHeader = "Missing or malformed auth header"
-	errorMsgInvalidKey               = "Invalid API key"
+	errorMsgMissingOrMalformedHeader = "missing or malformed auth header"
+	errorMsgInvalidKey               = "invalid API key"
 )
 
 func TestNewMiddleware_SharedAPIKey(t *testing.T) {
@@ -308,37 +308,6 @@ func TestEnsureAutheticatedMiddleware_AuthErrorInContext(t *testing.T) {
 	}
 
 	expectedMsg := errorMsgMissingOrMalformedHeader
-	if resp.Message != expectedMsg {
-		t.Errorf("expected error message '%s', got '%s'", expectedMsg, resp.Message)
-	}
-}
-
-func TestEnsureAutheticatedMiddleware_AnonymousUser(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	w := httptest.NewRecorder()
-
-	anonymousHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := addUserIDToContext(r.Context(), anonymousUserID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-
-	middlewareChain := EnsureAutheticatedMiddleware(anonymousHandler)
-	middlewareChain.ServeHTTP(w, req)
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
-	}
-
-	var resp errorResponse
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-
-	expectedMsg := "Unauthorized (missing account ID)"
 	if resp.Message != expectedMsg {
 		t.Errorf("expected error message '%s', got '%s'", expectedMsg, resp.Message)
 	}
