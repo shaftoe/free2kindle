@@ -157,6 +157,5 @@ func addUserIDToContext(ctx context.Context, userID string) context.Context {
 
 func handleAuthError(ctx context.Context, next http.Handler, w http.ResponseWriter, r *http.Request, msg string) {
 	ctx = context.WithValue(ctx, authErrorKey, msg)
-
 	next.ServeHTTP(w, r.WithContext(ctx))
 }

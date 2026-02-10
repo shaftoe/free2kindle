@@ -99,7 +99,7 @@ func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Gr
 // - downloads/processes the article
 // - (re)write metadata in the repository in background
 // - (optionally) sends the article to the Kindle
-// - updates logging information in the context for the final wide log event printing
+// - updates logging information in the context for the final wide log event printing.
 func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	id, cleanURL, err := getArticleIDandCleanURL(r)
 	if err != nil {
