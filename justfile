@@ -36,6 +36,23 @@ deploy-bucket:
         --stack-name {{ project_name }}-bucket \
         --parameter-overrides BucketName={{ bucket_name }}
 
+# Deploy ACM certificate (must be deployed to us-east-1)
+deploy-cert:
+    @echo "Open https://us-east-1.console.aws.amazon.com/acm/certificates/ and add DNS validation records for $F2K_DOMAIN"
+    aws cloudformation deploy \
+        --template-file infra/cert.yaml \
+        --stack-name {{ project_name }}-cert \
+        --region us-east-1 \
+        --parameter-overrides ProjectName={{ project_name }} DomainName="$F2K_DOMAIN"
+
+# Get certificate ARN
+get-cert-arn:
+    aws cloudformation describe-stacks \
+        --stack-name {{ project_name }}-cert \
+        --region us-east-1 \
+        --query "Stacks[0].Outputs[?OutputKey=='CertificateArn'].OutputValue" \
+        --output text
+
 # Upload Lambda source zip to S3
 upload-zip:
     aws s3 cp bin/{{ lambda_archive }} s3://{{ bucket_name }}/{{ lambda_archive }}
@@ -51,21 +68,25 @@ deploy-api:
             Auth0Audience="$F2K_AUTH0_AUDIENCE" \
             Auth0Domain="$F2K_AUTH0_DOMAIN" \
             AuthBackend="$F2K_AUTH_BACKEND" \
+            CertificateArn=$(just get-cert-arn) \
             DestEmail="$F2K_DEST_EMAIL" \
+            DomainName="$F2K_DOMAIN" \
             MailjetAPIKey="$MAILJET_API_KEY" \
             MailjetAPISecret="$MAILJET_API_SECRET" \
             ProjectName={{ project_name }} \
+            SendEnabled="true" \
             SenderEmail="$F2K_SENDER_EMAIL" \
             SourceBucketKey={{ lambda_archive }} \
             SourceBucketName={{ bucket_name }} \
-            SendEnabled="true" \
             Debug="true"
 
 # Full deployment (bucket + upload + infra)
 deploy: build-lambda-zip
     just deploy-bucket
-    just upload-zip
+    just deploy-cert
+    just deploy-lambda
     just deploy-api
+    @echo "Add DNS record: $F2K_DOMAIN" A $(just get-distribution-url)."
 
 # Destroy Lambda infrastructure
 destroy:
@@ -74,6 +95,8 @@ destroy:
     -aws s3 rm s3://{{ bucket_name }} --recursive
     aws cloudformation delete-stack --stack-name {{ project_name }}-bucket
     aws cloudformation wait stack-delete-complete --stack-name {{ project_name }}-bucket
+    aws cloudformation delete-stack --stack-name {{ project_name }}-cert --region us-east-1
+    aws cloudformation wait stack-delete-complete --stack-name {{ project_name }}-cert --region us-east-1
 
 # Get Lambda function URL
 get-url:
@@ -82,13 +105,20 @@ get-url:
         --query "Stacks[0].Outputs[?OutputKey=='FunctionUrl'].OutputValue" \
         --output text
 
+# Get CloudFront distribution domain name
+get-distribution-url:
+    aws cloudformation describe-stacks \
+        --stack-name {{ project_name }}-infra \
+        --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDomainName'].OutputValue" \
+        --output text
+
 # View Lambda function logs
 logs:
     aws logs tail /aws/lambda/{{ project_name }}-api --follow
 
 # Test deployed Lambda function with article URL
 test-url *URL:
-    curl -X POST http://localhost:8080/api/v1/articles \
+    curl -X POST http://localhost:8080/v1/articles \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $F2K_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"

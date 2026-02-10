@@ -56,7 +56,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "method_not_allowed"})
 	})
 
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", handlers.handleHealth)
 
 		r.Route("/articles", func(r chi.Router) {

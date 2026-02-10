@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     apiUrl = apiUrl.replace(/\/$/, '');
 
     try {
-      const response = await makeApiRequest('/api/v1/health', {
+      const response = await makeApiRequest('/v1/health', {
         method: 'GET'
       });
 

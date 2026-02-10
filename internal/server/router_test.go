@@ -33,7 +33,7 @@ func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 	r.Use(corsMiddleware)
 	r.Use(jsonContentTypeMiddleware)
 	r.Use(loggingMiddleware)
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Route("/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
 			r.Use(auth.EnsureAutheticatedMiddleware)
 			r.Post("/", h.handleCreateArticle)
@@ -72,19 +72,19 @@ func TestNewRouter_RouteRegistration(t *testing.T) {
 		{
 			name:           "health endpoint - GET",
 			method:         "GET",
-			path:           "/api/v1/health",
+			path:           "/v1/health",
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "health endpoint - OPTIONS",
 			method:         "OPTIONS",
-			path:           "/api/v1/health",
+			path:           "/v1/health",
 			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name:           "articles endpoint - POST without auth",
 			method:         "POST",
-			path:           "/api/v1/articles",
+			path:           "/v1/articles",
 			expectedStatus: http.StatusUnauthorized,
 			body:           []byte(`{"url":"https://example.com"}`),
 		},
@@ -110,7 +110,7 @@ func TestNewRouter_404Handler(t *testing.T) {
 	}
 	r := NewRouter(cfg)
 
-	req := httptest.NewRequest("GET", "/api/v1/unknown", http.NoBody)
+	req := httptest.NewRequest("GET", "/v1/unknown", http.NoBody)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -135,7 +135,7 @@ func TestNewRouter_405Handler(t *testing.T) {
 	}
 	r := NewRouter(cfg)
 
-	req := httptest.NewRequest("PUT", "/api/v1/health", http.NoBody)
+	req := httptest.NewRequest("PUT", "/v1/health", http.NoBody)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -191,7 +191,7 @@ func TestHealthCheckFlow(t *testing.T) {
 	}
 	r := NewRouter(cfg)
 
-	req := httptest.NewRequest("GET", "/api/v1/health", http.NoBody)
+	req := httptest.NewRequest("GET", "/v1/health", http.NoBody)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -221,7 +221,7 @@ func TestArticleCreationFlow_Authenticated(t *testing.T) {
 
 	body := articleRequest{URL: testArticleURL}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+testAPIKey)
 	w := httptest.NewRecorder()
@@ -254,7 +254,7 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 	h := createTestHandlerWithMock(cfg)
 	r := chi.NewRouter()
 	r.Use(corsMiddleware)
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Route("/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
 			r.Use(auth.EnsureAutheticatedMiddleware)
 			r.Use(auth.NewUserIDMiddleware(cfg))
@@ -264,7 +264,7 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 
 	body := articleRequest{URL: testArticleURL}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -286,7 +286,7 @@ func TestArticleCreationFlow_EmailDisabled(t *testing.T) {
 
 	body := articleRequest{URL: testArticleURL}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+testAPIKey)
 	w := httptest.NewRecorder()
@@ -313,7 +313,7 @@ func TestCORS_PreflightFlow(t *testing.T) {
 	}
 	r := NewRouter(cfg)
 
-	req := httptest.NewRequest("OPTIONS", "/api/v1/health", http.NoBody)
+	req := httptest.NewRequest("OPTIONS", "/v1/health", http.NoBody)
 	req.Header.Set("origin", testOrigin)
 	w := httptest.NewRecorder()
 

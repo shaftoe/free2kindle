@@ -9,7 +9,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'sendToKindle' && info.linkUrl) {
     try {
-      const response = await makeApiRequest('/api/v1/articles', {
+      const response = await makeApiRequest('/v1/articles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

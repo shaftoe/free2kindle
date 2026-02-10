@@ -62,6 +62,19 @@ Parameters:
     Description: Debug flag
     Default: "false"
 
+  DomainName:
+    Type: String
+    Description: Custom domain name for the API (e.g. api.saveto.ink)
+    Default: ""
+
+  CertificateArn:
+    Type: String
+    Description: ACM certificate ARN for the custom domain (must be in us-east-1)
+    Default: ""
+
+Conditions:
+  UseCustomDomain: !Not [!Equals [!Ref DomainName, ""]]
+
 Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -107,6 +120,12 @@ Resources:
       TracingConfig:
         Mode: PassThrough
 
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${LambdaFunction}"
+      RetentionInDays: 30
+
   LambdaFunctionUrl:
     Type: AWS::Lambda::Url
     Properties:
@@ -128,6 +147,45 @@ Resources:
       FunctionName: !Ref LambdaFunction
       Action: lambda:InvokeFunction
       Principal: "*"
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: UseCustomDomain
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: /
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: LambdaOrigin
+            DomainName: !Ref DomainName
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        DefaultCacheBehavior:
+          TargetOriginId: LambdaOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - HEAD
+            - DELETE
+            - POST
+            - GET
+            - OPTIONS
+            - PUT
+            - PATCH
+          Compress: true
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Aliases:
+          - !Ref DomainName
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
@@ -189,3 +247,22 @@ Outputs:
     Value: !GetAtt DynamoDBTable.Arn
     Export:
       Name: !Sub "${ProjectName}-dynamodb-table-arn"
+
+  CloudFrontDistributionId:
+    Description: CloudFront distribution ID
+    Value: !Ref CloudFrontDistribution
+    Condition: UseCustomDomain
+
+  CloudFrontDomainName:
+    Description: CloudFront distribution domain name
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Condition: UseCustomDomain
+
+  CustomDomainUrl:
+    Description: Custom domain URL for the API
+    Value: !Sub "https://${DomainName}"
+    Condition: UseCustomDomain
+
+  LogGroupName:
+    Description: CloudWatch log group name for Lambda
+    Value: !Ref LambdaLogGroup

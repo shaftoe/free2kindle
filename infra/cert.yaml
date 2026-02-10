@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ACM certificate for custom domain (must be deployed to us-east-1)
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Domain Configuration
+        Parameters:
+          - DomainName
+  RequiredRegions:
+    - us-east-1
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Name of the project (used for resource naming)
+
+  DomainName:
+    Type: String
+    Description: Custom domain name for the API (e.g. api.saveto.ink)
+
+Resources:
+  DomainCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      SubjectAlternativeNames:
+        - !Ref DomainName
+
+Outputs:
+  CertificateArn:
+    Description: ARN of the ACM certificate
+    Value: !Ref DomainCertificate
+    Export:
+      Name: !Sub "${ProjectName}-certificate-arn"

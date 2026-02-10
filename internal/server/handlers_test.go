@@ -98,7 +98,7 @@ func TestHandleCreateArticleSuccessWithEmail(t *testing.T) {
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -139,7 +139,7 @@ func TestHandleCreateArticleSuccessWithoutEmail(t *testing.T) {
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -168,7 +168,7 @@ func TestHandleCreateArticleInvalidJSON(t *testing.T) {
 	}
 	h := newHandlers(cfg, nil, nil)
 
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader([]byte("invalid json")))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -197,7 +197,7 @@ func TestHandleCreateArticleMissingURL(t *testing.T) {
 
 	body := articleRequest{URL: ""}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -228,7 +228,7 @@ func TestHandleCreateArticleServiceError(t *testing.T) {
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -259,7 +259,7 @@ func TestHandleCreateArticleNilArticle(t *testing.T) {
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/api/v1/articles", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 

@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending...';
 
-      const response = await makeApiRequest('/api/v1/articles', {
+      const response = await makeApiRequest('/v1/articles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
