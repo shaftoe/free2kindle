@@ -71,7 +71,7 @@ func getArticleIDandCleanURL(r *http.Request) (id, url *string, err error) {
 }
 
 func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Group, articles chan *model.Article) {
-	eg = &errgroup.Group{}
+	eg, ctx = errgroup.WithContext(ctx)
 	articles = make(chan *model.Article)
 	var dbErrors error
 
@@ -96,9 +96,10 @@ func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Gr
 
 // handleCreateArticle handles the creation of a new article.
 // It:
-// - downloads/processes the article.
-// - updates/stores metadata in the repository.
-// - (optionally) sends the article to the Kindle.
+// - downloads/processes the article
+// - (re)write metadata in the repository in background
+// - (optionally) sends the article to the Kindle
+// - updates logging information in the context for the final wide log event printing
 func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	id, cleanURL, err := getArticleIDandCleanURL(r)
 	if err != nil {
@@ -107,8 +108,6 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addLogAttr(r.Context(), slog.String("article_id", *id))
-	addLogAttr(r.Context(), slog.String("article_url", *cleanURL))
 	article := &model.Article{
 		Account:   auth.GetAccountID(r.Context()),
 		ID:        *id,
@@ -122,6 +121,9 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		_ = eg.Wait()
 	}()
 	articlesChan <- article
+
+	addLogAttr(r.Context(), slog.String("article_id", *id))
+	addLogAttr(r.Context(), slog.String("article_url", *cleanURL))
 
 	result, err := h.service.Process(r.Context(), *cleanURL)
 	if err != nil {
