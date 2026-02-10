@@ -92,16 +92,15 @@ func TestCorsMiddleware_OriginHeader(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	origin := "https://example.com"
 	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	req.Header.Set("origin", origin)
+	req.Header.Set("origin", testOrigin)
 	w := httptest.NewRecorder()
 
 	corsMiddleware(next).ServeHTTP(w, req)
 
-	if w.Header().Get("Access-Control-Allow-Origin") != origin {
+	if w.Header().Get("Access-Control-Allow-Origin") != testOrigin {
 		t.Errorf("expected Access-Control-Allow-Origin '%s', got '%s'",
-			origin, w.Header().Get("Access-Control-Allow-Origin"))
+			testOrigin, w.Header().Get("Access-Control-Allow-Origin"))
 	}
 }
 
@@ -371,5 +370,54 @@ func TestResponseStatusRecorder_WriteHeader(t *testing.T) {
 
 	if recorder.status != http.StatusCreated {
 		t.Errorf("expected status %d, got %d", http.StatusCreated, recorder.status)
+	}
+}
+
+func BenchmarkCorsMiddleware(b *testing.B) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	middleware := corsMiddleware(next)
+
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("origin", testOrigin)
+	w := httptest.NewRecorder()
+
+	for b.Loop() {
+		middleware.ServeHTTP(w, req)
+	}
+}
+
+func BenchmarkRequestIDMiddleware(b *testing.B) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	middleware := requestIDMiddleware(next)
+
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("X-Request-ID", customRequestID)
+	w := httptest.NewRecorder()
+
+	for b.Loop() {
+		middleware.ServeHTTP(w, req)
+	}
+}
+
+func BenchmarkLoggingMiddleware(b *testing.B) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	middleware := loggingMiddleware(next)
+
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("User-Agent", "test-agent")
+	w := httptest.NewRecorder()
+	recorder := &responseStatusRecorder{ResponseWriter: w, status: http.StatusOK}
+
+	for b.Loop() {
+		middleware.ServeHTTP(recorder, req)
 	}
 }
