@@ -32,7 +32,8 @@ const (
 )
 
 // NewUserIDMiddleware returns authentication middleware based on the configured auth backend.
-// Ensure the userID is set in the context, adds authentication error to the context if any.
+// The returned middleware ensures the userID is set in the context, adds authentication error
+// to the context if any. To subsequently validate authentication use EnsureAutheticatedMiddleware.
 func NewUserIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	switch cfg.AuthBackend {
 	case constant.AuthBackendSharedAPIKey:
@@ -42,6 +43,27 @@ func NewUserIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	default:
 		return sharedAPIKeyMiddleware(cfg.APIKeySecret)
 	}
+}
+
+// EnsureAutheticatedMiddleware ensures that the request is authenticated before
+// proceeding to the next handler.
+func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := GetAuthError(r.Context()); err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		accountID := GetAccountID(r.Context())
+		if accountID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "unauthorized"})
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // GetAccountID retrieves the authenticated account ID from the context.
@@ -127,27 +149,6 @@ func auth0Middleware(domain, audience string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
-}
-
-// EnsureAutheticatedMiddleware ensures that the request is authenticated before
-// proceeding to the next handler.
-func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := GetAuthError(r.Context()); err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
-			return
-		}
-
-		accountID := GetAccountID(r.Context())
-		if accountID == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "unauthorized"})
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }
 
 func addUserIDToContext(ctx context.Context, userID string) context.Context {

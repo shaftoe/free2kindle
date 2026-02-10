@@ -73,14 +73,19 @@ func getArticleIDandCleanURL(r *http.Request) (id, url *string, err error) {
 func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Group, articles chan *model.Article) {
 	eg = &errgroup.Group{}
 	articles = make(chan *model.Article)
+	var dbErrors error
 
 	eg.Go(func() error {
 		for article := range articles {
 			if h.repository != nil {
 				if storeErr := h.repository.Store(ctx, article); storeErr != nil {
-					addLogAttr(ctx, slog.String("db_error", storeErr.Error()))
+					dbErrors = errors.Join(dbErrors, storeErr)
 				}
 			}
+		}
+
+		if dbErrors != nil {
+			addLogAttr(ctx, slog.String("db_error", dbErrors.Error()))
 		}
 
 		return nil
