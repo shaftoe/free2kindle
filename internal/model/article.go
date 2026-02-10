@@ -36,3 +36,8 @@ type Article struct {
 	DeliveredEmailUUID *string                `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"` //nolint:lll // tag string is long due to json and dynamodb tags
 	DeliveredBy        constant.EmailProvider `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`               //nolint:lll // tag string is long due to json and dynamodb tags
 }
+
+// ErrorResponse represents the unified error response.
+type ErrorResponse struct {
+	Error string `json:"error"`
+}

@@ -119,7 +119,7 @@ func TestNewRouter_404Handler(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusNotFound, w.Code)
 	}
 
-	var resp errorResponse
+	var resp model.ErrorResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
@@ -144,7 +144,7 @@ func TestNewRouter_405Handler(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusMethodNotAllowed, w.Code)
 	}
 
-	var resp errorResponse
+	var resp model.ErrorResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}

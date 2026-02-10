@@ -98,7 +98,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 	id, cleanURL, err := getArticleIDandCleanURL(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(errorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -161,7 +161,7 @@ func (h *handlers) processArticleError(
 	addLogAttr(r.Context(), slog.String("error", err.Error()))
 
 	w.WriteHeader(http.StatusInternalServerError)
-	_ = json.NewEncoder(w).Encode(errorResponse{Error: err.Error()})
+	_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 }
 
 func (h *handlers) enrichArticle(

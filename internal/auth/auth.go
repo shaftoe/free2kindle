@@ -14,6 +14,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v3/validator"
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/constant"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 const (
@@ -29,10 +30,6 @@ const (
 	userIDKey    contextKey = "user_id"
 	authErrorKey contextKey = "auth_error"
 )
-
-type errorResponse struct {
-	Message string `json:"error"`
-}
 
 // NewUserIDMiddleware returns authentication middleware based on the configured auth backend.
 // Ensure the userID is set in the context, adds authentication error to the context if any.
@@ -138,14 +135,14 @@ func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := GetAuthError(r.Context()); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(errorResponse{Message: err.Error()})
+			_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		accountID := GetAccountID(r.Context())
 		if accountID == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(errorResponse{Message: "unauthorized"})
+			_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "unauthorized"})
 			return
 		}
 

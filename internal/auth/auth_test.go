@@ -9,6 +9,7 @@ import (
 
 	"github.com/shaftoe/free2kindle/internal/config"
 	"github.com/shaftoe/free2kindle/internal/constant"
+	"github.com/shaftoe/free2kindle/internal/model"
 )
 
 const (
@@ -275,13 +276,13 @@ func TestSharedAPIKeyMiddleware_ErrorMessageInResponse(t *testing.T) {
 				t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
 			}
 
-			var resp errorResponse
+			var resp model.ErrorResponse
 			if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 				t.Fatalf("failed to decode response: %v", err)
 			}
 
-			if resp.Message != tt.expectedMsg {
-				t.Errorf("expected error message '%s', got '%s'", tt.expectedMsg, resp.Message)
+			if resp.Error != tt.expectedMsg {
+				t.Errorf("expected error message '%s', got '%s'", tt.expectedMsg, resp.Error)
 			}
 		})
 	}
@@ -302,13 +303,13 @@ func TestEnsureAutheticatedMiddleware_AuthErrorInContext(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
 	}
 
-	var resp errorResponse
+	var resp model.ErrorResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
 	expectedMsg := errorMsgMissingOrMalformedHeader
-	if resp.Message != expectedMsg {
-		t.Errorf("expected error message '%s', got '%s'", expectedMsg, resp.Message)
+	if resp.Error != expectedMsg {
+		t.Errorf("expected error message '%s', got '%s'", expectedMsg, resp.Error)
 	}
 }

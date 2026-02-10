@@ -25,10 +25,6 @@ type healthResponse struct {
 	Status string `json:"status"`
 }
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
 type handlers struct {
 	cfg        *config.Config
 	service    service.Interface
