@@ -122,10 +122,10 @@ func TestCorsMiddleware_NoOrigin(t *testing.T) {
 }
 
 func TestRequestIDMiddleware_LambdaContext(t *testing.T) {
-	var gotRequestID string
+	var gotRequestID *string
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotRequestID, _ = r.Context().Value(contextKey(requestIDKey)).(string)
+		gotRequestID = getRequestIDFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -146,16 +146,20 @@ func TestRequestIDMiddleware_LambdaContext(t *testing.T) {
 			requestID, w.Header().Get("X-Request-ID"))
 	}
 
-	if gotRequestID != requestID {
-		t.Errorf("expected context value '%s', got '%s'", requestID, gotRequestID)
+	if gotRequestID == nil || *gotRequestID != requestID {
+		var got string
+		if gotRequestID != nil {
+			got = *gotRequestID
+		}
+		t.Errorf("expected context value '%s', got '%s'", requestID, got)
 	}
 }
 
 func TestRequestIDMiddleware_XRequestIDHeader(t *testing.T) {
-	var gotRequestID string
+	var gotRequestID *string
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotRequestID, _ = r.Context().Value(contextKey(requestIDKey)).(string)
+		gotRequestID = getRequestIDFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -170,16 +174,20 @@ func TestRequestIDMiddleware_XRequestIDHeader(t *testing.T) {
 			customRequestID, w.Header().Get("X-Request-ID"))
 	}
 
-	if gotRequestID != customRequestID {
-		t.Errorf("expected context value '%s', got '%s'", customRequestID, gotRequestID)
+	if gotRequestID == nil || *gotRequestID != customRequestID {
+		var got string
+		if gotRequestID != nil {
+			got = *gotRequestID
+		}
+		t.Errorf("expected context value '%s', got '%s'", customRequestID, got)
 	}
 }
 
 func TestRequestIDMiddleware_XAmznRequestIDHeader(t *testing.T) {
-	var gotRequestID string
+	var gotRequestID *string
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotRequestID, _ = r.Context().Value(contextKey(requestIDKey)).(string)
+		gotRequestID = getRequestIDFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -194,8 +202,12 @@ func TestRequestIDMiddleware_XAmznRequestIDHeader(t *testing.T) {
 			awsRequestID, w.Header().Get("X-Request-ID"))
 	}
 
-	if gotRequestID != awsRequestID {
-		t.Errorf("expected context value '%s', got '%s'", awsRequestID, gotRequestID)
+	if gotRequestID == nil || *gotRequestID != awsRequestID {
+		var got string
+		if gotRequestID != nil {
+			got = *gotRequestID
+		}
+		t.Errorf("expected context value '%s', got '%s'", awsRequestID, got)
 	}
 }
 

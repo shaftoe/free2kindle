@@ -72,19 +72,24 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+		var (
+			start     = time.Now()
+			userID    = auth.GetAccountID(r.Context())
+			level     = slog.LevelInfo
+			record    = slog.NewRecord(time.Now(), level, "request completed", 0)
+			requestID = getRequestIDFromContext(r.Context())
+		)
 
-		requestID, _ := r.Context().Value(contextKey(requestIDKey)).(string)
-		userID := auth.GetAccountID(r.Context())
-
-		level := slog.LevelInfo
-		record := slog.NewRecord(time.Now(), level, "request completed", 0)
 		record.AddAttrs(
-			slog.String("request_id", requestID),
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
-			slog.String("user_id", userID),
 		)
+		if requestID != nil {
+			record.AddAttrs(slog.String("request_id", *requestID))
+		}
+		if userID != "" {
+			record.AddAttrs(slog.String("user_id", userID))
+		}
 
 		ctx := context.WithValue(r.Context(), logRecordKey, &logRecord{Record: &record})
 
@@ -118,6 +123,14 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 func generateRequestID() string {
 	return strings.ReplaceAll(time.Now().Format("20060102-150405.000"), ".", "")
+}
+
+func getRequestIDFromContext(ctx context.Context) *string {
+	requestID, ok := ctx.Value(contextKey(requestIDKey)).(string)
+	if !ok {
+		return nil
+	}
+	return &requestID
 }
 
 func remoteAddr(r *http.Request) string {
