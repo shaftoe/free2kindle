@@ -8,7 +8,7 @@ This document outlines the testing strategy for the `internal/server` package.
 
 ### 1. Handlers (`handlers.go`)
 - `handleHealth` - Simple health check endpoint
-- `handleCreateArticle` - POST /api/v1/articles (main business logic)
+- `handleCreateArticle` - POST /v1/articles (main business logic)
 
 ### 2. Middleware (`middleware.go`)
 - `corsMiddleware` - CORS headers and OPTIONS handling

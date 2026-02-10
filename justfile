@@ -82,6 +82,7 @@ deploy-api:
 
 # Full deployment (bucket + upload + infra)
 deploy: build-lambda-zip
+    just auth0-create-api
     just deploy-bucket
     just deploy-cert
     just deploy-lambda

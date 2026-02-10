@@ -47,8 +47,8 @@ The extension will verify your settings by making a health check request to your
 
 This extension works with the savetoink backend API:
 
-- `POST /api/v1/articles` - Queue article for Kindle delivery
-- `GET /api/v1/health` - Health check endpoint
+- `POST /v1/articles` - Queue article for Kindle delivery
+ - `GET /v1/health` - Health check endpoint
 
 Authentication is done via the `Authorization` header with `Bearer` prefix.
 

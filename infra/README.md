@@ -92,17 +92,17 @@ The following environment variables must be set before deploying:
 
 Once deployed, the Lambda function provides the following endpoints via Function URL:
 
-- `GET /api/v1/health` - Health check
-- `POST /api/v1/articles` - Process and send article to Kindle
+- `GET /v1/health` - Health check
+- `POST /v1/articles` - Process and send article to Kindle
 
 ### Example Usage
 
 ```bash
 # Health check
-curl https://<FUNCTION_URL>/api/v1/health
+curl https://<FUNCTION_URL>/v1/health
 
 # Send article to Kindle
-curl -X POST https://<FUNCTION_URL>/api/v1/articles \
+curl -X POST https://<FUNCTION_URL>/v1/articles \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $F2K_API_KEY" \
   -d '{"url": "https://example.com/article"}'
