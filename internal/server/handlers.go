@@ -57,11 +57,11 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 	if result.Article.DeliveryStatus != "" {
 		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
+		addLogAttr(r.Context(), slog.String("email_provider", string(h.cfg.EmailProvider)))
 	}
 
 	if result.EmailResp != nil && result.EmailResp.EmailUUID != "" {
 		addLogAttr(r.Context(), slog.String("email_uuid", result.EmailResp.EmailUUID))
-		addLogAttr(r.Context(), slog.String("email_provider", string(h.cfg.EmailProvider)))
 	}
 
 	if dbErr := h.service.GetDBError(); dbErr != nil {
