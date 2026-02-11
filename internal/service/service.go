@@ -335,6 +335,10 @@ func (s *Service) GetArticles(ctx context.Context, accountID string, page, pageS
 		}
 	}
 
+	if articles == nil {
+		articles = []*model.Article{}
+	}
+
 	total := len(articles)
 	skip := (page - 1) * pageSize
 

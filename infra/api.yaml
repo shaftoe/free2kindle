@@ -207,7 +207,7 @@ Resources:
               - PATCH
             Compress: true
             ForwardedValues:
-              QueryString: false
+              QueryString: true
               Cookies:
                 Forward: none
             MinTTL: 0

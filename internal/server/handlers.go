@@ -13,6 +13,11 @@ import (
 	"github.com/shaftoe/savetoink/internal/service"
 )
 
+const (
+	defaultPageSize = 20
+	maxPageSize     = 100
+)
+
 func newHandlers(
 	cfg *config.Config,
 	svc service.Interface,
@@ -43,6 +48,8 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "missing URL in request body"})
 		return
 	}
+
+	addLogAttr(r.Context(), slog.String("url", req.URL))
 
 	result, err := h.service.CreateArticle(r.Context(), req.URL, auth.GetAccountID(r.Context()))
 	if err != nil {
@@ -81,7 +88,7 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 
 func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 	page := 1
-	pageSize := 20
+	pageSize := defaultPageSize
 
 	if p := r.URL.Query().Get("page"); p != "" {
 		if parsed, err := strconv.Atoi(p); err == nil && parsed >= 1 {
@@ -91,7 +98,7 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 
 	if ps := r.URL.Query().Get("page_size"); ps != "" {
 		if parsed, err := strconv.Atoi(ps); err == nil && parsed >= 1 {
-			pageSize = min(parsed, 100)
+			pageSize = min(parsed, maxPageSize)
 		}
 	}
 
