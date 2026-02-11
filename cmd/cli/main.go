@@ -35,15 +35,6 @@ var rootCmd = &cobra.Command{
 	Use:   "savetoink",
 	Short: "Convert web articles to EPUB format",
 	Long:  `A CLI tool to fetch web articles and convert them to EPUB format for Kindle devices.`,
-	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		viper.SetEnvPrefix("F2K")
-		viper.AutomaticEnv()
-
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			return fmt.Errorf("failed to bind flags: %w", err)
-		}
-		return nil
-	},
 }
 
 var convertCmd = &cobra.Command{
