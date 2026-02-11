@@ -44,7 +44,7 @@ func Load(mode constant.RunMode) (*Config, error) {
 		cfg.AuthBackend = constant.AuthBackendSharedAPIKey
 	}
 
-	if err := cfg.Validate(); err != nil {
+	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
 
@@ -79,25 +79,24 @@ func bindEnvVars() error {
 
 func loadConfig(mode constant.RunMode) *Config {
 	cfg := &Config{
+		APIKeySecret:     viper.GetString("api-key-secret"),
+		Auth0Audience:    viper.GetString("auth0-audience"),
+		Auth0Domain:      viper.GetString("auth0-domain"),
+		AuthBackend:      constant.AuthBackend(viper.GetString("auth-backend")),
+		Debug:            viper.GetBool("debug"),
 		DestEmail:        viper.GetString("destination-email"),
-		SenderEmail:      viper.GetString("sender-email"),
+		DynamoDBTable:    viper.GetString("dynamodb-table"),
 		MailjetAPIKey:    viper.GetString("api-key"),
 		MailjetAPISecret: viper.GetString("api-secret"),
-		APIKeySecret:     viper.GetString("api-key-secret"),
-		Auth0Domain:      viper.GetString("auth0-domain"),
-		Auth0Audience:    viper.GetString("auth0-audience"),
-		Debug:            viper.GetBool("debug"),
-		SendEnabled:      viper.GetBool("send-enabled"),
-		DynamoDBTable:    viper.GetString("dynamodb-table"),
 		Mode:             mode,
-		AuthBackend:      constant.AuthBackend(viper.GetString("auth-backend")),
+		SendEnabled:      viper.GetBool("send-enabled"),
+		SenderEmail:      viper.GetString("sender-email"),
 	}
 
 	return cfg
 }
 
-// Validate checks that all required configuration fields are set.
-func (c *Config) Validate() error {
+func (c *Config) validate() error {
 	var missing []string
 
 	if c.Mode == constant.ModeServer {
