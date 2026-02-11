@@ -87,7 +87,7 @@ deploy: build-lambda-zip
     just deploy-cert
     just deploy-lambda
     just deploy-api
-    @echo "Add DNS record: $SAVETOINK_DOMAIN" A $(just get-distribution-url)."
+    @echo "Add DNS record: $SAVETOINK_DOMAIN A $(just get-distribution-url)."
 
 # Destroy Lambda infrastructure
 destroy:
