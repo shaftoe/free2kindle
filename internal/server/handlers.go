@@ -9,13 +9,9 @@ import (
 
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/shaftoe/savetoink/internal/service"
-)
-
-const (
-	defaultPageSize = 20
-	maxPageSize     = 100
 )
 
 func newHandlers(
@@ -87,18 +83,18 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
-	page := 1
-	pageSize := defaultPageSize
+	page := constant.DefaultPage
+	pageSize := constant.DefaultPageSize
 
 	if p := r.URL.Query().Get("page"); p != "" {
-		if parsed, err := strconv.Atoi(p); err == nil && parsed >= 1 {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed >= constant.MinPage {
 			page = parsed
 		}
 	}
 
 	if ps := r.URL.Query().Get("page_size"); ps != "" {
-		if parsed, err := strconv.Atoi(ps); err == nil && parsed >= 1 {
-			pageSize = min(parsed, maxPageSize)
+		if parsed, err := strconv.Atoi(ps); err == nil && parsed >= constant.MinPageSize {
+			pageSize = min(parsed, constant.MaxPageSize)
 		}
 	}
 

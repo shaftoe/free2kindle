@@ -13,4 +13,5 @@ type Repository interface {
 	GetByAccountAndID(ctx context.Context, account, id string) (*model.Article, error)
 	GetByAccount(ctx context.Context, account string) ([]*model.Article, error)
 	DeleteByAccountAndID(ctx context.Context, account, id string) error
+	DeleteByAccount(ctx context.Context, account string) error
 }

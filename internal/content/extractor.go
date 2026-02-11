@@ -14,11 +14,8 @@ import (
 
 	"github.com/go-shiori/dom"
 	"github.com/markusmobius/go-trafilatura"
+	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/shaftoe/savetoink/internal/model"
-)
-
-const (
-	wordsPerMinute = 250
 )
 
 // Extractor handles the extraction of article content from URLs and HTML.
@@ -114,7 +111,7 @@ func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr strin
 		URL:                urlStr,
 		CreatedAt:          time.Now(),
 		WordCount:          wordCount,
-		ReadingTimeMinutes: (wordCount + wordsPerMinute - 1) / wordsPerMinute,
+		ReadingTimeMinutes: (wordCount + constant.WordsPerMinute - 1) / constant.WordsPerMinute,
 		SourceDomain:       result.Metadata.Hostname,
 		SiteName:           result.Metadata.Sitename,
 		ContentType:        result.Metadata.PageType,

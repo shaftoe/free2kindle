@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testAccount = "test@example.com"
+)
+
 func isResourceNotFound(err error) bool {
 	var smithyErr interface {
 		ErrorCode() string
@@ -36,7 +40,7 @@ func TestDynamoDB_Store(t *testing.T) {
 	ctx := context.Background()
 
 	article := &model.Article{
-		Account:   "test@example.com",
+		Account:   testAccount,
 		ID:        "test-id-1",
 		URL:       "https://example.com/test",
 		Title:     "Test Article",
@@ -80,7 +84,7 @@ func TestDynamoDB_GetByAccountAndID(t *testing.T) {
 	ctx := context.Background()
 
 	expected := &model.Article{
-		Account:   "test@example.com",
+		Account:   testAccount,
 		ID:        "test-id-2",
 		URL:       "https://example.com/test2",
 		Title:     "Test Article 2",
@@ -93,7 +97,7 @@ func TestDynamoDB_GetByAccountAndID(t *testing.T) {
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 
-	actual, err := repo.GetByAccountAndID(ctx, "test@example.com", "test-id-2")
+	actual, err := repo.GetByAccountAndID(ctx, testAccount, "test-id-2")
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Equal(t, expected.Account, actual.Account)
@@ -111,7 +115,7 @@ func TestDynamoDB_GetByAccountAndID_NotFound(t *testing.T) {
 	repo := setupTestDynamoDB(t)
 	ctx := context.Background()
 
-	_, err := repo.GetByAccountAndID(ctx, "test@example.com", "non-existent-id")
+	_, err := repo.GetByAccountAndID(ctx, testAccount, "non-existent-id")
 	skipIfTableNotFound(t, err)
 	assert.Error(t, err)
 	assert.Equal(t, ErrNotFound, err)
@@ -152,7 +156,7 @@ func TestDynamoDB_GetByAccount(t *testing.T) {
 	repo := setupTestDynamoDB(t)
 	ctx := context.Background()
 
-	account := "test@example.com"
+	account := testAccount
 	articles := []*model.Article{
 		{
 			Account:   account,
@@ -223,7 +227,7 @@ func TestDynamoDB_DeleteByAccountAndID(t *testing.T) {
 	ctx := context.Background()
 
 	article := &model.Article{
-		Account:   "test@example.com",
+		Account:   testAccount,
 		ID:        "test-id-7",
 		URL:       "https://example.com/test7",
 		Title:     "Test Article 7",
@@ -235,11 +239,11 @@ func TestDynamoDB_DeleteByAccountAndID(t *testing.T) {
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 
-	err = repo.DeleteByAccountAndID(ctx, "test@example.com", "test-id-7")
+	err = repo.DeleteByAccountAndID(ctx, testAccount, "test-id-7")
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 
-	_, err = repo.GetByAccountAndID(ctx, "test@example.com", "test-id-7")
+	_, err = repo.GetByAccountAndID(ctx, testAccount, "test-id-7")
 	skipIfTableNotFound(t, err)
 	assert.Error(t, err)
 	assert.Equal(t, ErrNotFound, err)
@@ -275,6 +279,76 @@ func TestDynamoDB_DeleteByAccountAndID_WrongAccount(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestDynamoDB_DeleteByAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := testAccount
+	articles := []*model.Article{
+		{
+			Account:   account,
+			ID:        "test-id-10",
+			URL:       "https://example.com/test10",
+			Title:     "Test Article 10",
+			Content:   "<p>Test content 10</p>",
+			CreatedAt: time.Now(),
+		},
+		{
+			Account:   account,
+			ID:        "test-id-11",
+			URL:       "https://example.com/test11",
+			Title:     "Test Article 11",
+			Content:   "<p>Test content 11</p>",
+			CreatedAt: time.Now(),
+		},
+		{
+			Account:   "other@example.com",
+			ID:        "test-id-12",
+			URL:       "https://example.com/test12",
+			Title:     "Test Article 12",
+			Content:   "<p>Test content 12</p>",
+			CreatedAt: time.Now(),
+		},
+	}
+
+	for _, article := range articles {
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	err := repo.DeleteByAccount(ctx, account)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+
+	retrieved, err := repo.GetByAccount(ctx, account)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Empty(t, retrieved)
+
+	otherArticles, err := repo.GetByAccount(ctx, "other@example.com")
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Len(t, otherArticles, 1)
+}
+
+func TestDynamoDB_DeleteByAccount_Empty(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	err := repo.DeleteByAccount(ctx, "non-existent@example.com")
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+}
+
 func TestDynamoDB_UpdateArticle(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -284,7 +358,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 	ctx := context.Background()
 
 	original := &model.Article{
-		Account:   "test@example.com",
+		Account:   testAccount,
 		ID:        "test-id-9",
 		URL:       "https://example.com/test9",
 		Title:     "Test Article 9",
@@ -297,7 +371,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 	require.NoError(t, err)
 
 	updated := &model.Article{
-		Account:            "test@example.com",
+		Account:            testAccount,
 		ID:                 "test-id-9",
 		URL:                "https://example.com/test9",
 		Title:              "Updated Article 9",
@@ -314,7 +388,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 
-	retrieved, err := repo.GetByAccountAndID(ctx, "test@example.com", "test-id-9")
+	retrieved, err := repo.GetByAccountAndID(ctx, testAccount, "test-id-9")
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Article 9", retrieved.Title)
@@ -334,7 +408,7 @@ func setupTestDynamoDB(t *testing.T) *DynamoDB {
 
 	t.Cleanup(func() {
 		ctx := context.Background()
-		articles, err := repo.GetByAccount(ctx, "test@example.com")
+		articles, err := repo.GetByAccount(ctx, testAccount)
 		if err != nil {
 			return
 		}

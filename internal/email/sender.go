@@ -6,14 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/shaftoe/savetoink/internal/model"
-)
-
-const (
-	// DefaultSubject is the default email subject.
-	DefaultSubject = "Document"
-	// MaxSubjectLength is the maximum length for email subjects.
-	MaxSubjectLength = 100
 )
 
 // SendEmailResponse contains the response from sending an email.
@@ -60,7 +54,7 @@ func GenerateSubject(articleTitle, customSubject string) string {
 	if articleTitle != "" {
 		return sanitizeSubject(articleTitle)
 	}
-	return DefaultSubject
+	return constant.DefaultSubject
 }
 
 func sanitizeFilename(name string) string {
@@ -75,11 +69,11 @@ func sanitizeFilename(name string) string {
 
 func sanitizeSubject(subject string) string {
 	if subject == "" {
-		return DefaultSubject
+		return constant.DefaultSubject
 	}
 	subject = strings.TrimSpace(subject)
-	if len(subject) > MaxSubjectLength {
-		subject = subject[:MaxSubjectLength]
+	if len(subject) > constant.MaxSubjectLength {
+		subject = subject[:constant.MaxSubjectLength]
 	}
 	return subject
 }

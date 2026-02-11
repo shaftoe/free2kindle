@@ -47,6 +47,17 @@ func (m *MockRepository) DeleteByAccountAndID(_ context.Context, account, id str
 	return nil
 }
 
+func (m *MockRepository) DeleteByAccount(_ context.Context, account string) error {
+	var filtered []*model.Article
+	for _, article := range m.articles {
+		if article.Account != account {
+			filtered = append(filtered, article)
+		}
+	}
+	m.articles = filtered
+	return nil
+}
+
 func TestGetArticles(t *testing.T) {
 	articles := []*model.Article{
 		{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1", CreatedAt: time.Now()},

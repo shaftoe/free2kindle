@@ -52,3 +52,51 @@ const (
 	// EmailBackendMailjet indicates MailJet email backend.
 	EmailBackendMailjet EmailProvider = "mailjet"
 )
+
+// Pagination constants.
+const (
+	// MinPage is the minimum valid page number for pagination.
+	MinPage = 1
+
+	// DefaultPage is the default page number for pagination.
+	DefaultPage = 1
+
+	// MinPageSize is the minimum number of items per page.
+	MinPageSize = 1
+
+	// DefaultPageSize is the default number of items per page.
+	DefaultPageSize = 20
+
+	// MaxPageSize is the maximum number of items per page.
+	MaxPageSize = 100
+)
+
+// Email constants.
+const (
+	// DefaultSubject is the default email subject.
+	DefaultSubject = "Document"
+
+	// MaxSubjectLength is the maximum length for email subjects.
+	MaxSubjectLength = 100
+)
+
+// DynamoDB constants.
+const (
+	// DynamoDBBatchSize is the maximum number of items in a BatchWriteItem operation.
+	DynamoDBBatchSize = 25
+)
+
+// Content extraction constants.
+const (
+	// WordsPerMinute is the average reading speed used to calculate estimated reading time.
+	WordsPerMinute = 250
+)
+
+// EPUB constants.
+const (
+	// DefaultChapterTitle is the default title for single-chapter EPUBs.
+	DefaultChapterTitle = "Chapter 1"
+
+	// DefaultChapterFilename is the default filename for the chapter in single-chapter EPUBs.
+	DefaultChapterFilename = "chapter1.xhtml"
+)
