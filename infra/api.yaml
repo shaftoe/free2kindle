@@ -187,6 +187,8 @@ Resources:
             - PATCH
           Compress: true
           ForwardedValues:
+            Headers:
+              - User-Agent
             QueryString: true
             Cookies:
               Forward: none
@@ -207,6 +209,8 @@ Resources:
               - PATCH
             Compress: true
             ForwardedValues:
+              Headers:
+                - User-Agent
               QueryString: true
               Cookies:
                 Forward: none
