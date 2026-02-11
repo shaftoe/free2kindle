@@ -131,6 +131,11 @@ test-get-articles:
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $SAVETOINK_API_KEY"
 
+test-delete-article *ID:
+    curl -X DELETE http://localhost:8080/v1/articles/{{ ID }} \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $SAVETOINK_API_KEY"
+
 deploy-lambda: build-lambda-zip upload-zip
     aws lambda update-function-code \
         --function-name {{ project_name }}-api \
