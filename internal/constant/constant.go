@@ -97,6 +97,12 @@ const (
 	// DefaultChapterTitle is the default title for single-chapter EPUBs.
 	DefaultChapterTitle = "Chapter 1"
 
-	// DefaultChapterFilename is the default filename for the chapter in single-chapter EPUBs.
+	// DefaultChapterFilename is the default filename for a chapter in single-chapter EPUBs.
 	DefaultChapterFilename = "chapter1.xhtml"
+)
+
+// Error messages.
+const (
+	// ErrInvalidArticleID is the error message for an invalid article ID.
+	ErrInvalidArticleID = "invalid article id"
 )

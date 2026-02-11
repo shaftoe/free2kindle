@@ -82,6 +82,11 @@ type GetArticlesResult struct {
 	HasMore  bool
 }
 
+// DeleteArticleResult holds the result of deleting an article.
+type DeleteArticleResult struct {
+	Deleted int
+}
+
 // ProcessResult holds the result of processing an article.
 type ProcessResult struct {
 	article  *model.Article
@@ -289,6 +294,51 @@ func (s *Service) startBackgroundDBStore(ctx context.Context) (eg *errgroup.Grou
 	})
 
 	return eg, articles
+}
+
+// DeleteArticle deletes a single article by account and ID.
+func (s *Service) DeleteArticle(ctx context.Context, accountID, articleID string) (*DeleteArticleResult, error) {
+	if articleID == "" {
+		return nil, errors.New(constant.ErrInvalidArticleID)
+	}
+
+	if s.repo == nil {
+		return &DeleteArticleResult{Deleted: 0}, nil
+	}
+
+	_, err := s.repo.GetByAccountAndID(ctx, accountID, articleID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return &DeleteArticleResult{Deleted: 0}, nil
+		}
+		return nil, fmt.Errorf("failed to get article: %w", err)
+	}
+
+	err = s.repo.DeleteByAccountAndID(ctx, accountID, articleID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete article: %w", err)
+	}
+
+	return &DeleteArticleResult{Deleted: 1}, nil
+}
+
+// DeleteAllArticles deletes all articles for a given account.
+func (s *Service) DeleteAllArticles(ctx context.Context, accountID string) error {
+	if s.repo == nil {
+		return nil
+	}
+
+	err := s.repo.DeleteByAccount(ctx, accountID)
+	if err != nil {
+		return fmt.Errorf("failed to delete all articles: %w", err)
+	}
+
+	return nil
+}
+
+// GetDBError returns any accumulated database errors from background operations.
+func (s *Service) GetDBError() error {
+	return s.dbErrors
 }
 
 func (s *Service) enrichArticle(

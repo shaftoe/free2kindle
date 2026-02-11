@@ -33,6 +33,10 @@ type listArticlesResponse struct {
 	HasMore  bool             `json:"has_more"`
 }
 
+type deleteArticleResponse struct {
+	Deleted int `json:"deleted"`
+}
+
 type handlers struct {
 	cfg     *config.Config
 	service service.Interface
