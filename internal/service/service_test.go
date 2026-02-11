@@ -5,8 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shaftoe/savetoink/internal/config"
 	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/shaftoe/savetoink/internal/model"
+	"github.com/shaftoe/savetoink/internal/repository"
 )
 
 type MockRepository struct {
@@ -24,7 +26,7 @@ func (m *MockRepository) GetByAccountAndID(_ context.Context, account, id string
 			return article, nil
 		}
 	}
-	return nil, nil
+	return nil, repository.ErrNotFound
 }
 
 func (m *MockRepository) GetByAccount(_ context.Context, account string) ([]*model.Article, error) {
@@ -240,5 +242,186 @@ func TestGetArticlesWithDeliveryStatus(t *testing.T) {
 
 	if result.Articles[1].Error != "email failed" {
 		t.Errorf("expected error 'email failed', got '%s'", result.Articles[1].Error)
+	}
+}
+
+func TestDeleteArticle_Success(t *testing.T) {
+	mockRepo := &MockRepository{
+		articles: []*model.Article{
+			{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1"},
+		},
+	}
+	svc := &Service{repo: mockRepo}
+
+	result, err := svc.DeleteArticle(context.Background(), "user1", "1")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Deleted != 1 {
+		t.Errorf("expected 1 deleted, got %d", result.Deleted)
+	}
+}
+
+func TestDeleteArticle_NotFound(t *testing.T) {
+	mockRepo := &MockRepository{
+		articles: []*model.Article{
+			{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1"},
+		},
+	}
+	svc := &Service{repo: mockRepo}
+
+	result, err := svc.DeleteArticle(context.Background(), "user1", "non-existent")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Deleted != 0 {
+		t.Errorf("expected 0 deleted for not found, got %d", result.Deleted)
+	}
+}
+
+func TestDeleteArticle_EmptyID(t *testing.T) {
+	svc := &Service{repo: nil}
+
+	_, err := svc.DeleteArticle(context.Background(), "user1", "")
+
+	if err == nil {
+		t.Error("expected error for empty ID, got nil")
+	}
+}
+
+func TestDeleteArticle_NoRepo(t *testing.T) {
+	svc := &Service{repo: nil}
+
+	result, err := svc.DeleteArticle(context.Background(), "user1", "1")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Deleted != 0 {
+		t.Errorf("expected 0 deleted with no repo, got %d", result.Deleted)
+	}
+}
+
+func TestDeleteAllArticles_Success(t *testing.T) {
+	mockRepo := &MockRepository{
+		articles: []*model.Article{
+			{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1"},
+			{Account: "user1", ID: "2", Title: "Article 2", URL: "https://example.com/2"},
+			{Account: "user2", ID: "3", Title: "Article 3", URL: "https://example.com/3"},
+		},
+	}
+	svc := &Service{repo: mockRepo}
+
+	result, err := svc.DeleteAllArticles(context.Background(), "user1")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Deleted != 2 {
+		t.Errorf("expected 2 deleted, got %d", result.Deleted)
+	}
+}
+
+func TestDeleteAllArticles_NoRepo(t *testing.T) {
+	svc := &Service{repo: nil}
+
+	result, err := svc.DeleteAllArticles(context.Background(), "user1")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Deleted != 0 {
+		t.Errorf("expected 0 deleted with no repo, got %d", result.Deleted)
+	}
+}
+
+func TestSend_NilResult(t *testing.T) {
+	cfg := &config.Config{
+		SendEnabled: true,
+	}
+	svc := New(cfg)
+
+	_, err := svc.Send(context.Background(), nil, "")
+
+	if err == nil {
+		t.Error("expected error for nil result, got nil")
+	}
+}
+
+func TestSend_NilArticle(t *testing.T) {
+	cfg := &config.Config{
+		SendEnabled: true,
+	}
+	svc := New(cfg)
+
+	result := NewProcessResult(nil, []byte("test"), "https://example.com")
+
+	_, err := svc.Send(context.Background(), result, "")
+
+	if err == nil {
+		t.Error("expected error for nil article, got nil")
+	}
+}
+
+func TestSend_NoSenderConfigured(t *testing.T) {
+	cfg := &config.Config{
+		SendEnabled: false,
+	}
+	svc := New(cfg)
+
+	article := &model.Article{
+		Title: "Test Article",
+		URL:   "https://example.com",
+	}
+	result := NewProcessResult(article, []byte("test"), "https://example.com")
+
+	_, err := svc.Send(context.Background(), result, "")
+
+	if err == nil {
+		t.Error("expected error when sender not configured, got nil")
+	}
+}
+
+func TestWriteToFile_NilResult(t *testing.T) {
+	svc := &Service{}
+
+	err := svc.WriteToFile(nil, "/tmp/test.epub")
+
+	if err == nil {
+		t.Error("expected error for nil result, got nil")
+	}
+}
+
+func TestWriteToFile_NilArticle(t *testing.T) {
+	svc := &Service{}
+
+	result := NewProcessResult(nil, []byte("test"), "https://example.com")
+
+	err := svc.WriteToFile(result, "/tmp/test.epub")
+
+	if err == nil {
+		t.Error("expected error for nil article, got nil")
+	}
+}
+
+func TestWriteToFile_EmptyPath(t *testing.T) {
+	svc := &Service{}
+
+	article := &model.Article{
+		Title: "Test Article",
+	}
+	result := NewProcessResult(article, []byte("test"), "https://example.com")
+
+	err := svc.WriteToFile(result, "")
+
+	if err == nil {
+		t.Error("expected error for empty path, got nil")
 	}
 }

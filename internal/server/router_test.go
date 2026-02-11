@@ -25,6 +25,7 @@ const (
 	statusCreatedMessage = "article sent to Kindle successfully"
 	statusEmailDisabled  = "article processed successfully (email sending disabled)"
 	methodsAllowed       = "POST, GET, OPTIONS"
+	testDatabaseError    = "database error"
 )
 
 func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {

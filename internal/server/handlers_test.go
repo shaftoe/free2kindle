@@ -493,3 +493,138 @@ func TestHandleGetArticlesServiceError(t *testing.T) {
 		t.Errorf("expected error 'database error', got '%s'", resp.Error)
 	}
 }
+
+func TestHandleDeleteArticle(t *testing.T) {
+	tests := []struct {
+		name         string
+		deleteResult *service.DeleteArticleResult
+		deleteErr    error
+		expectedCode int
+		expectedErr  string
+	}{
+		{
+			name:         "success",
+			deleteResult: &service.DeleteArticleResult{Deleted: 1},
+			deleteErr:    nil,
+			expectedCode: http.StatusOK,
+			expectedErr:  "",
+		},
+		{
+			name:         "not found",
+			deleteResult: &service.DeleteArticleResult{Deleted: 0},
+			deleteErr:    nil,
+			expectedCode: http.StatusOK,
+			expectedErr:  "",
+		},
+		{
+			name:         "service error",
+			deleteResult: nil,
+			deleteErr:    &serviceError{msg: testDatabaseError},
+			expectedCode: http.StatusInternalServerError,
+			expectedErr:  testDatabaseError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.Config{}
+			svc := newMockService(nil)
+			svc.deleteArticle = func(_ context.Context, _, _ string) (*service.DeleteArticleResult, error) {
+				return tt.deleteResult, tt.deleteErr
+			}
+			h := newHandlers(cfg, svc)
+
+			req := httptest.NewRequest("DELETE", "/v1/articles/123", http.NoBody)
+			w := httptest.NewRecorder()
+
+			h.handleDeleteArticle(w, req)
+
+			if w.Code != tt.expectedCode {
+				t.Errorf("expected status %d, got %d", tt.expectedCode, w.Code)
+			}
+
+			if tt.deleteErr != nil {
+				var resp model.ErrorResponse
+				if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if resp.Error != tt.expectedErr {
+					t.Errorf("expected error '%s', got '%s'", tt.expectedErr, resp.Error)
+				}
+				return
+			}
+
+			var resp deleteArticleResponse
+			if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+				t.Fatalf("failed to decode response: %v", err)
+			}
+			if resp.Deleted != tt.deleteResult.Deleted {
+				t.Errorf("expected deleted %d, got %d", tt.deleteResult.Deleted, resp.Deleted)
+			}
+		})
+	}
+}
+
+func TestHandleDeleteAllArticles(t *testing.T) {
+	tests := []struct {
+		name         string
+		deleteResult *service.DeleteArticleResult
+		deleteErr    error
+		expectedCode int
+		expectedErr  string
+	}{
+		{
+			name:         "success",
+			deleteResult: &service.DeleteArticleResult{Deleted: 5},
+			deleteErr:    nil,
+			expectedCode: http.StatusOK,
+			expectedErr:  "",
+		},
+		{
+			name:         "service error",
+			deleteResult: nil,
+			deleteErr:    &serviceError{msg: testDatabaseError},
+			expectedCode: http.StatusInternalServerError,
+			expectedErr:  testDatabaseError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.Config{}
+			svc := newMockService(nil)
+			svc.deleteAllArticles = func(_ context.Context, _ string) (*service.DeleteArticleResult, error) {
+				return tt.deleteResult, tt.deleteErr
+			}
+			h := newHandlers(cfg, svc)
+
+			req := httptest.NewRequest("DELETE", "/v1/articles", http.NoBody)
+			w := httptest.NewRecorder()
+
+			h.handleDeleteAllArticles(w, req)
+
+			if w.Code != tt.expectedCode {
+				t.Errorf("expected status %d, got %d", tt.expectedCode, w.Code)
+			}
+
+			if tt.deleteErr != nil {
+				var resp model.ErrorResponse
+				if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if resp.Error != tt.expectedErr {
+					t.Errorf("expected error '%s', got '%s'", tt.expectedErr, resp.Error)
+				}
+				return
+			}
+
+			var resp deleteArticleResponse
+			if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+				t.Fatalf("failed to decode response: %v", err)
+			}
+			if resp.Deleted != tt.deleteResult.Deleted {
+				t.Errorf("expected deleted %d, got %d", tt.deleteResult.Deleted, resp.Deleted)
+			}
+		})
+	}
+}

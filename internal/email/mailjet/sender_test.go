@@ -131,6 +131,32 @@ func TestValidateRequest(t *testing.T) {
 	}
 }
 
+func TestValidateRequest_EmptyArticleTitle(t *testing.T) {
+	sender := NewSender("key", "secret", "test@example.com")
+	req := &email.Request{
+		Article:   &model.Article{Title: ""},
+		EPUBData:  []byte("data"),
+		DestEmail: "kindle@kindle.com",
+	}
+	err := sender.validateRequest(req)
+	if err != nil {
+		t.Errorf("validateRequest() unexpected error = %v", err)
+	}
+}
+
+func TestValidateRequest_NonEmptyArticleTitle(t *testing.T) {
+	sender := NewSender("key", "secret", "test@example.com")
+	req := &email.Request{
+		Article:   &model.Article{Title: "Test Article"},
+		EPUBData:  []byte("data"),
+		DestEmail: "kindle@kindle.com",
+	}
+	err := sender.validateRequest(req)
+	if err != nil {
+		t.Errorf("validateRequest() unexpected error = %v", err)
+	}
+}
+
 func TestSendEmailValidation(t *testing.T) {
 	tests := []struct {
 		name        string
