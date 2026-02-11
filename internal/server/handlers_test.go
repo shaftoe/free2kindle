@@ -15,12 +15,14 @@ import (
 )
 
 type MockService struct {
-	createFunc  func(context.Context, string, string) (*service.CreateArticleResult, error)
-	processFunc func(context.Context, string) (*service.ProcessResult, error)
-	sendFunc    func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
-	writeFunc   func(*service.ProcessResult, string) error
-	getArticles func(context.Context, string, int, int) (*service.GetArticlesResult, error)
-	dbError     error
+	createFunc        func(context.Context, string, string) (*service.CreateArticleResult, error)
+	processFunc       func(context.Context, string) (*service.ProcessResult, error)
+	sendFunc          func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
+	writeFunc         func(*service.ProcessResult, string) error
+	getArticles       func(context.Context, string, int, int) (*service.GetArticlesResult, error)
+	deleteArticle     func(context.Context, string, string) (*service.DeleteArticleResult, error)
+	deleteAllArticles func(context.Context, string) (*service.DeleteArticleResult, error)
+	dbError           error
 }
 
 func newMockService(
@@ -91,6 +93,27 @@ func (m *MockService) GetArticles(
 		Total:    0,
 		HasMore:  false,
 	}, nil
+}
+
+func (m *MockService) DeleteArticle(
+	ctx context.Context,
+	accountID string,
+	articleID string,
+) (*service.DeleteArticleResult, error) {
+	if m.deleteArticle != nil {
+		return m.deleteArticle(ctx, accountID, articleID)
+	}
+	return &service.DeleteArticleResult{Deleted: 1}, nil
+}
+
+func (m *MockService) DeleteAllArticles(
+	ctx context.Context,
+	accountID string,
+) (*service.DeleteArticleResult, error) {
+	if m.deleteAllArticles != nil {
+		return m.deleteAllArticles(ctx, accountID)
+	}
+	return &service.DeleteArticleResult{Deleted: 0}, nil
 }
 
 func TestHandleHealth(t *testing.T) {

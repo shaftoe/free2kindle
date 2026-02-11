@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
 	"github.com/shaftoe/savetoink/internal/constant"
@@ -120,4 +121,41 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 		Total:    result.Total,
 		HasMore:  result.HasMore,
 	})
+}
+
+func (h *handlers) handleDeleteArticle(w http.ResponseWriter, r *http.Request) {
+	accountID := auth.GetAccountID(r.Context())
+	articleID := chi.URLParam(r, "id")
+
+	addLogAttr(r.Context(), slog.String("article_id", articleID))
+
+	result, err := h.service.DeleteArticle(r.Context(), accountID, articleID)
+	if err != nil {
+		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	addLogAttr(r.Context(), slog.Int("deleted", result.Deleted))
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(deleteArticleResponse{Deleted: result.Deleted})
+}
+
+func (h *handlers) handleDeleteAllArticles(w http.ResponseWriter, r *http.Request) {
+	accountID := auth.GetAccountID(r.Context())
+
+	result, err := h.service.DeleteAllArticles(r.Context(), accountID)
+	if err != nil {
+		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	addLogAttr(r.Context(), slog.Int("deleted", result.Deleted))
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(deleteArticleResponse{Deleted: result.Deleted})
 }

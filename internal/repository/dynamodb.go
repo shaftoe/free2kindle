@@ -137,14 +137,14 @@ func (d *DynamoDB) DeleteByAccountAndID(ctx context.Context, account, id string)
 }
 
 // DeleteByAccount implements Repository.DeleteByAccount.
-func (d *DynamoDB) DeleteByAccount(ctx context.Context, account string) error {
+func (d *DynamoDB) DeleteByAccount(ctx context.Context, account string) (int, error) {
 	articles, err := d.GetByAccount(ctx, account)
 	if err != nil {
-		return fmt.Errorf("failed to get articles for deletion: %w", err)
+		return 0, fmt.Errorf("failed to get articles for deletion: %w", err)
 	}
 
 	if len(articles) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	for i := 0; i < len(articles); i += constant.DynamoDBBatchSize {
@@ -168,11 +168,11 @@ func (d *DynamoDB) DeleteByAccount(ctx context.Context, account string) error {
 			},
 		})
 		if err != nil {
-			return fmt.Errorf("failed to delete batch of articles: %w", err)
+			return i, fmt.Errorf("failed to delete batch of articles: %w", err)
 		}
 	}
 
-	return nil
+	return len(articles), nil
 }
 
 // ErrNotFound is returned when an article is not found.

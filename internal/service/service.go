@@ -25,6 +25,8 @@ type Interface interface {
 	WriteToFile(result *ProcessResult, outputPath string) error
 	CreateArticle(ctx context.Context, rawURL, accountID string) (*CreateArticleResult, error)
 	GetArticles(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error)
+	DeleteArticle(ctx context.Context, accountID, articleID string) (*DeleteArticleResult, error)
+	DeleteAllArticles(ctx context.Context, accountID string) (*DeleteArticleResult, error)
 	GetDBError() error
 }
 
@@ -323,17 +325,17 @@ func (s *Service) DeleteArticle(ctx context.Context, accountID, articleID string
 }
 
 // DeleteAllArticles deletes all articles for a given account.
-func (s *Service) DeleteAllArticles(ctx context.Context, accountID string) error {
+func (s *Service) DeleteAllArticles(ctx context.Context, accountID string) (*DeleteArticleResult, error) {
 	if s.repo == nil {
-		return nil
+		return &DeleteArticleResult{Deleted: 0}, nil
 	}
 
-	err := s.repo.DeleteByAccount(ctx, accountID)
+	deleted, err := s.repo.DeleteByAccount(ctx, accountID)
 	if err != nil {
-		return fmt.Errorf("failed to delete all articles: %w", err)
+		return nil, fmt.Errorf("failed to delete all articles: %w", err)
 	}
 
-	return nil
+	return &DeleteArticleResult{Deleted: deleted}, nil
 }
 
 func (s *Service) enrichArticle(

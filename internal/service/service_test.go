@@ -47,7 +47,8 @@ func (m *MockRepository) DeleteByAccountAndID(_ context.Context, account, id str
 	return nil
 }
 
-func (m *MockRepository) DeleteByAccount(_ context.Context, account string) error {
+func (m *MockRepository) DeleteByAccount(_ context.Context, account string) (int, error) {
+	initialLen := len(m.articles)
 	var filtered []*model.Article
 	for _, article := range m.articles {
 		if article.Account != account {
@@ -55,7 +56,7 @@ func (m *MockRepository) DeleteByAccount(_ context.Context, account string) erro
 		}
 	}
 	m.articles = filtered
-	return nil
+	return initialLen - len(m.articles), nil
 }
 
 func TestGetArticles(t *testing.T) {

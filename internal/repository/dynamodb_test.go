@@ -321,9 +321,10 @@ func TestDynamoDB_DeleteByAccount(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	err := repo.DeleteByAccount(ctx, account)
+	deleted, err := repo.DeleteByAccount(ctx, account)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
+	assert.Equal(t, 2, deleted)
 
 	retrieved, err := repo.GetByAccount(ctx, account)
 	skipIfTableNotFound(t, err)
@@ -344,9 +345,10 @@ func TestDynamoDB_DeleteByAccount_Empty(t *testing.T) {
 	repo := setupTestDynamoDB(t)
 	ctx := context.Background()
 
-	err := repo.DeleteByAccount(ctx, "non-existent@example.com")
+	deleted, err := repo.DeleteByAccount(ctx, "non-existent@example.com")
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
+	assert.Equal(t, 0, deleted)
 }
 
 func TestDynamoDB_UpdateArticle(t *testing.T) {
