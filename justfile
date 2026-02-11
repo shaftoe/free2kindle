@@ -81,11 +81,12 @@ deploy-api:
             Debug="true"
 
 # Full deployment (bucket + upload + infra)
-deploy: build-lambda-zip
+deploy:
     just auth0-create-api
     just deploy-bucket
     just deploy-cert
-    just deploy-lambda
+    just build-lambda-zip
+    just upload-zip
     just deploy-api
     @echo "Add DNS record: $SAVETOINK_DOMAIN A $(just get-distribution-url)."
 
@@ -98,7 +99,7 @@ destroy:
     aws cloudformation wait stack-delete-complete --stack-name {{ project_name }}-bucket
     aws cloudformation delete-stack --stack-name {{ project_name }}-cert --region us-east-1
     aws cloudformation wait stack-delete-complete --stack-name {{ project_name }}-cert --region us-east-1
-    auth0 apis delete {{ project_name }}-api
+    -just auth0-destroy-api
 
 # Get Lambda function URL
 get-url:
@@ -150,3 +151,6 @@ auth0-create-api:
     --name {{ project_name }} \
     --identifier "$SAVETOINK_AUTH0_AUDIENCE" \
     --signing-alg "RS256"
+
+auth0-destroy-api:
+    auth0 apis delete --force "$SAVETOINK_AUTH0_AUDIENCE"

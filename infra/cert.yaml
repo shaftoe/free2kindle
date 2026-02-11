@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: ACM certificate for custom domain (must be deployed to us-east-1)
+Description: Save to Ink - ACM certificate for custom domain (must be deployed to us-east-1)
 
 Metadata:
   AWS::CloudFormation::Interface:

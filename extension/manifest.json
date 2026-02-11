@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "savetoink",
+  "name": "Save to Ink",
   "version": "1.0.0",
   "description": "Send web articles to your Kindle with one click",
   "icons": {

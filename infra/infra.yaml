@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Lambda function with Function URL for savetoink API
+Description: Save to Ink - API Backend resources
 
 Parameters:
   ProjectName:
@@ -95,7 +95,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${ProjectName}-api"
-      Description: savetoink API - Article conversion and delivery service
+      Description: !Sub "${ProjectName} API - Article conversion and delivery service"
       Runtime: provided.al2023
       Handler: bootstrap
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -159,7 +159,17 @@ Resources:
         PriceClass: PriceClass_100
         Origins:
           - Id: LambdaOrigin
-            DomainName: !Ref DomainName
+            DomainName:
+              !Select [
+                0,
+                !Split [
+                  "/",
+                  !Select [
+                    1,
+                    !Split ["://", !GetAtt LambdaFunctionUrl.FunctionUrl],
+                  ],
+                ],
+              ]
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
               OriginSSLProtocols:

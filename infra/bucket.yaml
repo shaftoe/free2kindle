@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: S3 bucket for Lambda function source code storage
+Description: Save to Ink - S3 bucket for Lambda function source code storage
 
 Parameters:
   BucketName:

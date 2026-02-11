@@ -13,6 +13,10 @@ const (
 	customRequestID = "custom-request-id"
 	lambdaRequestID = "lambda-request-id"
 	awsRequestID    = "aws-request-id"
+	testRemoteAddr  = "192.168.1.1:8080"
+	testClientIP    = "203.0.113.1"
+	testClientIPv6  = "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+	testUserAgent   = "Mozilla/5.0 (Macintosh)"
 )
 
 func TestCorsMiddleware_GET(t *testing.T) {
@@ -351,7 +355,7 @@ func TestLoggingMiddleware_RemoteAddr(t *testing.T) {
 	})
 
 	req := httptest.NewRequest("GET", "/test", http.NoBody)
-	req.RemoteAddr = "192.168.1.1:8080"
+	req.RemoteAddr = testRemoteAddr
 	w := httptest.NewRecorder()
 
 	recorder := &responseStatusRecorder{ResponseWriter: w, status: http.StatusOK}
@@ -370,6 +374,108 @@ func TestResponseStatusRecorder_WriteHeader(t *testing.T) {
 
 	if recorder.status != http.StatusCreated {
 		t.Errorf("expected status %d, got %d", http.StatusCreated, recorder.status)
+	}
+}
+
+func TestRemoteAddr_XForwardedForSingle(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("X-Forwarded-For", testClientIP)
+
+	got := remoteAddr(req)
+	want := testClientIP
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestRemoteAddr_XForwardedForSingleIPv6(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("X-Forwarded-For", testClientIPv6)
+
+	got := remoteAddr(req)
+	want := testClientIPv6
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestRemoteAddr_XForwardedForMultiple(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("X-Forwarded-For", "203.0.113.1, 198.51.100.1, 192.0.2.1")
+
+	got := remoteAddr(req)
+	want := testClientIP
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestRemoteAddr_XForwardedForMultipleIPv6(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("X-Forwarded-For",
+		"2001:0db8:85a3:0000:0000:8a2e:0370:7334, "+
+			"2001:0db8:85a3:0000:0000:8a2e:0370:7335, "+
+			"2001:0db8:85a3:0000:0000:8a2e:0370:7336")
+
+	got := remoteAddr(req)
+	want := testClientIPv6
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestRemoteAddr_XForwardedForMixedIPv4IPv6(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("X-Forwarded-For",
+		"203.0.113.1, 2001:0db8:85a3::8a2e:0370:7334, 198.51.100.1")
+
+	got := remoteAddr(req)
+	want := "203.0.113.1"
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestRemoteAddr_NoXForwardedFor(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.RemoteAddr = testRemoteAddr
+
+	got := remoteAddr(req)
+	want := testRemoteAddr
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestRemoteAddr_NoSource(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.RemoteAddr = ""
+
+	got := remoteAddr(req)
+	want := "-"
+	if got != want {
+		t.Errorf("expected client_ip '%s', got '%s'", want, got)
+	}
+}
+
+func TestUserAgent_StandardHeader(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+	req.Header.Set("User-Agent", testUserAgent)
+
+	got := userAgent(req)
+	want := testUserAgent
+	if got != want {
+		t.Errorf("expected user_agent '%s', got '%s'", want, got)
+	}
+}
+
+func TestUserAgent_NoSource(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", http.NoBody)
+
+	got := userAgent(req)
+	want := "-"
+	if got != want {
+		t.Errorf("expected user_agent '%s', got '%s'", want, got)
 	}
 }
 

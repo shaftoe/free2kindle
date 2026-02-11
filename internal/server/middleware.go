@@ -78,9 +78,13 @@ func loggingMiddleware(next http.Handler) http.Handler {
 			level     = slog.LevelInfo
 			record    = slog.NewRecord(time.Now(), level, "request completed", 0)
 			requestID = getRequestIDFromContext(r.Context())
+			userAgent = userAgent(r)
+			clientIP  = remoteAddr(r)
 		)
 
 		record.AddAttrs(
+			slog.String("client_ip", clientIP),
+			slog.String("user_agent", userAgent),
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
 		)
@@ -111,8 +115,6 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		record.AddAttrs(
 			slog.Int("status", statusCode),
 			slog.Int64("latency_ms", latency.Milliseconds()),
-			slog.String("client_ip", remoteAddr(r)),
-			slog.String("user_agent", r.Header.Get("User-Agent")),
 		)
 
 		if err := slog.Default().Handler().Handle(ctx, record); err != nil {
@@ -134,8 +136,21 @@ func getRequestIDFromContext(ctx context.Context) *string {
 }
 
 func remoteAddr(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if ip, _, found := strings.Cut(xff, ","); found {
+			return ip
+		}
+		return xff
+	}
 	if r.RemoteAddr != "" {
 		return r.RemoteAddr
+	}
+	return "-"
+}
+
+func userAgent(r *http.Request) string {
+	if ua := r.Header.Get("User-Agent"); ua != "" {
+		return ua
 	}
 	return "-"
 }
