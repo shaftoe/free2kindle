@@ -16,7 +16,6 @@ import (
 	"github.com/shaftoe/savetoink/internal/epub"
 	"github.com/shaftoe/savetoink/internal/service"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const defaultTimeoutSeconds = 30
