@@ -2,39 +2,23 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
-	"github.com/shaftoe/savetoink/internal/content"
-	"github.com/shaftoe/savetoink/internal/email"
 	"github.com/shaftoe/savetoink/internal/model"
-	"github.com/shaftoe/savetoink/internal/repository"
 	"github.com/shaftoe/savetoink/internal/service"
-	"golang.org/x/sync/errgroup"
-)
-
-const (
-	messageSentToKindle  = "article sent to Kindle successfully"
-	messageEmailDisabled = "article processed successfully (email sending disabled)"
 )
 
 func newHandlers(
 	cfg *config.Config,
 	svc service.Interface,
-	repo repository.Repository,
 ) *handlers {
 	return &handlers{
-		cfg:        cfg,
-		service:    svc,
-		repository: repo,
+		cfg:     cfg,
+		service: svc,
 	}
 }
 
@@ -43,178 +27,53 @@ func (h *handlers) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
 }
 
-func getArticleIDandCleanURL(r *http.Request) (id, url *string, err error) {
-	var req *articleRequest
-	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, nil, fmt.Errorf("failed to decode request body: %w", err)
+// handleCreateArticle handles the creation of a new article.
+// It delegates all business logic to the service layer.
+func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
+	var req articleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "failed to decode request body: " + err.Error()})
+		return
 	}
 
 	if req.URL == "" {
-		return nil, nil, errors.New("missing URL in request body")
-	}
-
-	var cleaned string
-	cleaned, err = content.CleanURL(req.URL)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to clean URL: %w", err)
-	}
-	url = &cleaned
-
-	var articleID string
-	articleID, err = content.ArticleIDFromURL(cleaned)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate article ID: %w", err)
-	}
-	id = &articleID
-
-	return id, url, nil
-}
-
-func (h *handlers) processDBArticleUpdates(ctx context.Context) (eg *errgroup.Group, articles chan *model.Article) {
-	eg, ctx = errgroup.WithContext(ctx)
-	articles = make(chan *model.Article)
-	var dbErrors error
-
-	eg.Go(func() error {
-		for article := range articles {
-			if h.repository != nil {
-				if storeErr := h.repository.Store(ctx, article); storeErr != nil {
-					dbErrors = errors.Join(dbErrors, storeErr)
-				}
-			}
-		}
-
-		if dbErrors != nil {
-			addLogAttr(ctx, slog.String("db_error", dbErrors.Error()))
-		}
-
-		return nil
-	})
-
-	return eg, articles
-}
-
-// handleCreateArticle handles the creation of a new article.
-// It:
-// - downloads/processes the article
-// - (re)write metadata in the repository in background
-// - (optionally) sends the article to the Kindle
-// - updates logging information in the context for the final wide log event printing.
-func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
-	id, cleanURL, err := getArticleIDandCleanURL(r)
-	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: "missing URL in request body"})
+		return
+	}
+
+	result, err := h.service.CreateArticle(r.Context(), req.URL, auth.GetAccountID(r.Context()))
+	if err != nil {
+		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	article := &model.Article{
-		Account:   auth.GetAccountID(r.Context()),
-		ID:        *id,
-		URL:       *cleanURL,
-		CreatedAt: time.Now(),
+	addLogAttr(r.Context(), slog.String("article_id", result.Article.ID))
+	addLogAttr(r.Context(), slog.String("article_url", result.Article.URL))
+	addLogAttr(r.Context(), slog.String("message", result.Message))
+
+	if result.Article.DeliveryStatus != "" {
+		addLogAttr(r.Context(), slog.String("delivery_status", string(result.Article.DeliveryStatus)))
 	}
 
-	eg, articlesChan := h.processDBArticleUpdates(r.Context())
-	defer func() {
-		close(articlesChan)
-		_ = eg.Wait()
-	}()
-	articlesChan <- article
-
-	addLogAttr(r.Context(), slog.String("article_id", *id))
-	addLogAttr(r.Context(), slog.String("article_url", *cleanURL))
-
-	result, err := h.service.Process(r.Context(), *cleanURL)
-	if err != nil {
-		h.processArticleError(article, articlesChan, w, r, fmt.Errorf("failed to process article: %w", err))
-		return
+	if result.EmailResp != nil && result.EmailResp.EmailUUID != "" {
+		addLogAttr(r.Context(), slog.String("email_uuid", result.EmailResp.EmailUUID))
+		addLogAttr(r.Context(), slog.String("email_provider", string(h.cfg.EmailProvider)))
 	}
 
-	if result.Article() == nil {
-		h.processArticleError(
-			article, articlesChan, w, r, errors.New("failed to process article: article is nil"))
-		return
+	if dbErr := h.service.GetDBError(); dbErr != nil {
+		addLogAttr(r.Context(), slog.String("db_error", dbErr.Error()))
 	}
-
-	var emailResp *email.SendEmailResponse
-	if h.cfg.SendEnabled {
-		emailResp, err = h.service.Send(r.Context(), result, "")
-		if err != nil {
-			h.processArticleError(article, articlesChan, w, r, err)
-			return
-		}
-	}
-
-	h.enrichArticle(result.Article(), id, emailResp, auth.GetAccountID(r.Context()))
-	articlesChan <- result.Article()
-	msg := h.enrichLogs(r.Context(), result.Article(), emailResp)
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(articleResponse{
-		ID:             result.Article().ID,
-		Title:          result.Article().Title,
-		URL:            *cleanURL,
-		Message:        *msg,
-		DeliveryStatus: string(result.Article().DeliveryStatus),
+		ID:             result.Article.ID,
+		Title:          result.Article.Title,
+		URL:            result.Article.URL,
+		Message:        result.Message,
+		DeliveryStatus: string(result.Article.DeliveryStatus),
 	})
-}
-
-func (h *handlers) processArticleError(
-	article *model.Article, ch chan *model.Article, w http.ResponseWriter, r *http.Request, err error) {
-	article.Error = err.Error()
-	ch <- article
-
-	addLogAttr(r.Context(), slog.String("error", err.Error()))
-
-	w.WriteHeader(http.StatusInternalServerError)
-	_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
-}
-
-func (h *handlers) enrichArticle(
-	article *model.Article,
-	id *string,
-	emailResp *email.SendEmailResponse,
-	accountID string,
-) {
-	article.Account = accountID
-	article.ID = *id
-
-	if !h.cfg.SendEnabled {
-		return
-	}
-
-	if emailResp == nil {
-		article.DeliveryStatus = constant.StatusFailed
-		return
-	}
-
-	article.DeliveryStatus = constant.StatusDelivered
-	article.DeliveredFrom = &h.cfg.SenderEmail
-	article.DeliveredTo = &h.cfg.DestEmail
-	article.DeliveredEmailUUID = &emailResp.EmailUUID
-	article.DeliveredBy = h.cfg.EmailProvider
-}
-
-func (h *handlers) enrichLogs(
-	ctx context.Context,
-	article *model.Article,
-	emailResp *email.SendEmailResponse,
-) (msg *string) {
-	message := messageSentToKindle
-	if !h.cfg.SendEnabled {
-		message = messageEmailDisabled
-	}
-	addLogAttr(ctx, slog.String("message", message))
-
-	if article.DeliveryStatus != "" {
-		addLogAttr(ctx, slog.String("delivery_status", string(article.DeliveryStatus)))
-	}
-
-	if emailResp != nil && emailResp.EmailUUID != "" {
-		addLogAttr(ctx, slog.String("email_uuid", emailResp.EmailUUID))
-		addLogAttr(ctx, slog.String("email_provider", string(h.cfg.EmailProvider)))
-	}
-
-	return &message
 }

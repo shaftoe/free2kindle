@@ -10,10 +10,7 @@ import (
 
 	"github.com/shaftoe/savetoink/internal/config"
 	"github.com/shaftoe/savetoink/internal/constant"
-	"github.com/shaftoe/savetoink/internal/content"
 	"github.com/shaftoe/savetoink/internal/email"
-	"github.com/shaftoe/savetoink/internal/email/mailjet"
-	"github.com/shaftoe/savetoink/internal/epub"
 	"github.com/shaftoe/savetoink/internal/service"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +21,6 @@ var (
 	outputPath string
 	timeout    time.Duration
 	verbose    bool
-	generator  *epub.Generator
 
 	sendEmail    bool
 	emailSubject string
@@ -58,18 +54,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 
 	fmt.Printf("Fetching article from: %s\n", url)
 
-	var sender email.Sender
-	if sendEmail {
-		sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
-	}
-
-	d := service.NewDeps(
-		content.NewExtractor(),
-		generator,
-		sender,
-	)
-
-	svc := service.New(d, cfg)
+	svc := service.New(cfg)
 
 	start := time.Now()
 	result, err := svc.Process(ctx, url)
@@ -92,7 +77,7 @@ func runConvert(_ *cobra.Command, args []string) error {
 		}
 	}
 
-	printResult(result, cfg, resp)
+	printResult(resp)
 
 	return nil
 }
@@ -106,21 +91,19 @@ func printVerboseOutput(result *service.ProcessResult) {
 	}
 }
 
-func printResult(result *service.ProcessResult, cfg *config.Config, resp *email.SendEmailResponse) {
+func printResult(resp *email.SendEmailResponse) {
 	if !sendEmail {
 		if outputPath == "" {
-			outputPath = email.GenerateFilename(result.Article())
+			outputPath = "article.epub"
 		}
 		absPath, _ := filepath.Abs(outputPath)
 		fmt.Printf("\n✓ EPUB saved to: %s\n", absPath)
-	} else {
-		fmt.Printf("\n✓ Article sent to Kindle (%s -> %s, email ID: %s)\n", cfg.SenderEmail, cfg.DestEmail, resp.EmailUUID)
+	} else if resp != nil {
+		fmt.Printf("\n✓ Article sent to Kindle (email ID: %s)\n", resp.EmailUUID)
 	}
 }
 
 func main() {
-	generator = epub.NewGenerator()
-
 	convertCmd.Flags().StringVarP(&outputPath, "output", "o", "article.epub", "Output file path")
 	convertCmd.Flags().DurationVarP(&timeout, "timeout", "t",
 		defaultTimeoutSeconds*time.Second, "Timeout for HTTP requests")

@@ -5,12 +5,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/shaftoe/savetoink/internal/content"
 	"github.com/shaftoe/savetoink/internal/email"
+	"github.com/shaftoe/savetoink/internal/email/mailjet"
 	"github.com/shaftoe/savetoink/internal/epub"
 	"github.com/shaftoe/savetoink/internal/model"
+	"github.com/shaftoe/savetoink/internal/repository"
+	"golang.org/x/sync/errgroup"
 )
 
 // Interface defines the contract for service operations.
@@ -18,40 +23,53 @@ type Interface interface {
 	Process(ctx context.Context, url string) (*ProcessResult, error)
 	Send(ctx context.Context, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
 	WriteToFile(result *ProcessResult, outputPath string) error
+	CreateArticle(ctx context.Context, rawURL, accountID string) (*CreateArticleResult, error)
+	GetDBError() error
 }
 
-// Deps holds the external dependencies required by the service.
-type Deps struct {
-	Extractor *content.Extractor
-	Generator *epub.Generator
-	Sender    email.Sender
-}
-
-// NewDeps creates a new Deps struct with the given components.
-func NewDeps(extractor *content.Extractor, generator *epub.Generator, sender email.Sender) *Deps {
-	return &Deps{
-		Extractor: extractor,
-		Generator: generator,
-		Sender:    sender,
-	}
-}
-
-// Service holds stateless dependencies and provides methods to process articles.
+// Service holds the stateless dependencies and provides methods to process articles.
 type Service struct {
 	extractor *content.Extractor
 	generator *epub.Generator
 	sender    email.Sender
+	repo      repository.Repository
 	cfg       *config.Config
+	dbErrors  error
 }
 
-// New creates a new Service instance with the given dependencies.
-func New(d *Deps, cfg *config.Config) *Service {
+// New creates a new Service instance with the given config.
+// All internal dependencies (extractor, generator, sender, repository) are created based on configuration.
+// DynamoDB repository is wired only if both DynamoDBTable and AWSConfig are available.
+func New(cfg *config.Config) *Service {
+	var sender email.Sender
+	if cfg.SendEnabled {
+		switch cfg.EmailProvider {
+		case constant.EmailBackendMailjet:
+			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
+		default:
+			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
+		}
+	}
+
+	var repo repository.Repository
+	if cfg.DynamoDBTable != "" && cfg.AWSConfig != nil {
+		repo = repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable)
+	}
+
 	return &Service{
-		extractor: d.Extractor,
-		generator: d.Generator,
-		sender:    d.Sender,
+		extractor: content.NewExtractor(),
+		generator: epub.NewGenerator(),
+		sender:    sender,
+		repo:      repo,
 		cfg:       cfg,
 	}
+}
+
+// CreateArticleResult holds the result of creating an article.
+type CreateArticleResult struct {
+	Article   *model.Article
+	Message   string
+	EmailResp *email.SendEmailResponse
 }
 
 // ProcessResult holds the result of processing an article.
@@ -166,4 +184,131 @@ func (s *Service) WriteToFile(result *ProcessResult, outputPath string) error {
 	}
 
 	return nil
+}
+
+// CreateArticle orchestrates the entire article creation flow:
+// - cleans the URL and generates an article ID
+// - processes the article (extracts content and generates EPUB)
+// - optionally sends the article to Kindle via email
+// - enriches the article with delivery metadata
+// - stores the article to the database in the background (if repository is configured)
+// Returns CreateArticleResult with the article and status information.
+func (s *Service) CreateArticle(ctx context.Context, rawURL, accountID string) (*CreateArticleResult, error) {
+	cleanURL, err := content.CleanURL(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clean url: %w", err)
+	}
+
+	articleID, err := content.ArticleIDFromURL(cleanURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate article id: %w", err)
+	}
+
+	eg, articlesChan := s.startBackgroundDBStore(ctx)
+	defer func() {
+		close(articlesChan)
+		_ = eg.Wait()
+	}()
+
+	article := &model.Article{
+		Account:   accountID,
+		ID:        articleID,
+		URL:       cleanURL,
+		CreatedAt: time.Now(),
+	}
+	articlesChan <- article
+
+	result, err := s.Process(ctx, cleanURL)
+	if err != nil {
+		article.Error = err.Error()
+		articlesChan <- article
+		return nil, fmt.Errorf("failed to process article: %w", err)
+	}
+
+	if result.Article() == nil {
+		articleErr := errors.New("failed to process article: article is nil")
+		article.Error = articleErr.Error()
+		articlesChan <- article
+		return nil, articleErr
+	}
+
+	var emailResp *email.SendEmailResponse
+	if s.cfg.SendEnabled {
+		emailResp, err = s.Send(ctx, result, "")
+		if err != nil {
+			article.Error = err.Error()
+			articlesChan <- article
+			return nil, err
+		}
+	}
+
+	s.enrichArticle(result.Article(), &articleID, emailResp, accountID)
+	articlesChan <- result.Article()
+
+	return &CreateArticleResult{
+		Article:   result.Article(),
+		Message:   s.getMessage(result.Article(), emailResp),
+		EmailResp: emailResp,
+	}, nil
+}
+
+// GetDBError returns any accumulated database errors from background operations.
+func (s *Service) GetDBError() error {
+	return s.dbErrors
+}
+
+func (s *Service) startBackgroundDBStore(ctx context.Context) (eg *errgroup.Group, articles chan *model.Article) {
+	eg, ctx = errgroup.WithContext(ctx)
+	articles = make(chan *model.Article)
+	var dbErrors error
+
+	eg.Go(func() error {
+		for article := range articles {
+			if s.repo != nil {
+				if storeErr := s.repo.Store(ctx, article); storeErr != nil {
+					dbErrors = errors.Join(dbErrors, storeErr)
+				}
+			}
+		}
+
+		if dbErrors != nil {
+			s.dbErrors = errors.Join(s.dbErrors, dbErrors)
+		}
+
+		return nil
+	})
+
+	return eg, articles
+}
+
+func (s *Service) enrichArticle(
+	article *model.Article,
+	id *string,
+	emailResp *email.SendEmailResponse,
+	accountID string,
+) {
+	article.Account = accountID
+	article.ID = *id
+
+	if !s.cfg.SendEnabled {
+		return
+	}
+
+	if emailResp == nil {
+		article.DeliveryStatus = constant.StatusFailed
+		return
+	}
+
+	article.DeliveryStatus = constant.StatusDelivered
+	article.DeliveredFrom = &s.cfg.SenderEmail
+	article.DeliveredTo = &s.cfg.DestEmail
+	article.DeliveredEmailUUID = &emailResp.EmailUUID
+	article.DeliveredBy = s.cfg.EmailProvider
+}
+
+func (s *Service) getMessage(_ *model.Article, _ *email.SendEmailResponse) string {
+	if !s.cfg.SendEnabled {
+		return "article processed successfully (email sending disabled)"
+	}
+	return "article sent to Kindle successfully"
 }

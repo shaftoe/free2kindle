@@ -10,13 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
-	"github.com/shaftoe/savetoink/internal/content"
-	"github.com/shaftoe/savetoink/internal/email"
-	"github.com/shaftoe/savetoink/internal/email/mailjet"
-	"github.com/shaftoe/savetoink/internal/epub"
 	"github.com/shaftoe/savetoink/internal/model"
-	"github.com/shaftoe/savetoink/internal/repository"
 	"github.com/shaftoe/savetoink/internal/service"
 )
 
@@ -32,11 +26,10 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	setupLogging(cfg)
 
 	r := chi.NewRouter()
-	srv := newService(cfg)
+	srv := service.New(cfg)
 	handlers := newHandlers(
 		cfg,
 		srv,
-		repository.NewDynamoDB(cfg.AWSConfig, cfg.DynamoDBTable),
 	)
 
 	r.Use(middleware.Recoverer)
@@ -76,22 +69,4 @@ func setupLogging(cfg *config.Config) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	})))
-}
-
-func newService(cfg *config.Config) *service.Service {
-	var sender email.Sender
-	if cfg.SendEnabled {
-		switch cfg.EmailProvider {
-		case constant.EmailBackendMailjet:
-			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
-		default:
-			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
-		}
-	}
-
-	return service.New(service.NewDeps(
-		content.NewExtractor(),
-		epub.NewGenerator(),
-		sender,
-	), cfg)
 }

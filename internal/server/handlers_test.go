@@ -9,23 +9,36 @@ import (
 	"testing"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
 	"github.com/shaftoe/savetoink/internal/email"
 	"github.com/shaftoe/savetoink/internal/model"
-	"github.com/shaftoe/savetoink/internal/repository"
 	"github.com/shaftoe/savetoink/internal/service"
 )
 
 type MockService struct {
+	createFunc  func(context.Context, string, string) (*service.CreateArticleResult, error)
 	processFunc func(context.Context, string) (*service.ProcessResult, error)
 	sendFunc    func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
 	writeFunc   func(*service.ProcessResult, string) error
+	dbError     error
 }
 
-func newMockService(processFunc func(context.Context, string) (*service.ProcessResult, error)) *MockService {
+func newMockService(
+	createFunc func(context.Context, string, string) (*service.CreateArticleResult, error),
+) *MockService {
 	return &MockService{
-		processFunc: processFunc,
+		createFunc: createFunc,
 	}
+}
+
+func (m *MockService) CreateArticle(
+	ctx context.Context,
+	_ string,
+	_ string,
+) (*service.CreateArticleResult, error) {
+	if m.createFunc != nil {
+		return m.createFunc(ctx, "", "")
+	}
+	return nil, nil
 }
 
 func (m *MockService) Process(ctx context.Context, url string) (*service.ProcessResult, error) {
@@ -57,8 +70,12 @@ func (m *MockService) WriteToFile(result *service.ProcessResult, outputPath stri
 	return nil
 }
 
+func (m *MockService) GetDBError() error {
+	return m.dbError
+}
+
 func TestHandleHealth(t *testing.T) {
-	h := newHandlers(nil, nil, nil)
+	h := newHandlers(nil, nil)
 
 	req := httptest.NewRequest("GET", "/health", http.NoBody)
 	w := httptest.NewRecorder()
@@ -87,14 +104,22 @@ func TestHandleCreateArticleSuccessWithEmail(t *testing.T) {
 		MailjetAPISecret: "test-secret",
 		SendEnabled:      true,
 	}
-	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
-		return service.NewProcessResult(
-			&model.Article{Title: testArticleTitle},
-			[]byte("epub data"),
-			"https://example.com/article",
-		), nil
+	svc := newMockService(func(_ context.Context, _ string, _ string) (*service.CreateArticleResult, error) {
+		return &service.CreateArticleResult{
+			Article: &model.Article{
+				ID:    "test-id",
+				Title: testArticleTitle,
+				URL:   "https://example.com/article",
+			},
+			Message: "article sent to Kindle successfully",
+			EmailResp: &email.SendEmailResponse{
+				Status:    "success",
+				Message:   "sent",
+				EmailUUID: "test-uuid",
+			},
+		}, nil
 	})
-	h := newHandlers(cfg, svc, nil)
+	h := newHandlers(cfg, svc)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -128,14 +153,18 @@ func TestHandleCreateArticleSuccessWithoutEmail(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
-		return service.NewProcessResult(
-			&model.Article{Title: testArticleTitle},
-			[]byte("epub data"),
-			"https://example.com/article",
-		), nil
+	svc := newMockService(func(_ context.Context, _ string, _ string) (*service.CreateArticleResult, error) {
+		return &service.CreateArticleResult{
+			Article: &model.Article{
+				ID:    "test-id",
+				Title: testArticleTitle,
+				URL:   "https://example.com/article",
+			},
+			Message:   "article processed successfully (email sending disabled)",
+			EmailResp: nil,
+		}, nil
 	})
-	h := newHandlers(cfg, svc, nil)
+	h := newHandlers(cfg, svc)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -166,7 +195,7 @@ func TestHandleCreateArticleInvalidJSON(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	h := newHandlers(cfg, nil, nil)
+	h := newHandlers(cfg, nil)
 
 	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -193,7 +222,7 @@ func TestHandleCreateArticleMissingURL(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	h := newHandlers(cfg, nil, nil)
+	h := newHandlers(cfg, nil)
 
 	body := articleRequest{URL: ""}
 	bodyBytes, _ := json.Marshal(body)
@@ -221,10 +250,10 @@ func TestHandleCreateArticleServiceError(t *testing.T) {
 	cfg := &config.Config{
 		SendEnabled: false,
 	}
-	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
+	svc := newMockService(func(_ context.Context, _ string, _ string) (*service.CreateArticleResult, error) {
 		return nil, &serviceError{msg: "extraction failed"}
 	})
-	h := newHandlers(cfg, svc, nil)
+	h := newHandlers(cfg, svc)
 
 	body := articleRequest{URL: "https://example.com/article"}
 	bodyBytes, _ := json.Marshal(body)
@@ -243,256 +272,8 @@ func TestHandleCreateArticleServiceError(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Error != "failed to process article: extraction failed" {
-		t.Errorf("expected message 'failed to process article: extraction failed', got '%s'", resp.Error)
-	}
-}
-
-func TestHandleCreateArticleNilArticle(t *testing.T) {
-	cfg := &config.Config{
-		SendEnabled: false,
-	}
-	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
-		return service.NewProcessResult(nil, []byte("epub data"), "https://example.com/article"), nil
-	})
-	h := newHandlers(cfg, svc, nil)
-
-	body := articleRequest{URL: "https://example.com/article"}
-	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest("POST", "/v1/articles", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-
-	h.handleCreateArticle(w, req)
-
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
-	}
-
-	var resp model.ErrorResponse
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-
-	if resp.Error != "failed to process article: article is nil" {
-		t.Errorf("expected message 'failed to process article: article is nil', got '%s'", resp.Error)
-	}
-}
-
-func TestGetArticleIDandCleanURL(t *testing.T) {
-	tests := []struct {
-		name        string
-		body        string
-		wantErr     bool
-		errContains string
-	}{
-		{
-			name:    "valid URL",
-			body:    `{"url": "https://example.com/article"}`,
-			wantErr: false,
-		},
-		{
-			name:        "invalid JSON",
-			body:        `invalid json`,
-			wantErr:     true,
-			errContains: "failed to decode request body",
-		},
-		{
-			name:        "missing URL",
-			body:        `{"url": ""}`,
-			wantErr:     true,
-			errContains: "missing URL in request body",
-		},
-		{
-			name:        "no URL field",
-			body:        `{}`,
-			wantErr:     true,
-			errContains: "missing URL in request body",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("POST", "/articles", bytes.NewReader([]byte(tt.body)))
-			req.Header.Set("Content-Type", "application/json")
-
-			id, url, err := getArticleIDandCleanURL(req)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("expected error containing %q, got nil", tt.errContains)
-				} else if tt.errContains != "" && !contains(err.Error(), tt.errContains) {
-					t.Errorf("expected error containing %q, got %q", tt.errContains, err.Error())
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-			if id == nil {
-				t.Error("expected id to be non-nil")
-			}
-			if url == nil {
-				t.Error("expected url to be non-nil")
-			}
-		})
-	}
-}
-
-func TestProcessDBArticleUpdates(t *testing.T) {
-	tests := []struct {
-		name       string
-		repository repository.Repository
-	}{
-		{
-			name:       "with repository",
-			repository: &mockRepository{},
-		},
-		{
-			name:       "without repository",
-			repository: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := newHandlers(nil, nil, tt.repository)
-			ctx := context.Background()
-
-			eg, articlesChan := h.processDBArticleUpdates(ctx)
-
-			article := &model.Article{
-				ID:  "test-id",
-				URL: "https://example.com",
-			}
-
-			go func() {
-				articlesChan <- article
-				close(articlesChan)
-			}()
-
-			if err := eg.Wait(); err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-		})
-	}
-}
-
-func TestEnrichArticle(t *testing.T) {
-	tests := []struct {
-		name          string
-		sendEnabled   bool
-		senderEmail   string
-		destEmail     string
-		wantStatus    constant.Status
-		wantDelivered bool
-	}{
-		{
-			name:          "send enabled",
-			sendEnabled:   true,
-			senderEmail:   "sender@example.com",
-			destEmail:     "dest@example.com",
-			wantStatus:    constant.StatusDelivered,
-			wantDelivered: true,
-		},
-		{
-			name:          "send disabled",
-			sendEnabled:   false,
-			wantStatus:    "",
-			wantDelivered: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := &config.Config{
-				SendEnabled: tt.sendEnabled,
-				SenderEmail: tt.senderEmail,
-				DestEmail:   tt.destEmail,
-			}
-			h := newHandlers(cfg, nil, nil)
-
-			id := "test-id"
-			article := &model.Article{}
-			var emailResp *email.SendEmailResponse
-			if tt.wantDelivered {
-				emailResp = &email.SendEmailResponse{EmailUUID: "test-uuid"}
-			}
-
-			h.enrichArticle(article, &id, emailResp, "admin")
-
-			if article.ID != id {
-				t.Errorf("expected ID %q, got %q", id, article.ID)
-			}
-
-			if article.DeliveryStatus != tt.wantStatus {
-				t.Errorf("expected DeliveryStatus %q, got %q", tt.wantStatus, article.DeliveryStatus)
-			}
-
-			if tt.wantDelivered {
-				assertDeliveredField(t, "DeliveredFrom", tt.senderEmail, article.DeliveredFrom)
-				assertDeliveredField(t, "DeliveredTo", tt.destEmail, article.DeliveredTo)
-			} else {
-				assertNilField(t, "DeliveredFrom", article.DeliveredFrom)
-				assertNilField(t, "DeliveredTo", article.DeliveredTo)
-			}
-		})
-	}
-}
-
-func TestEnrichLogs(t *testing.T) {
-	tests := []struct {
-		name           string
-		sendEnabled    bool
-		emailResp      *email.SendEmailResponse
-		wantMessage    string
-		deliveryStatus constant.Status
-	}{
-		{
-			name:           "send enabled with email response",
-			sendEnabled:    true,
-			emailResp:      &email.SendEmailResponse{EmailUUID: "test-uuid"},
-			wantMessage:    "article sent to Kindle successfully",
-			deliveryStatus: constant.StatusDelivered,
-		},
-		{
-			name:           "send enabled without email response",
-			sendEnabled:    true,
-			emailResp:      nil,
-			wantMessage:    "article sent to Kindle successfully",
-			deliveryStatus: constant.StatusDelivered,
-		},
-		{
-			name:           "send disabled",
-			sendEnabled:    false,
-			emailResp:      nil,
-			wantMessage:    "article processed successfully (email sending disabled)",
-			deliveryStatus: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := &config.Config{
-				SendEnabled: tt.sendEnabled,
-			}
-			h := newHandlers(cfg, nil, nil)
-
-			ctx := context.Background()
-			article := &model.Article{
-				DeliveryStatus: tt.deliveryStatus,
-			}
-
-			msg := h.enrichLogs(ctx, article, tt.emailResp)
-
-			if msg == nil {
-				t.Fatal("expected msg to be non-nil")
-			}
-			if *msg != tt.wantMessage {
-				t.Errorf("expected message %q, got %q", tt.wantMessage, *msg)
-			}
-		})
+	if resp.Error != "extraction failed" {
+		t.Errorf("expected message 'extraction failed', got '%s'", resp.Error)
 	}
 }
 
@@ -502,44 +283,4 @@ type serviceError struct {
 
 func (e *serviceError) Error() string {
 	return e.msg
-}
-
-type mockRepository struct{}
-
-func (m *mockRepository) Store(_ context.Context, _ *model.Article) error {
-	return nil
-}
-
-func (m *mockRepository) GetByAccountAndID(_ context.Context, _, _ string) (*model.Article, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetByAccount(_ context.Context, _ string) ([]*model.Article, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) DeleteByAccountAndID(_ context.Context, _, _ string) error {
-	return nil
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || s != "" && (s[0:len(substr)] == substr || contains(s[1:], substr)))
-}
-
-func assertDeliveredField(t *testing.T, name, want string, got *string) {
-	t.Helper()
-	if got == nil {
-		t.Errorf("expected %s to be %q, got nil", name, want)
-		return
-	}
-	if *got != want {
-		t.Errorf("expected %s to be %q, got %q", name, want, *got)
-	}
-}
-
-func assertNilField(t *testing.T, name string, got *string) {
-	t.Helper()
-	if got != nil {
-		t.Errorf("expected %s to be nil, got %q", name, *got)
-	}
 }

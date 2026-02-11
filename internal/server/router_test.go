@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/email"
 	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/shaftoe/savetoink/internal/service"
 )
@@ -44,15 +45,30 @@ func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 
 func createTestHandlerWithMock(
 	cfg *config.Config,
+	sendEnabled bool,
 ) *handlers {
-	svc := newMockService(func(_ context.Context, _ string) (*service.ProcessResult, error) {
-		return service.NewProcessResult(
-			&model.Article{Title: testArticleTitle},
-			[]byte("epub data"),
-			testArticleURL,
-		), nil
+	svc := newMockService(func(_ context.Context, _ string, _ string) (*service.CreateArticleResult, error) {
+		message := statusEmailDisabled
+		var emailResp *email.SendEmailResponse
+		if sendEnabled {
+			message = statusCreatedMessage
+			emailResp = &email.SendEmailResponse{
+				Status:    "success",
+				Message:   "sent",
+				EmailUUID: "test-uuid",
+			}
+		}
+		return &service.CreateArticleResult{
+			Article: &model.Article{
+				ID:    "test-id",
+				Title: testArticleTitle,
+				URL:   testArticleURL,
+			},
+			Message:   message,
+			EmailResp: emailResp,
+		}, nil
 	})
-	return newHandlers(cfg, svc, nil)
+	return newHandlers(cfg, svc)
 }
 
 func TestNewRouter_RouteRegistration(t *testing.T) {
@@ -160,7 +176,7 @@ func TestNewRouter_MiddlewareChain(t *testing.T) {
 		SendEnabled:  false,
 	}
 
-	h := createTestHandlerWithMock(cfg)
+	h := createTestHandlerWithMock(cfg, false)
 
 	r := chi.NewRouter()
 	r.Use(corsMiddleware)
@@ -216,7 +232,7 @@ func TestArticleCreationFlow_Authenticated(t *testing.T) {
 		SendEnabled:  true,
 	}
 
-	h := createTestHandlerWithMock(cfg)
+	h := createTestHandlerWithMock(cfg, true)
 	r := createTestRouterWithHandler(h, cfg)
 
 	body := articleRequest{URL: testArticleURL}
@@ -251,7 +267,7 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 		SendEnabled:  false,
 	}
 
-	h := createTestHandlerWithMock(cfg)
+	h := createTestHandlerWithMock(cfg, false)
 	r := chi.NewRouter()
 	r.Use(corsMiddleware)
 	r.Route("/v1", func(r chi.Router) {
@@ -281,7 +297,7 @@ func TestArticleCreationFlow_EmailDisabled(t *testing.T) {
 		SendEnabled:  false,
 	}
 
-	h := createTestHandlerWithMock(cfg)
+	h := createTestHandlerWithMock(cfg, false)
 	r := createTestRouterWithHandler(h, cfg)
 
 	body := articleRequest{URL: testArticleURL}

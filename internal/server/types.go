@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/repository"
 	"github.com/shaftoe/savetoink/internal/service"
 )
 
@@ -26,9 +25,8 @@ type healthResponse struct {
 }
 
 type handlers struct {
-	cfg        *config.Config
-	service    service.Interface
-	repository repository.Repository
+	cfg     *config.Config
+	service service.Interface
 }
 
 type contextKey string
