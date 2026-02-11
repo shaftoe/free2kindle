@@ -56,8 +56,8 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 			r.Use(auth.EnsureAutheticatedMiddleware)
 			r.Post("/", handlers.handleCreateArticle)
 			r.Get("/", handlers.handleGetArticles)
-			r.Delete("/", handlers.handleDeleteAllArticles)
-			r.Delete("/{id}", handlers.handleDeleteArticle)
+			// r.Delete("/", handlers.handleDeleteAllArticles)
+			// r.Delete("/{id}", handlers.handleDeleteArticle)
 		})
 	})
 

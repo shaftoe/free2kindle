@@ -2,13 +2,11 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
 	"github.com/shaftoe/savetoink/internal/constant"
@@ -122,45 +120,4 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 		Total:    result.Total,
 		HasMore:  result.HasMore,
 	})
-}
-
-func (h *handlers) handleDeleteArticle(w http.ResponseWriter, r *http.Request) {
-	articleID := chi.URLParam(r, "id")
-
-	if articleID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: constant.ErrInvalidArticleID})
-		return
-	}
-
-	accountID := auth.GetAccountID(r.Context())
-
-	result, err := h.service.DeleteArticle(r.Context(), accountID, articleID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	addLogAttr(r.Context(), slog.String("account_id", accountID))
-	addLogAttr(r.Context(), slog.String("article_id", articleID))
-	addLogAttr(r.Context(), slog.Int("deleted", result.Deleted))
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(deleteArticleResponse{Deleted: result.Deleted})
-}
-
-func (h *handlers) handleDeleteAllArticles(w http.ResponseWriter, r *http.Request) {
-	accountID := auth.GetAccountID(r.Context())
-
-	err := h.service.DeleteAllArticles(r.Context(), accountID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	addLogAttr(r.Context(), slog.String("account_id", accountID))
-
-	w.WriteHeader(http.StatusNoContent)
 }

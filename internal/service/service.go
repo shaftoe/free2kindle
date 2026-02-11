@@ -336,11 +336,6 @@ func (s *Service) DeleteAllArticles(ctx context.Context, accountID string) error
 	return nil
 }
 
-// GetDBError returns any accumulated database errors from background operations.
-func (s *Service) GetDBError() error {
-	return s.dbErrors
-}
-
 func (s *Service) enrichArticle(
 	article *model.Article,
 	id *string,
