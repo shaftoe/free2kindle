@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/shaftoe/savetoink/internal/config"
+	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/shaftoe/savetoink/internal/service"
 )
 
@@ -22,6 +23,14 @@ type articleResponse struct {
 
 type healthResponse struct {
 	Status string `json:"status"`
+}
+
+type listArticlesResponse struct {
+	Articles []*model.Article `json:"articles"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
+	Total    int              `json:"total"`
+	HasMore  bool             `json:"has_more"`
 }
 
 type handlers struct {

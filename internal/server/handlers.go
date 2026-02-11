@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
@@ -75,5 +76,45 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 		URL:            result.Article.URL,
 		Message:        result.Message,
 		DeliveryStatus: string(result.Article.DeliveryStatus),
+	})
+}
+
+func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
+	page := 1
+	pageSize := 20
+
+	if p := r.URL.Query().Get("page"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed >= 1 {
+			page = parsed
+		}
+	}
+
+	if ps := r.URL.Query().Get("page_size"); ps != "" {
+		if parsed, err := strconv.Atoi(ps); err == nil && parsed >= 1 {
+			pageSize = min(parsed, 100)
+		}
+	}
+
+	accountID := auth.GetAccountID(r.Context())
+
+	result, err := h.service.GetArticles(r.Context(), accountID, page, pageSize)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	addLogAttr(r.Context(), slog.String("account_id", accountID))
+	addLogAttr(r.Context(), slog.Int("page", page))
+	addLogAttr(r.Context(), slog.Int("page_size", pageSize))
+	addLogAttr(r.Context(), slog.Int("total", result.Total))
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(listArticlesResponse{
+		Articles: result.Articles,
+		Page:     result.Page,
+		PageSize: result.PageSize,
+		Total:    result.Total,
+		HasMore:  result.HasMore,
 	})
 }

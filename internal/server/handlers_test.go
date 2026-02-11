@@ -19,6 +19,7 @@ type MockService struct {
 	processFunc func(context.Context, string) (*service.ProcessResult, error)
 	sendFunc    func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
 	writeFunc   func(*service.ProcessResult, string) error
+	getArticles func(context.Context, string, int, int) (*service.GetArticlesResult, error)
 	dbError     error
 }
 
@@ -72,6 +73,24 @@ func (m *MockService) WriteToFile(result *service.ProcessResult, outputPath stri
 
 func (m *MockService) GetDBError() error {
 	return m.dbError
+}
+
+func (m *MockService) GetArticles(
+	ctx context.Context,
+	accountID string,
+	page int,
+	pageSize int,
+) (*service.GetArticlesResult, error) {
+	if m.getArticles != nil {
+		return m.getArticles(ctx, accountID, page, pageSize)
+	}
+	return &service.GetArticlesResult{
+		Articles: []*model.Article{},
+		Page:     1,
+		PageSize: 20,
+		Total:    0,
+		HasMore:  false,
+	}, nil
 }
 
 func TestHandleHealth(t *testing.T) {
@@ -283,4 +302,171 @@ type serviceError struct {
 
 func (e *serviceError) Error() string {
 	return e.msg
+}
+
+func TestHandleGetArticlesSuccess(t *testing.T) {
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	svc.getArticles = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
+		articles := []*model.Article{
+			{ID: "1", Title: "Article 1", URL: "https://example.com/1"},
+			{ID: "2", Title: "Article 2", URL: "https://example.com/2"},
+		}
+		return &service.GetArticlesResult{
+			Articles: articles,
+			Page:     page,
+			PageSize: pageSize,
+			Total:    5,
+			HasMore:  true,
+		}, nil
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles?page=1&page_size=2", http.NoBody)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticles(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var resp listArticlesResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if len(resp.Articles) != 2 {
+		t.Errorf("expected 2 articles, got %d", len(resp.Articles))
+	}
+	if resp.Page != 1 {
+		t.Errorf("expected page 1, got %d", resp.Page)
+	}
+	if resp.PageSize != 2 {
+		t.Errorf("expected page_size 2, got %d", resp.PageSize)
+	}
+	if resp.Total != 5 {
+		t.Errorf("expected total 5, got %d", resp.Total)
+	}
+	if !resp.HasMore {
+		t.Errorf("expected has_more true, got false")
+	}
+}
+
+func TestHandleGetArticlesDefaultParams(t *testing.T) {
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	svc.getArticles = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
+		return &service.GetArticlesResult{
+			Articles: []*model.Article{},
+			Page:     page,
+			PageSize: pageSize,
+			Total:    0,
+			HasMore:  false,
+		}, nil
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles", http.NoBody)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticles(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var resp listArticlesResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if resp.Page != 1 {
+		t.Errorf("expected default page 1, got %d", resp.Page)
+	}
+	if resp.PageSize != 20 {
+		t.Errorf("expected default page_size 20, got %d", resp.PageSize)
+	}
+}
+
+func TestHandleGetArticlesInvalidParams(t *testing.T) {
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	svc.getArticles = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
+		return &service.GetArticlesResult{
+			Articles: []*model.Article{},
+			Page:     page,
+			PageSize: pageSize,
+			Total:    0,
+			HasMore:  false,
+		}, nil
+	}
+	h := newHandlers(cfg, svc)
+
+	testCases := []struct {
+		name         string
+		url          string
+		expectedPage int
+		expectedSize int
+	}{
+		{"invalid page uses default", "/v1/articles?page=abc&page_size=10", 1, 10},
+		{"negative page uses default", "/v1/articles?page=-1&page_size=10", 1, 10},
+		{"zero page uses default", "/v1/articles?page=0&page_size=10", 1, 10},
+		{"invalid size uses default", "/v1/articles?page=1&page_size=abc", 1, 20},
+		{"size too small uses default", "/v1/articles?page=1&page_size=0", 1, 20},
+		{"size too large uses max", "/v1/articles?page=1&page_size=200", 1, 100},
+		{"negative size uses default", "/v1/articles?page=1&page_size=-10", 1, 20},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tc.url, http.NoBody)
+			w := httptest.NewRecorder()
+
+			h.handleGetArticles(w, req)
+
+			if w.Code != http.StatusOK {
+				t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+			}
+
+			var resp listArticlesResponse
+			if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+				t.Fatalf("failed to decode response: %v", err)
+			}
+
+			if resp.Page != tc.expectedPage {
+				t.Errorf("expected page %d, got %d", tc.expectedPage, resp.Page)
+			}
+			if resp.PageSize != tc.expectedSize {
+				t.Errorf("expected page_size %d, got %d", tc.expectedSize, resp.PageSize)
+			}
+		})
+	}
+}
+
+func TestHandleGetArticlesServiceError(t *testing.T) {
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	svc.getArticles = func(_ context.Context, _ string, _ int, _ int) (*service.GetArticlesResult, error) {
+		return nil, &serviceError{msg: "database error"}
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles", http.NoBody)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticles(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	var resp model.ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if resp.Error != "database error" {
+		t.Errorf("expected error 'database error', got '%s'", resp.Error)
+	}
 }

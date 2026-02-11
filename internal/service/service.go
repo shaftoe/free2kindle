@@ -24,6 +24,7 @@ type Interface interface {
 	Send(ctx context.Context, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
 	WriteToFile(result *ProcessResult, outputPath string) error
 	CreateArticle(ctx context.Context, rawURL, accountID string) (*CreateArticleResult, error)
+	GetArticles(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error)
 	GetDBError() error
 }
 
@@ -70,6 +71,15 @@ type CreateArticleResult struct {
 	Article   *model.Article
 	Message   string
 	EmailResp *email.SendEmailResponse
+}
+
+// GetArticlesResult holds the result of listing articles with pagination.
+type GetArticlesResult struct {
+	Articles []*model.Article
+	Page     int
+	PageSize int
+	Total    int
+	HasMore  bool
 }
 
 // ProcessResult holds the result of processing an article.
@@ -311,4 +321,34 @@ func (s *Service) getMessage(_ *model.Article, _ *email.SendEmailResponse) strin
 		return "article processed successfully (email sending disabled)"
 	}
 	return "article sent to Kindle successfully"
+}
+
+// GetArticles retrieves articles for a given account with pagination.
+// page starts at 1, pageSize limits the number of articles returned.
+func (s *Service) GetArticles(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error) {
+	var articles []*model.Article
+	if s.repo != nil {
+		var err error
+		articles, err = s.repo.GetByAccount(ctx, accountID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get articles: %w", err)
+		}
+	}
+
+	total := len(articles)
+	skip := (page - 1) * pageSize
+
+	skip = min(skip, total)
+	end := min(skip+pageSize, total)
+
+	pagedArticles := articles[skip:end]
+	hasMore := end < total
+
+	return &GetArticlesResult{
+		Articles: pagedArticles,
+		Page:     page,
+		PageSize: pageSize,
+		Total:    total,
+		HasMore:  hasMore,
+	}, nil
 }

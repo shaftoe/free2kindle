@@ -55,6 +55,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 		r.Route("/articles", func(r chi.Router) {
 			r.Use(auth.EnsureAutheticatedMiddleware)
 			r.Post("/", handlers.handleCreateArticle)
+			r.Get("/", handlers.handleGetArticles)
 		})
 	})
 
