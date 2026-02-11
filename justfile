@@ -60,7 +60,7 @@ upload-zip:
 # Deploy Lambda infrastructure
 deploy-api:
     aws cloudformation deploy \
-        --template-file infra/infra.yaml \
+        --template-file infra/api.yaml \
         --stack-name {{ project_name }}-infra \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
