@@ -13,11 +13,13 @@ Self-hosted read-later service with native Kindle delivery. Save articles in the
 
 ### Backend
 
-- generic Go HTTP server with Lambda adapter
-- by default deployed as AWS Lambda Function + CloudFront for custom domain, DynamoDB for storage
+- generic Go HTTP server
+- deployed as AWS Lambda Function (with [HTTP adapter](https://github.com/akrylysov/algnhsa) + CloudFront for custom domain, DynamoDB for storage
 - pluggable user backend
   -  single-user shared API key
-  -  multi-user with Auth0
+  -  multi-user with [Auth0](https://auth0.com/)
+- pluggable send email backend
+  - currently only [MailJet](https://www.mailjet.com/) supported
 
 ### Prerequisites
 
