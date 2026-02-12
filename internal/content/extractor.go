@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-shiori/dom"
 	"github.com/markusmobius/go-trafilatura"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 )
 
@@ -111,7 +111,7 @@ func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr strin
 		URL:                urlStr,
 		CreatedAt:          time.Now(),
 		WordCount:          wordCount,
-		ReadingTimeMinutes: (wordCount + constant.WordsPerMinute - 1) / constant.WordsPerMinute,
+		ReadingTimeMinutes: (wordCount + consts.WordsPerMinute - 1) / consts.WordsPerMinute,
 		SourceDomain:       result.Metadata.Hostname,
 		SiteName:           result.Metadata.Sitename,
 		ContentType:        result.Metadata.PageType,

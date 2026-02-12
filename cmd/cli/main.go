@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/email"
 	"github.com/shaftoe/savetoink/internal/service"
 	"github.com/spf13/cobra"
@@ -44,7 +44,7 @@ var convertCmd = &cobra.Command{
 func runConvert(_ *cobra.Command, args []string) error {
 	url := args[0]
 
-	cfg, err := config.Load(constant.ModeCLI)
+	cfg, err := config.Load(consts.ModeCLI)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}

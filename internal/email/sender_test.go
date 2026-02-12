@@ -3,7 +3,7 @@ package email
 import (
 	"testing"
 
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 )
 
@@ -105,7 +105,7 @@ func TestGenerateSubject(t *testing.T) {
 			name:          "empty",
 			articleTitle:  "",
 			customSubject: "",
-			expected:      constant.DefaultSubject,
+			expected:      consts.DefaultSubject,
 		},
 	}
 
@@ -145,7 +145,7 @@ func TestSanitizeSubject(t *testing.T) {
 		{
 			name:     "empty subject",
 			input:    "",
-			expected: constant.DefaultSubject,
+			expected: consts.DefaultSubject,
 		},
 	}
 

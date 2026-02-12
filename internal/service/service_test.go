@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/shaftoe/savetoink/internal/repository"
 )
@@ -257,7 +257,7 @@ func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 			Title:          "Article 1",
 			URL:            "https://example.com/1",
 			CreatedAt:      time.Now(),
-			DeliveryStatus: constant.StatusDelivered,
+			DeliveryStatus: consts.StatusDelivered,
 		},
 		{
 			Account:        "user1",
@@ -265,7 +265,7 @@ func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 			Title:          "Article 2",
 			URL:            "https://example.com/2",
 			CreatedAt:      time.Now(),
-			DeliveryStatus: constant.StatusFailed,
+			DeliveryStatus: consts.StatusFailed,
 			Error:          "email failed",
 		},
 	}
@@ -283,12 +283,12 @@ func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 		t.Errorf("expected 2 articles, got %d", len(result.Articles))
 	}
 
-	if result.Articles[0].DeliveryStatus != constant.StatusDelivered {
-		t.Errorf("expected delivery status %v, got %v", constant.StatusDelivered, result.Articles[0].DeliveryStatus)
+	if result.Articles[0].DeliveryStatus != consts.StatusDelivered {
+		t.Errorf("expected delivery status %v, got %v", consts.StatusDelivered, result.Articles[0].DeliveryStatus)
 	}
 
-	if result.Articles[1].DeliveryStatus != constant.StatusFailed {
-		t.Errorf("expected delivery status %v, got %v", constant.StatusFailed, result.Articles[1].DeliveryStatus)
+	if result.Articles[1].DeliveryStatus != consts.StatusFailed {
+		t.Errorf("expected delivery status %v, got %v", consts.StatusFailed, result.Articles[1].DeliveryStatus)
 	}
 
 	if result.Articles[1].Error != "email failed" {

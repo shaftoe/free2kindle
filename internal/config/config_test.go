@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +17,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "valid CLI config with send enabled",
 			config: &Config{
-				Mode:             constant.ModeCLI,
+				Mode:             consts.ModeCLI,
 				DestEmail:        "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
@@ -29,7 +29,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "valid CLI config with send disabled",
 			config: &Config{
-				Mode:        constant.ModeCLI,
+				Mode:        consts.ModeCLI,
 				SendEnabled: false,
 			},
 			wantErr: false,
@@ -37,35 +37,35 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "valid server config",
 			config: &Config{
-				Mode:          constant.ModeServer,
+				Mode:          consts.ModeServer,
 				APIKeySecret:  "api-key-secret",
 				DynamoDBTable: "test-table",
-				AuthBackend:   constant.AuthBackendSharedAPIKey,
+				AuthBackend:   consts.AuthBackendSharedAPIKey,
 			},
 			wantErr: false,
 		},
 		{
 			name: "server config missing api key",
 			config: &Config{
-				Mode:          constant.ModeServer,
+				Mode:          consts.ModeServer,
 				DynamoDBTable: "test-table",
-				AuthBackend:   constant.AuthBackendSharedAPIKey,
+				AuthBackend:   consts.AuthBackendSharedAPIKey,
 			},
 			wantErr: true,
 		},
 		{
 			name: "server config missing dynamodb table",
 			config: &Config{
-				Mode:         constant.ModeServer,
+				Mode:         consts.ModeServer,
 				APIKeySecret: "api-key-secret",
-				AuthBackend:  constant.AuthBackendSharedAPIKey,
+				AuthBackend:  consts.AuthBackendSharedAPIKey,
 			},
 			wantErr: true,
 		},
 		{
 			name: "server config with invalid auth backend",
 			config: &Config{
-				Mode:          constant.ModeServer,
+				Mode:          consts.ModeServer,
 				APIKeySecret:  "api-key-secret",
 				DynamoDBTable: "test-table",
 				AuthBackend:   "invalid_backend",
@@ -75,8 +75,8 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "server config with auth0 backend valid",
 			config: &Config{
-				Mode:          constant.ModeServer,
-				AuthBackend:   constant.AuthBackendAuth0,
+				Mode:          consts.ModeServer,
+				AuthBackend:   consts.AuthBackendAuth0,
 				Auth0Domain:   "example.auth0.com",
 				Auth0Audience: "test-audience",
 				DynamoDBTable: "test-table",
@@ -86,8 +86,8 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "server config with auth0 missing domain",
 			config: &Config{
-				Mode:          constant.ModeServer,
-				AuthBackend:   constant.AuthBackendAuth0,
+				Mode:          consts.ModeServer,
+				AuthBackend:   consts.AuthBackendAuth0,
 				Auth0Audience: "test-audience",
 				DynamoDBTable: "test-table",
 			},
@@ -96,8 +96,8 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "server config with auth0 missing audience",
 			config: &Config{
-				Mode:          constant.ModeServer,
-				AuthBackend:   constant.AuthBackendAuth0,
+				Mode:          consts.ModeServer,
+				AuthBackend:   consts.AuthBackendAuth0,
 				Auth0Domain:   "example.auth0.com",
 				DynamoDBTable: "test-table",
 			},
@@ -106,7 +106,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing kindle email with send enabled",
 			config: &Config{
-				Mode:             constant.ModeCLI,
+				Mode:             consts.ModeCLI,
 				SenderEmail:      "sender@example.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
@@ -117,7 +117,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing sender email with send enabled",
 			config: &Config{
-				Mode:             constant.ModeCLI,
+				Mode:             consts.ModeCLI,
 				DestEmail:        "test@kindle.com",
 				MailjetAPIKey:    "api-key",
 				MailjetAPISecret: "api-secret",
@@ -128,7 +128,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing mailjet api key with send enabled",
 			config: &Config{
-				Mode:             constant.ModeCLI,
+				Mode:             consts.ModeCLI,
 				DestEmail:        "test@kindle.com",
 				SenderEmail:      "sender@example.com",
 				MailjetAPISecret: "api-secret",
@@ -139,7 +139,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "CLI config missing mailjet api secret with send enabled",
 			config: &Config{
-				Mode:          constant.ModeCLI,
+				Mode:          consts.ModeCLI,
 				DestEmail:     "test@kindle.com",
 				SenderEmail:   "sender@example.com",
 				MailjetAPIKey: "api-key",
@@ -187,7 +187,7 @@ func TestLoad(t *testing.T) {
 		_ = os.Unsetenv("SAVETOINK_DYNAMODB_TABLE_NAME")
 	}()
 
-	cfg, err := Load(constant.ModeCLI)
+	cfg, err := Load(consts.ModeCLI)
 	assert.NoError(t, err)
 	assert.Equal(t, "test@kindle.com", cfg.DestEmail)
 	assert.Equal(t, "sender@example.com", cfg.SenderEmail)
@@ -195,7 +195,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, "api-secret", cfg.MailjetAPISecret)
 	assert.Equal(t, "api-key-secret", cfg.APIKeySecret)
 	assert.Equal(t, "test-table", cfg.DynamoDBTable)
-	assert.Equal(t, constant.ModeCLI, cfg.Mode)
+	assert.Equal(t, consts.ModeCLI, cfg.Mode)
 }
 
 func TestLoadDefaultsToCLI(t *testing.T) {
@@ -209,9 +209,9 @@ func TestLoadDefaultsToCLI(t *testing.T) {
 	_ = os.Unsetenv("SAVETOINK_AUTH0_DOMAIN")
 	_ = os.Unsetenv("SAVETOINK_AUTH0_AUDIENCE")
 
-	cfg, err := Load(constant.ModeCLI)
+	cfg, err := Load(consts.ModeCLI)
 	assert.NoError(t, err)
-	assert.Equal(t, constant.ModeCLI, cfg.Mode)
+	assert.Equal(t, consts.ModeCLI, cfg.Mode)
 }
 
 func TestLoadServerMode(t *testing.T) {
@@ -223,9 +223,9 @@ func TestLoadServerMode(t *testing.T) {
 		_ = os.Unsetenv("SAVETOINK_DYNAMODB_TABLE_NAME")
 	}()
 
-	cfg, err := Load(constant.ModeServer)
+	cfg, err := Load(consts.ModeServer)
 	assert.NoError(t, err)
-	assert.Equal(t, constant.ModeServer, cfg.Mode)
+	assert.Equal(t, consts.ModeServer, cfg.Mode)
 }
 
 func TestLoadServerModeAuth0(t *testing.T) {
@@ -250,10 +250,10 @@ func TestLoadServerModeAuth0(t *testing.T) {
 		_ = os.Unsetenv("SAVETOINK_DYNAMODB_TABLE_NAME")
 	}()
 
-	cfg, err := Load(constant.ModeServer)
+	cfg, err := Load(consts.ModeServer)
 	assert.NoError(t, err)
-	assert.Equal(t, constant.ModeServer, cfg.Mode)
-	assert.Equal(t, constant.AuthBackendAuth0, cfg.AuthBackend)
+	assert.Equal(t, consts.ModeServer, cfg.Mode)
+	assert.Equal(t, consts.AuthBackendAuth0, cfg.AuthBackend)
 	assert.Equal(t, "example.auth0.com", cfg.Auth0Domain)
 	assert.Equal(t, "test-audience", cfg.Auth0Audience)
 }

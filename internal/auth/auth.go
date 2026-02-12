@@ -13,7 +13,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v3/jwks"
 	"github.com/auth0/go-jwt-middleware/v3/validator"
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 )
 
@@ -36,9 +36,9 @@ const (
 // to the context if any. To subsequently validate authentication use EnsureAutheticatedMiddleware.
 func NewAccountIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	switch cfg.AuthBackend {
-	case constant.AuthBackendSharedAPIKey:
+	case consts.AuthBackendSharedAPIKey:
 		return sharedAPIKeyMiddleware(cfg.APIKeySecret)
-	case constant.AuthBackendAuth0:
+	case consts.AuthBackendAuth0:
 		return auth0Middleware(cfg.Auth0Domain, cfg.Auth0Audience)
 	default:
 		return sharedAPIKeyMiddleware(cfg.APIKeySecret)

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 )
 
@@ -19,7 +19,7 @@ const (
 
 func TestNewMiddleware_SharedAPIKey(t *testing.T) {
 	cfg := &config.Config{
-		AuthBackend:  constant.AuthBackendSharedAPIKey,
+		AuthBackend:  consts.AuthBackendSharedAPIKey,
 		APIKeySecret: "valid-key",
 	}
 
@@ -32,7 +32,7 @@ func TestNewMiddleware_SharedAPIKey(t *testing.T) {
 
 func TestNewMiddleware_Auth0(t *testing.T) {
 	cfg := &config.Config{
-		AuthBackend:   constant.AuthBackendAuth0,
+		AuthBackend:   consts.AuthBackendAuth0,
 		Auth0Domain:   "example.auth0.com",
 		Auth0Audience: "test-audience",
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/spf13/viper"
 )
 
@@ -23,14 +23,14 @@ type Config struct {
 	Debug            bool
 	SendEnabled      bool
 	DynamoDBTable    string
-	Mode             constant.RunMode
+	Mode             consts.RunMode
 	AWSConfig        *aws.Config
-	EmailProvider    constant.EmailProvider
-	AuthBackend      constant.AuthBackend
+	EmailProvider    consts.EmailProvider
+	AuthBackend      consts.AuthBackend
 }
 
 // Load reads configuration from environment variables and returns a Config instance.
-func Load(mode constant.RunMode) (*Config, error) {
+func Load(mode consts.RunMode) (*Config, error) {
 	viper.SetEnvPrefix("SAVETOINK")
 	viper.AutomaticEnv()
 
@@ -41,7 +41,7 @@ func Load(mode constant.RunMode) (*Config, error) {
 	cfg := loadConfig(mode)
 
 	if cfg.AuthBackend == "" {
-		cfg.AuthBackend = constant.AuthBackendSharedAPIKey
+		cfg.AuthBackend = consts.AuthBackendSharedAPIKey
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -77,12 +77,12 @@ func bindEnvVars() error {
 	return nil
 }
 
-func loadConfig(mode constant.RunMode) *Config {
+func loadConfig(mode consts.RunMode) *Config {
 	cfg := &Config{
 		APIKeySecret:     viper.GetString("api-key-secret"),
 		Auth0Audience:    viper.GetString("auth0-audience"),
 		Auth0Domain:      viper.GetString("auth0-domain"),
-		AuthBackend:      constant.AuthBackend(viper.GetString("auth-backend")),
+		AuthBackend:      consts.AuthBackend(viper.GetString("auth-backend")),
 		Debug:            viper.GetBool("debug"),
 		DestEmail:        viper.GetString("destination-email"),
 		DynamoDBTable:    viper.GetString("dynamodb-table"),
@@ -99,14 +99,14 @@ func loadConfig(mode constant.RunMode) *Config {
 func (c *Config) validate() error {
 	var missing []string
 
-	if c.Mode == constant.ModeServer {
+	if c.Mode == consts.ModeServer {
 		if err := c.validateServerConfig(&missing); err != nil {
 			return err
 		}
 	}
 
 	if c.SendEnabled {
-		c.EmailProvider = constant.EmailBackendMailjet
+		c.EmailProvider = consts.EmailBackendMailjet
 		c.validateSendEnabledConfig(&missing)
 	}
 
@@ -119,11 +119,11 @@ func (c *Config) validate() error {
 
 func (c *Config) validateServerConfig(missing *[]string) error {
 	switch c.AuthBackend {
-	case constant.AuthBackendSharedAPIKey:
+	case consts.AuthBackendSharedAPIKey:
 		if c.APIKeySecret == "" {
 			*missing = append(*missing, "SAVETOINK_API_KEY")
 		}
-	case constant.AuthBackendAuth0:
+	case consts.AuthBackendAuth0:
 		if c.Auth0Domain == "" {
 			*missing = append(*missing, "SAVETOINK_AUTH0_DOMAIN")
 		}

@@ -4,7 +4,7 @@ package model
 import (
 	"time"
 
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 )
 
 // Article represents all article data including content, metadata, and delivery status.
@@ -30,11 +30,11 @@ type Article struct {
 	PublishedAt        *time.Time `json:"publishedAt,omitempty" dynamodbav:"publishedAt,omitempty"`
 
 	// email delivery metadata
-	DeliveryStatus     constant.Status        `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
-	DeliveredFrom      *string                `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
-	DeliveredTo        *string                `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
-	DeliveredEmailUUID *string                `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"` //nolint:lll // tag string is long due to json and dynamodb tags
-	DeliveredBy        constant.EmailProvider `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`               //nolint:lll // tag string is long due to json and dynamodb tags
+	DeliveryStatus     consts.Status        `json:"deliveryStatus,omitempty" dynamodbav:"deliveryStatus,omitempty"`
+	DeliveredFrom      *string              `json:"deliveredFrom,omitempty" dynamodbav:"deliveredFrom,omitempty"`
+	DeliveredTo        *string              `json:"deliveredTo,omitempty" dynamodbav:"deliveredTo,omitempty"`
+	DeliveredEmailUUID *string              `json:"deliveredEmailUUID,omitempty" dynamodbav:"deliveredEmailUUID,omitempty"` //nolint:lll // tag string is long due to json and dynamodb tags
+	DeliveredBy        consts.EmailProvider `json:"deliveredBy,omitempty" dynamodbav:"deliveredBy,omitempty"`               //nolint:lll // tag string is long due to json and dynamodb tags
 }
 
 // ErrorResponse represents the unified error response.

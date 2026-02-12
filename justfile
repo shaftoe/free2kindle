@@ -115,6 +115,13 @@ get-distribution-url:
         --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDomainName'].OutputValue" \
         --output text
 
+# Get GitHub Actions IAM role ARN
+get-github-role:
+    aws cloudformation describe-stacks \
+        --stack-name {{ project_name }}-infra \
+        --query "Stacks[0].Outputs[?OutputKey=='GitHubActionsRoleArn'].OutputValue" \
+        --output text
+
 # View Lambda function logs
 logs:
     aws logs tail /aws/lambda/{{ project_name }}-api --follow

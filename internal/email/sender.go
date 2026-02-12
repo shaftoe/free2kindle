@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 )
 
@@ -54,7 +54,7 @@ func GenerateSubject(articleTitle, customSubject string) string {
 	if articleTitle != "" {
 		return sanitizeSubject(articleTitle)
 	}
-	return constant.DefaultSubject
+	return consts.DefaultSubject
 }
 
 func sanitizeFilename(name string) string {
@@ -69,11 +69,11 @@ func sanitizeFilename(name string) string {
 
 func sanitizeSubject(subject string) string {
 	if subject == "" {
-		return constant.DefaultSubject
+		return consts.DefaultSubject
 	}
 	subject = strings.TrimSpace(subject)
-	if len(subject) > constant.MaxSubjectLength {
-		subject = subject[:constant.MaxSubjectLength]
+	if len(subject) > consts.MaxSubjectLength {
+		subject = subject[:consts.MaxSubjectLength]
 	}
 	return subject
 }

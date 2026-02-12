@@ -7,12 +7,12 @@ import (
 	"os"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/server"
 )
 
 func main() {
-	cfg, err := config.Load(constant.ModeServer)
+	cfg, err := config.Load(consts.ModeServer)
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		os.Exit(1)
@@ -25,9 +25,9 @@ func main() {
 	srv := &http.Server{
 		Addr:         ":" + port,
 		Handler:      router,
-		ReadTimeout:  constant.ReadTimeout,
-		WriteTimeout: constant.WriteTimeout,
-		IdleTimeout:  constant.IdleTimeout,
+		ReadTimeout:  consts.ReadTimeout,
+		WriteTimeout: consts.WriteTimeout,
+		IdleTimeout:  consts.IdleTimeout,
 	}
 	if srvErr := srv.ListenAndServe(); srvErr != nil {
 		slog.Error("failed to start server", "error", srvErr)

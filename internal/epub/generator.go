@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-shiori/go-epub"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -100,7 +100,7 @@ func (g *Generator) Generate(article *model.Article) ([]byte, error) {
 
 	articleContent := buildMetadataHeader(article) + article.Content
 
-	_, err = e.AddSection(articleContent, constant.DefaultChapterTitle, constant.DefaultChapterFilename, "")
+	_, err = e.AddSection(articleContent, consts.DefaultChapterTitle, consts.DefaultChapterFilename, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to add chapter: %w", err)
 	}

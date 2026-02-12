@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/content"
 	"github.com/shaftoe/savetoink/internal/email"
 	"github.com/shaftoe/savetoink/internal/email/mailjet"
@@ -48,7 +48,7 @@ func New(cfg *config.Config) *Service {
 	var sender email.Sender
 	if cfg.SendEnabled {
 		switch cfg.EmailProvider {
-		case constant.EmailBackendMailjet:
+		case consts.EmailBackendMailjet:
 			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
 		default:
 			sender = mailjet.NewSender(cfg.MailjetAPIKey, cfg.MailjetAPISecret, cfg.SenderEmail)
@@ -302,7 +302,7 @@ func (s *Service) startBackgroundDBStore(ctx context.Context) (eg *errgroup.Grou
 // DeleteArticle deletes a single article by account and ID.
 func (s *Service) DeleteArticle(ctx context.Context, accountID, articleID string) (*DeleteArticleResult, error) {
 	if articleID == "" {
-		return nil, errors.New(constant.ErrInvalidArticleID)
+		return nil, errors.New(consts.ErrInvalidArticleID)
 	}
 
 	if s.repo == nil {
@@ -353,11 +353,11 @@ func (s *Service) enrichArticle(
 	}
 
 	if emailResp == nil {
-		article.DeliveryStatus = constant.StatusFailed
+		article.DeliveryStatus = consts.StatusFailed
 		return
 	}
 
-	article.DeliveryStatus = constant.StatusDelivered
+	article.DeliveryStatus = consts.StatusDelivered
 	article.DeliveredFrom = &s.cfg.SenderEmail
 	article.DeliveredTo = &s.cfg.DestEmail
 	article.DeliveredEmailUUID = &emailResp.EmailUUID
@@ -375,7 +375,7 @@ func (s *Service) getMessage(_ *model.Article, _ *email.SendEmailResponse) strin
 // Returns the full article including all metadata and content.
 func (s *Service) GetArticle(ctx context.Context, accountID, articleID string) (*model.Article, error) {
 	if articleID == "" {
-		return nil, errors.New(constant.ErrInvalidArticleID)
+		return nil, errors.New(consts.ErrInvalidArticleID)
 	}
 
 	if s.repo == nil {

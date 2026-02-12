@@ -1,5 +1,5 @@
-// Package constant provides shared constants used across the savetoink application.
-package constant
+// Package consts provides shared constants used across the savetoink application.
+package consts
 
 import "time"
 

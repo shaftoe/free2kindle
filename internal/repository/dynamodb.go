@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 )
 
@@ -172,8 +172,8 @@ func (d *DynamoDB) DeleteByAccount(ctx context.Context, account string) (int, er
 		return 0, nil
 	}
 
-	for i := 0; i < len(articles); i += constant.DynamoDBBatchSize {
-		end := min(i+constant.DynamoDBBatchSize, len(articles))
+	for i := 0; i < len(articles); i += consts.DynamoDBBatchSize {
+		end := min(i+consts.DynamoDBBatchSize, len(articles))
 
 		var writeReqs []types.WriteRequest
 		for _, article := range articles[i:end] {

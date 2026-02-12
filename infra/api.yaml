@@ -72,6 +72,11 @@ Parameters:
     Description: ACM certificate ARN for the custom domain (must be in us-east-1)
     Default: ""
 
+  GitHubRepository:
+    Type: String
+    Description: "GitHub repository for OIDC authentication (format: owner/repo)"
+    Default: "savetoink/savetoink"
+
 Conditions:
   UseCustomDomain: !Not [!Equals [!Ref DomainName, ""]]
 
@@ -260,6 +265,50 @@ Resources:
               - dynamodb:DeleteItem
             Resource: !GetAtt DynamoDBTable.Arn
 
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-github-actions"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !GetAtt GitHubOIDCProvider.Arn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepository}:ref:refs/heads/*"
+
+  GitHubActionsPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-github-actions-deploy"
+      Roles:
+        - !Ref GitHubActionsRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${SourceBucketName}/*"
+          - Effect: Allow
+            Action:
+              - lambda:UpdateFunctionCode
+            Resource: !Sub "arn:aws:lambda:*:*:function:${ProjectName}-api"
+
 Outputs:
   FunctionName:
     Description: Name of the Lambda function
@@ -305,3 +354,11 @@ Outputs:
   LogGroupName:
     Description: CloudWatch log group name for Lambda
     Value: !Ref LambdaLogGroup
+
+  GitHubActionsRoleArn:
+    Description: ARN of the GitHub Actions IAM role for OIDC authentication
+    Value: !GetAtt GitHubActionsRole.Arn
+
+  GitHubOIDCProviderArn:
+    Description: ARN of the GitHub OIDC provider
+    Value: !GetAtt GitHubOIDCProvider.Arn

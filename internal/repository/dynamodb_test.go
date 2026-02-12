@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -380,11 +380,11 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 		Title:              "Updated Article 9",
 		Content:            "<p>Updated content 9</p>",
 		CreatedAt:          original.CreatedAt,
-		DeliveryStatus:     constant.StatusDelivered,
+		DeliveryStatus:     consts.StatusDelivered,
 		DeliveredFrom:      stringPtr("sender@example.com"),
 		DeliveredTo:        stringPtr("kindle@example.com"),
 		DeliveredEmailUUID: stringPtr("email-uuid-123"),
-		DeliveredBy:        constant.EmailBackendMailjet,
+		DeliveredBy:        consts.EmailBackendMailjet,
 	}
 
 	err = repo.Store(ctx, updated)
@@ -395,7 +395,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Article 9", retrieved.Title)
-	assert.Equal(t, constant.StatusDelivered, retrieved.DeliveryStatus)
+	assert.Equal(t, consts.StatusDelivered, retrieved.DeliveryStatus)
 	assert.Equal(t, "sender@example.com", *retrieved.DeliveredFrom)
 }
 

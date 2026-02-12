@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/shaftoe/savetoink/internal/auth"
 	"github.com/shaftoe/savetoink/internal/config"
-	"github.com/shaftoe/savetoink/internal/constant"
+	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/shaftoe/savetoink/internal/service"
 )
@@ -84,18 +84,18 @@ func (h *handlers) handleCreateArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
-	page := constant.DefaultPage
-	pageSize := constant.DefaultPageSize
+	page := consts.DefaultPage
+	pageSize := consts.DefaultPageSize
 
 	if p := r.URL.Query().Get("page"); p != "" {
-		if parsed, err := strconv.Atoi(p); err == nil && parsed >= constant.MinPage {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed >= consts.MinPage {
 			page = parsed
 		}
 	}
 
 	if ps := r.URL.Query().Get("page_size"); ps != "" {
-		if parsed, err := strconv.Atoi(ps); err == nil && parsed >= constant.MinPageSize {
-			pageSize = min(parsed, constant.MaxPageSize)
+		if parsed, err := strconv.Atoi(ps); err == nil && parsed >= consts.MinPageSize {
+			pageSize = min(parsed, consts.MaxPageSize)
 		}
 	}
 
