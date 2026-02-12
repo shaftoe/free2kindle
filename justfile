@@ -126,6 +126,11 @@ test-url *URL:
       -H "Authorization: Bearer $SAVETOINK_API_KEY" \
       -d "{\"url\": \"{{ URL }}\"}"
 
+test-get-article *ID:
+    curl -X GET http://localhost:8080/v1/articles/{{ ID }} \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $SAVETOINK_API_KEY"
+
 test-get-articles:
     curl -X GET http://localhost:8080/v1/articles \
       -H "Content-Type: application/json" \

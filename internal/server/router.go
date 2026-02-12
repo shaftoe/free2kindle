@@ -57,6 +57,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 			r.Post("/", handlers.handleCreateArticle)
 			r.Get("/", handlers.handleGetArticles)
 			r.Delete("/", handlers.handleDeleteAllArticles)
+			r.Get("/{id}", handlers.handleGetArticle)
 			r.Delete("/{id}", handlers.handleDeleteArticle)
 		})
 	})

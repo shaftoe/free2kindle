@@ -200,6 +200,55 @@ func TestGetArticlesMetadataWithNilRepo(t *testing.T) {
 	}
 }
 
+func TestGetArticle(t *testing.T) {
+	article := &model.Article{
+		Account:   "user1",
+		ID:        "test-id",
+		Title:     "Test Article",
+		URL:       "https://example.com/test",
+		Content:   "<p>Test content</p>",
+		CreatedAt: time.Now(),
+	}
+
+	mockRepo := &MockRepository{articles: []*model.Article{article}}
+	svc := &Service{repo: mockRepo}
+
+	result, err := svc.GetArticle(context.Background(), "user1", "test-id")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.ID != "test-id" {
+		t.Errorf("expected id 'test-id', got '%s'", result.ID)
+	}
+
+	if result.Content != "<p>Test content</p>" {
+		t.Errorf("expected content to be included, got '%s'", result.Content)
+	}
+}
+
+func TestGetArticleNotFound(t *testing.T) {
+	mockRepo := &MockRepository{articles: []*model.Article{}}
+	svc := &Service{repo: mockRepo}
+
+	_, err := svc.GetArticle(context.Background(), "user1", "non-existent")
+
+	if err == nil {
+		t.Error("expected error for non-existent article, got nil")
+	}
+}
+
+func TestGetArticleEmptyID(t *testing.T) {
+	svc := &Service{repo: nil}
+
+	_, err := svc.GetArticle(context.Background(), "user1", "")
+
+	if err == nil {
+		t.Error("expected error for empty ID, got nil")
+	}
+}
+
 func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 	articles := []*model.Article{
 		{

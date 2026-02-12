@@ -19,6 +19,7 @@ type MockService struct {
 	processFunc         func(context.Context, string) (*service.ProcessResult, error)
 	sendFunc            func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
 	writeFunc           func(*service.ProcessResult, string) error
+	getArticle          func(context.Context, string, string) (*model.Article, error)
 	getArticlesMetadata func(context.Context, string, int, int) (*service.GetArticlesResult, error)
 	deleteArticle       func(context.Context, string, string) (*service.DeleteArticleResult, error)
 	deleteAllArticles   func(context.Context, string) (*service.DeleteArticleResult, error)
@@ -75,6 +76,17 @@ func (m *MockService) WriteToFile(result *service.ProcessResult, outputPath stri
 
 func (m *MockService) GetDBError() error {
 	return m.dbError
+}
+
+func (m *MockService) GetArticle(
+	ctx context.Context,
+	accountID string,
+	articleID string,
+) (*model.Article, error) {
+	if m.getArticle != nil {
+		return m.getArticle(ctx, accountID, articleID)
+	}
+	return nil, &serviceError{msg: "article not found"}
 }
 
 func (m *MockService) GetArticlesMetadata(
@@ -491,6 +503,71 @@ func TestHandleGetArticlesServiceError(t *testing.T) {
 
 	if resp.Error != "database error" {
 		t.Errorf("expected error 'database error', got '%s'", resp.Error)
+	}
+}
+
+func TestHandleGetArticleSuccess(t *testing.T) {
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	svc.getArticle = func(_ context.Context, _ string, _ string) (*model.Article, error) {
+		return &model.Article{
+			ID:      "test-id",
+			Title:   "Test Article",
+			URL:     "https://example.com/article",
+			Content: "<p>Test content</p>",
+		}, nil
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles/test-id", http.NoBody)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticle(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var resp model.Article
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if resp.ID != "test-id" {
+		t.Errorf("expected id 'test-id', got '%s'", resp.ID)
+	}
+	if resp.Title != "Test Article" {
+		t.Errorf("expected title 'Test Article', got '%s'", resp.Title)
+	}
+	if resp.Content != "<p>Test content</p>" {
+		t.Errorf("expected content to be included, got empty or incorrect")
+	}
+}
+
+func TestHandleGetArticleNotFound(t *testing.T) {
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	svc.getArticle = func(_ context.Context, _ string, _ string) (*model.Article, error) {
+		return nil, &serviceError{msg: "article not found"}
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles/test-id", http.NoBody)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticle(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+
+	var resp model.ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if resp.Error != "article not found" {
+		t.Errorf("expected error 'article not found', got '%s'", resp.Error)
 	}
 }
 

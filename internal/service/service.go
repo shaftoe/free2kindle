@@ -24,6 +24,7 @@ type Interface interface {
 	Send(ctx context.Context, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
 	WriteToFile(result *ProcessResult, outputPath string) error
 	CreateArticle(ctx context.Context, rawURL, accountID string) (*CreateArticleResult, error)
+	GetArticle(ctx context.Context, accountID, articleID string) (*model.Article, error)
 	GetArticlesMetadata(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error)
 	DeleteArticle(ctx context.Context, accountID, articleID string) (*DeleteArticleResult, error)
 	DeleteAllArticles(ctx context.Context, accountID string) (*DeleteArticleResult, error)
@@ -368,6 +369,28 @@ func (s *Service) getMessage(_ *model.Article, _ *email.SendEmailResponse) strin
 		return "article processed successfully (email sending disabled)"
 	}
 	return "article sent to Kindle successfully"
+}
+
+// GetArticle retrieves a single article by account ID and article ID.
+// Returns the full article including all metadata and content.
+func (s *Service) GetArticle(ctx context.Context, accountID, articleID string) (*model.Article, error) {
+	if articleID == "" {
+		return nil, errors.New(constant.ErrInvalidArticleID)
+	}
+
+	if s.repo == nil {
+		return nil, errors.New("repository not configured")
+	}
+
+	article, err := s.repo.GetByAccountAndID(ctx, accountID, articleID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, errors.New("article not found")
+		}
+		return nil, fmt.Errorf("failed to get article: %w", err)
+	}
+
+	return article, nil
 }
 
 // GetArticlesMetadata retrieves article metadata for a given account with pagination.

@@ -123,6 +123,26 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *handlers) handleGetArticle(w http.ResponseWriter, r *http.Request) {
+	accountID := auth.GetAccountID(r.Context())
+	articleID := chi.URLParam(r, "id")
+
+	addLogAttr(r.Context(), slog.String("article_id", articleID))
+
+	article, err := h.service.GetArticle(r.Context(), accountID, articleID)
+	if err != nil {
+		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	addLogAttr(r.Context(), slog.String("article_title", article.Title))
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(article)
+}
+
 func (h *handlers) handleDeleteArticle(w http.ResponseWriter, r *http.Request) {
 	accountID := auth.GetAccountID(r.Context())
 	articleID := chi.URLParam(r, "id")
