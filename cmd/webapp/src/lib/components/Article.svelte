@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Article } from '$lib/types';
+  import type { Article } from "$lib/types";
 
   let {
     id,
@@ -33,12 +33,6 @@
     {/if}
   </h2>
 
-  {#if imageUrl}
-    <figure class="article-image">
-      <img src={imageUrl} alt={title || `Article image for ${id}`} loading="lazy" />
-    </figure>
-  {/if}
-
   {#if excerpt}
     <p class="article-excerpt">{excerpt}</p>
   {/if}
@@ -51,17 +45,27 @@
       </tr>
       <tr>
         <th scope="row">URL</th>
-        <td><a href={url} rel="noopener noreferrer" target="_blank">{url}</a></td>
+        <td
+          ><a href={url} rel="noopener noreferrer" target="_blank">{url}</a></td
+        >
       </tr>
       {#if publishedAt}
         <tr>
           <th scope="row">Published</th>
-          <td><time datetime={publishedAt}>{new Date(publishedAt).toLocaleDateString()}</time></td>
+          <td
+            ><time datetime={publishedAt}
+              >{new Date(publishedAt).toLocaleDateString()}</time
+            ></td
+          >
         </tr>
       {/if}
       <tr>
         <th scope="row">Added</th>
-        <td><time datetime={createdAt}>{new Date(createdAt).toLocaleDateString()}</time></td>
+        <td
+          ><time datetime={createdAt}
+            >{new Date(createdAt).toLocaleDateString()}</time
+          ></td
+        >
       </tr>
       {#if author}
         <tr>

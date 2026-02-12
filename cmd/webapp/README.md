@@ -73,6 +73,47 @@ Or use the test script:
 ./test.sh
 ```
 
+## Services
+
+### Article Service (`src/lib/services/articles.ts`)
+
+The `fetchArticles` function provides a reusable way to fetch articles from the Go backend API:
+
+```typescript
+import { fetchArticles } from '$lib/services/articles';
+
+const data = await fetchArticles(page, pageSize);
+```
+
+This service can be reused in:
+- Server load functions (`+page.server.ts`)
+- Actions for refresh buttons
+- Form submissions
+- Client-side fetching (if needed)
+
+The service handles:
+- API URL configuration (via `API_URL` env var)
+- Authentication (via `API_KEY` env var)
+- Error propagation (throws Error objects)
+- Type-safe response parsing
+
+### Error Handling
+
+Following SvelteKit best practices:
+
+1. **Service layer** (`fetchArticles`):
+   - Throws standard `Error` objects on failure
+   - Does not call SvelteKit's `error()` function directly
+   - No console logging for error signaling
+
+2. **Load functions** (`+page.server.ts`):
+   - Catches errors from services
+   - Uses SvelteKit's `error()` to display error pages
+   - Provides user-friendly error messages
+
+This separation ensures proper error handling and SvelteKit error page rendering.
+```
+
 ## Deployment
 
 This application is configured for Netlify deployment using `@sveltejs/adapter-netlify`.
