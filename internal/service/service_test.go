@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/shaftoe/savetoink/internal/config"
 	"github.com/shaftoe/savetoink/internal/consts"
 	"github.com/shaftoe/savetoink/internal/model"
@@ -29,7 +31,11 @@ func (m *MockRepository) GetByAccountAndID(_ context.Context, account, id string
 	return nil, repository.ErrNotFound
 }
 
-func (m *MockRepository) GetMetadataByAccount(_ context.Context, account string) ([]*model.Article, error) {
+func (m *MockRepository) GetMetadataByAccount(
+	_ context.Context,
+	account string,
+	page, pageSize int,
+) (articles []*model.Article, lastEvaluatedKey map[string]types.AttributeValue, total int, err error) {
 	var result []*model.Article
 	for _, article := range m.articles {
 		if article.Account == account {
@@ -38,7 +44,26 @@ func (m *MockRepository) GetMetadataByAccount(_ context.Context, account string)
 			result = append(result, &articleCopy)
 		}
 	}
-	return result, nil
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].CreatedAt.After(result[j].CreatedAt)
+	})
+
+	total = len(result)
+	skip := max((page-1)*pageSize, 0)
+	if skip >= total {
+		return []*model.Article{}, nil, total, nil
+	}
+	end := min(skip+pageSize, total)
+
+	if end < total {
+		lastEvaluatedKey = map[string]types.AttributeValue{
+			"account":   &types.AttributeValueMemberS{Value: account},
+			"createdAt": &types.AttributeValueMemberS{Value: result[end-1].CreatedAt.Format(time.RFC3339)},
+		}
+	}
+
+	return result[skip:end], lastEvaluatedKey, total, nil
 }
 
 func (m *MockRepository) DeleteByAccountAndID(_ context.Context, account, id string) error {
@@ -64,12 +89,13 @@ func (m *MockRepository) DeleteByAccount(_ context.Context, account string) (int
 }
 
 func TestGetArticlesMetadata(t *testing.T) {
+	now := time.Now()
 	articles := []*model.Article{
-		{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1", CreatedAt: time.Now()},
-		{Account: "user1", ID: "2", Title: "Article 2", URL: "https://example.com/2", CreatedAt: time.Now()},
-		{Account: "user1", ID: "3", Title: "Article 3", URL: "https://example.com/3", CreatedAt: time.Now()},
-		{Account: "user1", ID: "4", Title: "Article 4", URL: "https://example.com/4", CreatedAt: time.Now()},
-		{Account: "user1", ID: "5", Title: "Article 5", URL: "https://example.com/5", CreatedAt: time.Now()},
+		{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1", CreatedAt: now.Add(-4 * time.Hour)},
+		{Account: "user1", ID: "2", Title: "Article 2", URL: "https://example.com/2", CreatedAt: now.Add(-3 * time.Hour)},
+		{Account: "user1", ID: "3", Title: "Article 3", URL: "https://example.com/3", CreatedAt: now.Add(-2 * time.Hour)},
+		{Account: "user1", ID: "4", Title: "Article 4", URL: "https://example.com/4", CreatedAt: now.Add(-1 * time.Hour)},
+		{Account: "user1", ID: "5", Title: "Article 5", URL: "https://example.com/5", CreatedAt: now},
 	}
 
 	tests := []struct {
@@ -250,13 +276,14 @@ func TestGetArticleEmptyID(t *testing.T) {
 }
 
 func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
+	now := time.Now()
 	articles := []*model.Article{
 		{
 			Account:        "user1",
 			ID:             "1",
 			Title:          "Article 1",
 			URL:            "https://example.com/1",
-			CreatedAt:      time.Now(),
+			CreatedAt:      now.Add(-1 * time.Hour),
 			DeliveryStatus: consts.StatusDelivered,
 		},
 		{
@@ -264,7 +291,7 @@ func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 			ID:             "2",
 			Title:          "Article 2",
 			URL:            "https://example.com/2",
-			CreatedAt:      time.Now(),
+			CreatedAt:      now,
 			DeliveryStatus: consts.StatusFailed,
 			Error:          "email failed",
 		},
@@ -283,16 +310,16 @@ func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 		t.Errorf("expected 2 articles, got %d", len(result.Articles))
 	}
 
-	if result.Articles[0].DeliveryStatus != consts.StatusDelivered {
-		t.Errorf("expected delivery status %v, got %v", consts.StatusDelivered, result.Articles[0].DeliveryStatus)
+	if result.Articles[0].DeliveryStatus != consts.StatusFailed {
+		t.Errorf("expected delivery status %v, got %v", consts.StatusFailed, result.Articles[0].DeliveryStatus)
 	}
 
-	if result.Articles[1].DeliveryStatus != consts.StatusFailed {
-		t.Errorf("expected delivery status %v, got %v", consts.StatusFailed, result.Articles[1].DeliveryStatus)
+	if result.Articles[0].Error != "email failed" {
+		t.Errorf("expected error 'email failed', got '%s'", result.Articles[0].Error)
 	}
 
-	if result.Articles[1].Error != "email failed" {
-		t.Errorf("expected error 'email failed', got '%s'", result.Articles[1].Error)
+	if result.Articles[1].DeliveryStatus != consts.StatusDelivered {
+		t.Errorf("expected delivery status %v, got %v", consts.StatusDelivered, result.Articles[1].DeliveryStatus)
 	}
 }
 

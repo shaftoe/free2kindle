@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/shaftoe/savetoink/internal/config"
 	"github.com/shaftoe/savetoink/internal/email"
@@ -342,10 +343,11 @@ func (e *serviceError) Error() string {
 func TestHandleGetArticlesSuccess(t *testing.T) {
 	cfg := &config.Config{}
 	svc := newMockService(nil)
+	now := time.Now()
 	svc.getArticlesMetadata = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
 		articles := []*model.Article{
-			{ID: "1", Title: "Article 1", URL: "https://example.com/1"},
-			{ID: "2", Title: "Article 2", URL: "https://example.com/2"},
+			{ID: "5", Title: "Article 5", URL: "https://example.com/5", CreatedAt: now},
+			{ID: "4", Title: "Article 4", URL: "https://example.com/4", CreatedAt: now.Add(-1 * time.Hour)},
 		}
 		return &service.GetArticlesResult{
 			Articles: articles,
@@ -449,7 +451,7 @@ func TestHandleGetArticlesInvalidParams(t *testing.T) {
 		{"zero page uses default", "/v1/articles?page=0&page_size=10", 1, 10},
 		{"invalid size uses default", "/v1/articles?page=1&page_size=abc", 1, 20},
 		{"size too small uses default", "/v1/articles?page=1&page_size=0", 1, 20},
-		{"size too large uses max", "/v1/articles?page=1&page_size=200", 1, 100},
+		{"size too large uses max", "/v1/articles?page=1&page_size=200", 1, 20},
 		{"negative size uses default", "/v1/articles?page=1&page_size=-10", 1, 20},
 	}
 

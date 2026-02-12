@@ -240,11 +240,42 @@ Resources:
           AttributeType: S
         - AttributeName: id
           AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
       KeySchema:
         - AttributeName: account
           KeyType: HASH
         - AttributeName: id
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: AccountCreatedAtIndex
+          KeySchema:
+            - AttributeName: account
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - id
+              - url
+              - title
+              - author
+              - siteName
+              - sourceDomain
+              - excerpt
+              - imageUrl
+              - contentType
+              - language
+              - error
+              - wordCount
+              - readingTimeMinutes
+              - publishedAt
+              - deliveryStatus
+              - deliveredFrom
+              - deliveredTo
+              - deliveredEmailUUID
+              - deliveredBy
       BillingMode: PAY_PER_REQUEST
 
   DynamoDBTableAccessPolicy:

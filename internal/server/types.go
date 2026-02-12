@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/shaftoe/savetoink/internal/config"
@@ -46,12 +45,4 @@ type contextKey string
 
 type logRecord struct {
 	*slog.Record
-}
-
-const logRecordKey = contextKey("log_record")
-
-func addLogAttr(ctx context.Context, attr slog.Attr) {
-	if record, ok := ctx.Value(logRecordKey).(*logRecord); ok {
-		record.AddAttrs(attr)
-	}
 }

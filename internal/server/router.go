@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -73,4 +74,12 @@ func setupLogging(cfg *config.Config) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	})))
+}
+
+const logRecordKey = contextKey("log_record")
+
+func addLogAttr(ctx context.Context, attr slog.Attr) {
+	if record, ok := ctx.Value(logRecordKey).(*logRecord); ok {
+		record.AddAttrs(attr)
+	}
 }

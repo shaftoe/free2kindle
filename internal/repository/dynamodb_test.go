@@ -190,7 +190,7 @@ func TestDynamoDB_GetMetadataByAccount(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	retrieved, err := repo.GetMetadataByAccount(ctx, account)
+	retrieved, _, _, err := repo.GetMetadataByAccount(ctx, account, 1, 20)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Len(t, retrieved, 2)
@@ -213,7 +213,7 @@ func TestDynamoDB_GetByAccount_Empty(t *testing.T) {
 	repo := setupTestDynamoDB(t)
 	ctx := context.Background()
 
-	retrieved, err := repo.GetMetadataByAccount(ctx, "non-existent@example.com")
+	retrieved, _, _, err := repo.GetMetadataByAccount(ctx, "non-existent@example.com", 1, 20)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Empty(t, retrieved)
@@ -327,12 +327,12 @@ func TestDynamoDB_DeleteByAccount(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, deleted)
 
-	retrieved, err := repo.GetMetadataByAccount(ctx, account)
+	retrieved, _, _, err := repo.GetMetadataByAccount(ctx, account, 1, 20)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Empty(t, retrieved)
 
-	otherArticles, err := repo.GetMetadataByAccount(ctx, "other@example.com")
+	otherArticles, _, _, err := repo.GetMetadataByAccount(ctx, "other@example.com", 1, 20)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Len(t, otherArticles, 1)
@@ -411,7 +411,7 @@ func setupTestDynamoDB(t *testing.T) *DynamoDB {
 
 	t.Cleanup(func() {
 		ctx := context.Background()
-		articles, err := repo.GetMetadataByAccount(ctx, testAccount)
+		articles, _, _, err := repo.GetMetadataByAccount(ctx, testAccount, 1, 20)
 		if err != nil {
 			return
 		}

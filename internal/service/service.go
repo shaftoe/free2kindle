@@ -401,33 +401,30 @@ func (s *Service) GetArticlesMetadata(
 	accountID string,
 	page, pageSize int,
 ) (*GetArticlesResult, error) {
-	var articles []*model.Article
-	if s.repo != nil {
-		var err error
-		articles, err = s.repo.GetMetadataByAccount(ctx, accountID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get articles: %w", err)
-		}
+	if s.repo == nil {
+		return &GetArticlesResult{
+			Articles: []*model.Article{},
+			Page:     page,
+			PageSize: pageSize,
+			Total:    0,
+			HasMore:  false,
+		}, nil
+	}
+
+	articles, lastEvaluatedKey, total, err := s.repo.GetMetadataByAccount(ctx, accountID, page, pageSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get articles: %w", err)
 	}
 
 	if articles == nil {
 		articles = []*model.Article{}
 	}
 
-	total := len(articles)
-	skip := (page - 1) * pageSize
-
-	skip = min(skip, total)
-	end := min(skip+pageSize, total)
-
-	pagedArticles := articles[skip:end]
-	hasMore := end < total
-
 	return &GetArticlesResult{
-		Articles: pagedArticles,
+		Articles: articles,
 		Page:     page,
 		PageSize: pageSize,
 		Total:    total,
-		HasMore:  hasMore,
+		HasMore:  lastEvaluatedKey != nil,
 	}, nil
 }

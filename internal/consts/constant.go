@@ -68,7 +68,7 @@ const (
 	DefaultPageSize = 20
 
 	// MaxPageSize is the maximum number of items per page.
-	MaxPageSize = 100
+	MaxPageSize = 20
 )
 
 // Email constants.
@@ -84,6 +84,9 @@ const (
 const (
 	// DynamoDBBatchSize is the maximum number of items in a BatchWriteItem operation.
 	DynamoDBBatchSize = 25
+
+	// DynamoDBGSIName is the name of the Global Secondary Index for sorting articles by creation date.
+	DynamoDBGSIName = "AccountCreatedAtIndex"
 )
 
 // Content extraction constants.
