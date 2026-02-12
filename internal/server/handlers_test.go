@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +14,11 @@ import (
 	"github.com/shaftoe/savetoink/internal/email"
 	"github.com/shaftoe/savetoink/internal/model"
 	"github.com/shaftoe/savetoink/internal/service"
+)
+
+const (
+	testArticleNotFoundError = "article not found"
+	dbErrorLogKey            = "db_error"
 )
 
 type MockService struct {
@@ -550,7 +556,7 @@ func TestHandleGetArticleNotFound(t *testing.T) {
 	cfg := &config.Config{}
 	svc := newMockService(nil)
 	svc.getArticle = func(_ context.Context, _ string, _ string) (*model.Article, error) {
-		return nil, &serviceError{msg: "article not found"}
+		return nil, &serviceError{msg: testArticleNotFoundError}
 	}
 	h := newHandlers(cfg, svc)
 
@@ -568,7 +574,7 @@ func TestHandleGetArticleNotFound(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if resp.Error != "article not found" {
+	if resp.Error != testArticleNotFoundError {
 		t.Errorf("expected error 'article not found', got '%s'", resp.Error)
 	}
 }
@@ -705,5 +711,198 @@ func TestHandleDeleteAllArticles(t *testing.T) {
 				t.Errorf("expected deleted %d, got %d", tt.deleteResult.Deleted, resp.Deleted)
 			}
 		})
+	}
+}
+
+type logCaptureHandler struct {
+	records []*slog.Record
+}
+
+func newLogCaptureHandler() *logCaptureHandler {
+	return &logCaptureHandler{
+		records: make([]*slog.Record, 0),
+	}
+}
+
+func (h *logCaptureHandler) Enabled(_ context.Context, _ slog.Level) bool {
+	return true
+}
+
+func (h *logCaptureHandler) Handle(_ context.Context, r slog.Record) error { //nolint:gocritic
+	// slog.Handler interface requires value, not pointer
+	recordCopy := r
+	h.records = append(h.records, &recordCopy)
+	return nil
+}
+
+func (h *logCaptureHandler) WithAttrs(_ []slog.Attr) slog.Handler {
+	return h
+}
+
+func (h *logCaptureHandler) WithGroup(_ string) slog.Handler {
+	return h
+}
+
+func setupLogCapture() {
+	slog.SetDefault(slog.New(newLogCaptureHandler()))
+}
+
+func TestHandleGetArticlesLogsDBError(t *testing.T) {
+	setupLogCapture()
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "request completed", 0)
+	logRec := &logRecord{Record: &record}
+
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	testDatabaseError := "database connection failed"
+	svc.getArticlesMetadata = func(_ context.Context, _ string, _ int, _ int) (*service.GetArticlesResult, error) {
+		return nil, &serviceError{msg: testDatabaseError}
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles", http.NoBody)
+	ctx := context.WithValue(req.Context(), logRecordKey, logRec)
+	req = req.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticles(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	foundDBError := false
+	logRec.Attrs(func(a slog.Attr) bool {
+		if a.Key == dbErrorLogKey {
+			foundDBError = true
+			if a.Value.String() != testDatabaseError {
+				t.Errorf("expected db_error '%s', got '%s'", testDatabaseError, a.Value.String())
+			}
+		}
+		return true
+	})
+
+	if !foundDBError {
+		t.Error("expected to find db_error attribute in log record")
+	}
+}
+
+func TestHandleGetArticleLogsDBError(t *testing.T) {
+	setupLogCapture()
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "request completed", 0)
+	logRec := &logRecord{Record: &record}
+
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	testDatabaseError := testArticleNotFoundError
+	svc.getArticle = func(_ context.Context, _ string, _ string) (*model.Article, error) {
+		return nil, &serviceError{msg: testDatabaseError}
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("GET", "/v1/articles/test-id", http.NoBody)
+	ctx := context.WithValue(req.Context(), logRecordKey, logRec)
+	req = req.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	h.handleGetArticle(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+
+	foundDBError := false
+	logRec.Attrs(func(a slog.Attr) bool {
+		if a.Key == dbErrorLogKey {
+			foundDBError = true
+			if a.Value.String() != testDatabaseError {
+				t.Errorf("expected db_error '%s', got '%s'", testDatabaseError, a.Value.String())
+			}
+		}
+		return true
+	})
+
+	if !foundDBError {
+		t.Error("expected to find db_error attribute in log record")
+	}
+}
+
+func TestHandleDeleteArticleLogsDBError(t *testing.T) {
+	setupLogCapture()
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "request completed", 0)
+	logRec := &logRecord{Record: &record}
+
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	testDatabaseError := "delete failed"
+	svc.deleteArticle = func(_ context.Context, _ string, _ string) (*service.DeleteArticleResult, error) {
+		return nil, &serviceError{msg: testDatabaseError}
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("DELETE", "/v1/articles/test-id", http.NoBody)
+	ctx := context.WithValue(req.Context(), logRecordKey, logRec)
+	req = req.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	h.handleDeleteArticle(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	foundDBError := false
+	logRec.Attrs(func(a slog.Attr) bool {
+		if a.Key == dbErrorLogKey {
+			foundDBError = true
+			if a.Value.String() != testDatabaseError {
+				t.Errorf("expected db_error '%s', got '%s'", testDatabaseError, a.Value.String())
+			}
+		}
+		return true
+	})
+
+	if !foundDBError {
+		t.Error("expected to find db_error attribute in log record")
+	}
+}
+
+func TestHandleDeleteAllArticlesLogsDBError(t *testing.T) {
+	setupLogCapture()
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "request completed", 0)
+	logRec := &logRecord{Record: &record}
+
+	cfg := &config.Config{}
+	svc := newMockService(nil)
+	testDatabaseError := "batch delete failed"
+	svc.deleteAllArticles = func(_ context.Context, _ string) (*service.DeleteArticleResult, error) {
+		return nil, &serviceError{msg: testDatabaseError}
+	}
+	h := newHandlers(cfg, svc)
+
+	req := httptest.NewRequest("DELETE", "/v1/articles", http.NoBody)
+	ctx := context.WithValue(req.Context(), logRecordKey, logRec)
+	req = req.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	h.handleDeleteAllArticles(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	foundDBError := false
+	logRec.Attrs(func(a slog.Attr) bool {
+		if a.Key == dbErrorLogKey {
+			foundDBError = true
+			if a.Value.String() != testDatabaseError {
+				t.Errorf("expected db_error '%s', got '%s'", testDatabaseError, a.Value.String())
+			}
+		}
+		return true
+	})
+
+	if !foundDBError {
+		t.Error("expected to find db_error attribute in log record")
 	}
 }

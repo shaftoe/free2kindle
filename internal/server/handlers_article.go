@@ -84,6 +84,7 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.GetArticlesMetadata(r.Context(), accountID, page, pageSize)
 	if err != nil {
+		addLogAttr(r.Context(), slog.String("db_error", err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 		return
@@ -111,7 +112,7 @@ func (h *handlers) handleGetArticle(w http.ResponseWriter, r *http.Request) {
 
 	article, err := h.service.GetArticle(r.Context(), accountID, articleID)
 	if err != nil {
-		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		addLogAttr(r.Context(), slog.String("db_error", err.Error()))
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 		return
@@ -131,7 +132,7 @@ func (h *handlers) handleDeleteArticle(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.DeleteArticle(r.Context(), accountID, articleID)
 	if err != nil {
-		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		addLogAttr(r.Context(), slog.String("db_error", err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 		return
@@ -148,7 +149,7 @@ func (h *handlers) handleDeleteAllArticles(w http.ResponseWriter, r *http.Reques
 
 	result, err := h.service.DeleteAllArticles(r.Context(), accountID)
 	if err != nil {
-		addLogAttr(r.Context(), slog.String("error", err.Error()))
+		addLogAttr(r.Context(), slog.String("db_error", err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
 		return
