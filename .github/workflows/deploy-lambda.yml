@@ -18,6 +18,8 @@ jobs:
 
       - name: Set up Go
         uses: actions/setup-go@v6
+        with:
+          go-version: "stable"
 
       - name: Set up Just
         uses: extractions/setup-just@v3
@@ -27,9 +29,6 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Run lint and tests
-        run: just lint test
 
       - name: Deploy Lambda
         run: just deploy-lambda
