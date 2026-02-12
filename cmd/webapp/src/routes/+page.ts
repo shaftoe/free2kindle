@@ -12,12 +12,12 @@ export async function load({
   url: URL;
 }): Promise<ArticlesResponse> {
   const token = getToken();
-  
+
   if (!token) {
     if (browser) {
       redirect(302, "/settings");
     }
-    const { apiUrl } = await parent();
+
     return {
       articles: [],
       page: 1,

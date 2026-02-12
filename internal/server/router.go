@@ -35,9 +35,9 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(auth.NewUserIDMiddleware(cfg))
 	r.Use(requestIDMiddleware)
+	r.Use(loggingMiddleware)
 	r.Use(corsMiddleware)
 	r.Use(jsonContentTypeMiddleware)
-	r.Use(loggingMiddleware)
 
 	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
