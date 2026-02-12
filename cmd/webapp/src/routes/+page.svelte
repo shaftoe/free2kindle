@@ -1,73 +1,69 @@
-<svelte:head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Articles</title>
-</svelte:head>
-
 <script lang="ts">
-  import type { PageData } from './$types';
-
-  interface Article {
-    id: string;
-    url: string;
-    title?: string;
-    createdAt: string;
-    author?: string;
-    siteName?: string;
-    excerpt?: string;
-    imageUrl?: string;
-    wordCount?: number;
-    readingTimeMinutes?: number;
-    publishedAt?: string;
-    deliveryStatus?: string;
-  }
+  import Article from "$lib/components/Article.svelte";
+  import type { PageData } from "./$types";
+  import type { Article as ArticleType } from "$lib/types";
 
   let { data }: { data: PageData } = $props();
 
-  const articles = $derived(data.articles as Article[]);
+  const articles = $derived(data.articles as ArticleType[]);
   const page = $derived(data.page);
   const pageSize = $derived(data.pageSize);
   const total = $derived(data.total);
   const hasMore = $derived(data.hasMore);
 </script>
 
-<h1>Articles</h1>
+<svelte:head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Articles - Free2Kindle</title>
+</svelte:head>
 
-<p>Total: {total}</p>
-<p>Page: {page} of {Math.ceil(total / pageSize)}</p>
+<main>
+  <header class="page-header">
+    <h1>Articles</h1>
 
-{#if articles.length === 0}
-  <p>No articles found.</p>
-{:else}
-  <ul>
-    {#each articles as article}
-      <li>
-        <strong>{article.title || article.id}</strong>
-        <br />
-        <a href={article.url}>{article.url}</a>
-        <br />
-        Created: {article.createdAt}
-        {#if article.author}
-          <br />Author: {article.author}
+    <nav class="page-info" aria-label="Pagination information">
+      <p class="page-stats">
+        Total articles: <strong>{total}</strong>
+      </p>
+      <p class="page-stats">
+        Page <strong>{page}</strong> of <strong>{total}</strong>
+        {#if pageSize}
+          (showing {pageSize} per page)
         {/if}
-        {#if article.siteName}
-          <br />Site: {article.siteName}
-        {/if}
-        {#if article.wordCount}
-          <br />Word count: {article.wordCount}
-        {/if}
-        {#if article.readingTimeMinutes}
-          <br />Reading time: {article.readingTimeMinutes} min
-        {/if}
-      </li>
-    {/each}
-  </ul>
-{/if}
+      </p>
+    </nav>
+  </header>
 
-{#if hasMore}
-  <p><a href="/?page={page + 1}&page_size={pageSize}">Next page</a></p>
-{/if}
+  {#if articles.length === 0}
+    <section class="empty-state">
+      <p>No articles found.</p>
+    </section>
+  {:else}
+    <section class="articles-list" aria-label="Articles list">
+      {#each articles as article}
+        <Article {...article} />
+      {/each}
+    </section>
 
-{#if page > 1}
-  <p><a href="/?page={page - 1}&page_size={pageSize}">Previous page</a></p>
-{/if}
+    <nav class="pagination" aria-label="Pagination">
+      <ul class="pagination-list">
+        {#if page > 1}
+          <li class="pagination-item">
+            <a href="/?page={page - 1}&page_size={pageSize}" rel="prev">
+              ← Previous page
+            </a>
+          </li>
+        {/if}
+
+        {#if hasMore}
+          <li class="pagination-item">
+            <a href="/?page={page + 1}&page_size={pageSize}" rel="next">
+              Next page →
+            </a>
+          </li>
+        {/if}
+      </ul>
+    </nav>
+  {/if}
+</main>

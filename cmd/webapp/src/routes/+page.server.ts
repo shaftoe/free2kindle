@@ -1,28 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
-
-interface Article {
-  id: string;
-  url: string;
-  title?: string;
-  createdAt: string;
-  author?: string;
-  siteName?: string;
-  excerpt?: string;
-  imageUrl?: string;
-  wordCount?: number;
-  readingTimeMinutes?: number;
-  publishedAt?: string;
-  deliveryStatus?: string;
-}
-
-interface ArticlesResponse {
-  articles: Article[];
-  page: number;
-  pageSize: number;
-  total: number;
-  hasMore: boolean;
-}
+import type { ArticlesResponse } from '$lib/types';
 
 export async function load({ url }) {
   const apiUrl = env.API_URL || 'http://localhost:8080';

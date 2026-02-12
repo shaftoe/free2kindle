@@ -1,22 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import type { Article, ArticlesResponse } from '../src/lib/types';
 
 describe('Articles API endpoint types', () => {
   it('should have correct Article interface', () => {
-    interface Article {
-      id: string;
-      url: string;
-      title?: string;
-      createdAt: string;
-      author?: string;
-      siteName?: string;
-      excerpt?: string;
-      imageUrl?: string;
-      wordCount?: number;
-      readingTimeMinutes?: number;
-      publishedAt?: string;
-      deliveryStatus?: string;
-    }
-
     const article: Article = {
       id: '123',
       url: 'https://example.com',
@@ -31,14 +17,6 @@ describe('Articles API endpoint types', () => {
   });
 
   it('should have correct ArticlesResponse interface', () => {
-    interface ArticlesResponse {
-      articles: any[];
-      page: number;
-      pageSize: number;
-      total: number;
-      hasMore: boolean;
-    }
-
     const response: ArticlesResponse = {
       articles: [],
       page: 1,
