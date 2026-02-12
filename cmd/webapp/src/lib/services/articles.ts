@@ -1,5 +1,5 @@
 import { ApiClient } from "./apiClient";
-import type { ArticlesResponse, Article } from "$lib/types";
+import type { ArticlesResponse, Article, CreateArticleRequest, CreateArticleResponse } from "$lib/types";
 
 export async function fetchArticles(
   apiUrl: string,
@@ -25,4 +25,13 @@ export async function fetchArticle(
     }
     throw err;
   }
+}
+
+export async function createArticle(
+  apiUrl: string,
+  url: string,
+): Promise<CreateArticleResponse> {
+  const client = new ApiClient(apiUrl);
+  const req: CreateArticleRequest = { url };
+  return client.post<CreateArticleResponse>("/v1/articles", req);
 }

@@ -28,3 +28,15 @@ export interface ArticlesResponse {
   total: number;
   hasMore: boolean;
 }
+
+export interface CreateArticleRequest {
+  url: string;
+}
+
+export interface CreateArticleResponse {
+  id: string;
+  title: string;
+  url: string;
+  message: string;
+  delivery_status?: string;
+}
