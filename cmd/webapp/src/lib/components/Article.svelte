@@ -28,7 +28,7 @@
 <article class="article-card" data-article-id={id}>
   <div class="article-content">
     <h2 class="article-title">
-      <a href={url} rel="noopener noreferrer" target="_blank">{title}</a>
+      <a href={`/article/${id}`}>{title}</a>
     </h2>
 
     <div class="article-image">

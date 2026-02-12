@@ -18,6 +18,7 @@ export interface Article {
   deliveredTo?: string;
   deliveredBy?: string;
   deliveredEmailUUID?: string;
+  content?: string;
 }
 
 export interface ArticlesResponse {
