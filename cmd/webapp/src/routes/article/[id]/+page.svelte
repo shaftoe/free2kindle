@@ -10,7 +10,7 @@
 <svelte:head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{article.title || 'Article'} - Free2Kindle</title>
+  <title>{article.title || "Article"} - Save to Ink</title>
 </svelte:head>
 
 <main>
@@ -21,7 +21,7 @@
   {#if article}
     <article>
       <header>
-        <h1>{article.title || 'Untitled'}</h1>
+        <h1>{article.title || "Untitled"}</h1>
 
         <div class="meta">
           {#if article.siteName || article.sourceDomain}

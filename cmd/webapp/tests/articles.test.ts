@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Article, ArticlesResponse } from '../src/lib/types';
+import { ApiClient } from '../src/lib/services/apiClient';
+import { getToken, setToken, clearToken } from '../src/lib/stores/token';
 
 describe('Articles API endpoint types', () => {
   it('should have correct Article interface', () => {
@@ -29,5 +31,115 @@ describe('Articles API endpoint types', () => {
     expect(response.pageSize).toBe(20);
     expect(response.total).toBe(0);
     expect(response.hasMore).toBe(false);
+  });
+});
+
+describe('Token store', () => {
+  beforeEach(() => {
+    clearToken();
+  });
+
+  afterEach(() => {
+    clearToken();
+  });
+
+  it('should set and get token', () => {
+    setToken('test-token');
+    expect(getToken()).toBe('test-token');
+  });
+
+  it('should clear token', () => {
+    setToken('test-token');
+    clearToken();
+    expect(getToken()).toBe(null);
+  });
+
+  it('should get null when no token is set', () => {
+    expect(getToken()).toBe(null);
+  });
+});
+
+describe('ApiClient', () => {
+  const fetchSpy = vi.fn();
+
+  beforeEach(() => {
+    clearToken();
+    fetchSpy.mockClear();
+    global.fetch = fetchSpy;
+  });
+
+  afterEach(() => {
+    clearToken();
+  });
+
+  it('should include Authorization header when token is set', async () => {
+    setToken('test-token');
+    const client = new ApiClient('http://localhost:8080');
+
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: 'test' }),
+    } as Response);
+
+    await client.get('/test');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://localhost:8080/test',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token',
+        }),
+      }),
+    );
+  });
+
+  it('should not include Authorization header when token is not set', async () => {
+    const client = new ApiClient('http://localhost:8080');
+
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: 'test' }),
+    } as Response);
+
+    await client.get('/test');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://localhost:8080/test',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+      }),
+    );
+
+    const callHeaders = fetchSpy.mock.calls[0][1].headers;
+    expect(callHeaders.Authorization).toBeUndefined();
+  });
+
+  it('should throw error on 401 response', async () => {
+    setToken('test-token');
+    const client = new ApiClient('http://localhost:8080');
+
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+    } as Response);
+
+    await expect(client.get('/test')).rejects.toThrow('request failed: 401 Unauthorized');
+  });
+
+  it('should throw error on non-OK response', async () => {
+    setToken('test-token');
+    const client = new ApiClient('http://localhost:8080');
+
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    } as Response);
+
+    await expect(client.get('/test')).rejects.toThrow('request failed: 500 Internal Server Error');
   });
 });

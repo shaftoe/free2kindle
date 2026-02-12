@@ -57,6 +57,12 @@
           </time>
         </span>
       {/if}
+
+      {#if url}
+        <a href={url} class="article-url" target="_blank" rel="noopener noreferrer">
+          Original article
+        </a>
+      {/if}
     </div>
 
     <div class="article-tags">
