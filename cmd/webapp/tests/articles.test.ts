@@ -1,7 +1,37 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Article, ArticlesResponse } from '../src/lib/types';
-import { ApiClient } from '../src/lib/services/apiClient';
+import { ApiClient, joinUrl } from '../src/lib/services/apiClient';
 import { getToken, setToken, clearToken } from '../src/lib/stores/token';
+
+describe('joinUrl', () => {
+  it('should join base URL and path correctly with trailing slash in base', () => {
+    expect(joinUrl('https://api.example.com/', '/v1/articles')).toBe('https://api.example.com/v1/articles');
+  });
+
+  it('should join base URL and path correctly without trailing slash in base', () => {
+    expect(joinUrl('https://api.example.com', '/v1/articles')).toBe('https://api.example.com/v1/articles');
+  });
+
+  it('should join base URL and path correctly without leading slash in path', () => {
+    expect(joinUrl('https://api.example.com', 'v1/articles')).toBe('https://api.example.com/v1/articles');
+  });
+
+  it('should join base URL and path correctly with neither trailing nor leading slashes', () => {
+    expect(joinUrl('https://api.example.com', 'v1/articles')).toBe('https://api.example.com/v1/articles');
+  });
+
+  it('should handle multiple trailing slashes in base URL', () => {
+    expect(joinUrl('https://api.example.com///', '/v1/articles')).toBe('https://api.example.com/v1/articles');
+  });
+
+  it('should handle multiple leading slashes in path', () => {
+    expect(joinUrl('https://api.example.com/', '///v1/articles')).toBe('https://api.example.com/v1/articles');
+  });
+
+  it('should handle query strings in path', () => {
+    expect(joinUrl('https://api.example.com/', '/v1/articles?page=1')).toBe('https://api.example.com/v1/articles?page=1');
+  });
+});
 
 describe('Articles API endpoint types', () => {
   it('should have correct Article interface', () => {
@@ -85,6 +115,28 @@ describe('ApiClient', () => {
 
     expect(fetchSpy).toHaveBeenCalledWith(
       'http://localhost:8080/test',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token',
+        }),
+      }),
+    );
+  });
+
+  it('should handle trailing slash in API URL', async () => {
+    setToken('test-token');
+    const client = new ApiClient('http://localhost:8080/');
+
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: 'test' }),
+    } as Response);
+
+    await client.get('/v1/articles');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://localhost:8080/v1/articles',
       expect.objectContaining({
         headers: expect.objectContaining({
           'Content-Type': 'application/json',

@@ -1,5 +1,9 @@
 import { getToken } from "$lib/stores/token";
 
+export function joinUrl(baseUrl: string, path: string): string {
+  return baseUrl.replace(/\/+$/, "") + "/" + path.replace(/^\/+/, "");
+}
+
 export class ApiClient {
   private apiUrl: string;
 
@@ -28,7 +32,7 @@ export class ApiClient {
   }
 
   async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${this.apiUrl}${path}`, {
+    const response = await fetch(joinUrl(this.apiUrl, path), {
       headers: this.getHeaders(),
     });
 
@@ -37,7 +41,7 @@ export class ApiClient {
   }
 
   async post<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${this.apiUrl}${path}`, {
+    const response = await fetch(joinUrl(this.apiUrl, path), {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(body),
@@ -48,7 +52,7 @@ export class ApiClient {
   }
 
   async put<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${this.apiUrl}${path}`, {
+    const response = await fetch(joinUrl(this.apiUrl, path), {
       method: "PUT",
       headers: this.getHeaders(),
       body: JSON.stringify(body),
@@ -59,7 +63,7 @@ export class ApiClient {
   }
 
   async delete<T>(path: string): Promise<T> {
-    const response = await fetch(`${this.apiUrl}${path}`, {
+    const response = await fetch(joinUrl(this.apiUrl, path), {
       method: "DELETE",
       headers: this.getHeaders(),
     });
