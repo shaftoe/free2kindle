@@ -302,8 +302,9 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - s3:GetObject
               - s3:PutObject
-            Resource: !Sub "arn:aws:s3:::${SourceBucketName}/*"
+            Resource: !Sub "arn:aws:s3:::${SourceBucketName}/${SourceBucketKey}"
           - Effect: Allow
             Action:
               - lambda:UpdateFunctionCode
