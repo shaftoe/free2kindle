@@ -143,11 +143,12 @@ deploy-lambda: build-lambda-zip upload-zip
         --s3-key {{ lambda_archive }} \
         --publish
 
-server:
+server-http:
     reflex -r '\.(env|go)$' -s -- go run ./cmd/http/main.go
 
-update-deps:
-    go get -u all
+[working-directory('cmd/webapp')]
+server-web:
+    npm run dev
 
 # Scan DynamoDB article table and print all records
 scan-table TABLE_NAME="savetoink-articles":

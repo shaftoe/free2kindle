@@ -37,3 +37,13 @@ go.work.sum
 bin/*
 cmd/function/function
 cmd/cli/cli
+
+# SvelteKit
+cmd/webapp/.svelte-kit
+cmd/webapp/build
+cmd/webapp/node_modules
+cmd/webapp/package-lock.json
+cmd/webapp/.env
+
+# Local Netlify folder
+.netlify
