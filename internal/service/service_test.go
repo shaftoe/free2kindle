@@ -29,11 +29,13 @@ func (m *MockRepository) GetByAccountAndID(_ context.Context, account, id string
 	return nil, repository.ErrNotFound
 }
 
-func (m *MockRepository) GetByAccount(_ context.Context, account string) ([]*model.Article, error) {
+func (m *MockRepository) GetMetadataByAccount(_ context.Context, account string) ([]*model.Article, error) {
 	var result []*model.Article
 	for _, article := range m.articles {
 		if article.Account == account {
-			result = append(result, article)
+			articleCopy := *article
+			articleCopy.Content = ""
+			result = append(result, &articleCopy)
 		}
 	}
 	return result, nil
@@ -61,7 +63,7 @@ func (m *MockRepository) DeleteByAccount(_ context.Context, account string) (int
 	return initialLen - len(m.articles), nil
 }
 
-func TestGetArticles(t *testing.T) {
+func TestGetArticlesMetadata(t *testing.T) {
 	articles := []*model.Article{
 		{Account: "user1", ID: "1", Title: "Article 1", URL: "https://example.com/1", CreatedAt: time.Now()},
 		{Account: "user1", ID: "2", Title: "Article 2", URL: "https://example.com/2", CreatedAt: time.Now()},
@@ -147,7 +149,7 @@ func TestGetArticles(t *testing.T) {
 			mockRepo := &MockRepository{articles: articles}
 			svc := &Service{repo: mockRepo}
 
-			result, err := svc.GetArticles(context.Background(), tt.accountID, tt.page, tt.pageSize)
+			result, err := svc.GetArticlesMetadata(context.Background(), tt.accountID, tt.page, tt.pageSize)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -176,10 +178,10 @@ func TestGetArticles(t *testing.T) {
 	}
 }
 
-func TestGetArticlesWithNilRepo(t *testing.T) {
+func TestGetArticlesMetadataWithNilRepo(t *testing.T) {
 	svc := &Service{repo: nil}
 
-	result, err := svc.GetArticles(context.Background(), "user1", 1, 10)
+	result, err := svc.GetArticlesMetadata(context.Background(), "user1", 1, 10)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -198,7 +200,7 @@ func TestGetArticlesWithNilRepo(t *testing.T) {
 	}
 }
 
-func TestGetArticlesWithDeliveryStatus(t *testing.T) {
+func TestGetArticlesMetadataWithDeliveryStatus(t *testing.T) {
 	articles := []*model.Article{
 		{
 			Account:        "user1",
@@ -222,7 +224,7 @@ func TestGetArticlesWithDeliveryStatus(t *testing.T) {
 	mockRepo := &MockRepository{articles: articles}
 	svc := &Service{repo: mockRepo}
 
-	result, err := svc.GetArticles(context.Background(), "user1", 1, 10)
+	result, err := svc.GetArticlesMetadata(context.Background(), "user1", 1, 10)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

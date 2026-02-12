@@ -101,7 +101,7 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 
 	accountID := auth.GetAccountID(r.Context())
 
-	result, err := h.service.GetArticles(r.Context(), accountID, page, pageSize)
+	result, err := h.service.GetArticlesMetadata(r.Context(), accountID, page, pageSize)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})

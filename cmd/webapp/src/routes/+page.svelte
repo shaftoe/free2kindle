@@ -20,17 +20,11 @@
 
 <main>
   <header class="page-header">
-    <h1>Articles</h1>
+    <h1>My List</h1>
 
     <nav class="page-info" aria-label="Pagination information">
       <p class="page-stats">
         Total articles: <strong>{total}</strong>
-      </p>
-      <p class="page-stats">
-        Page <strong>{page}</strong> of <strong>{total}</strong>
-        {#if pageSize}
-          (showing {pageSize} per page)
-        {/if}
       </p>
     </nav>
   </header>

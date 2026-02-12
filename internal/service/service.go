@@ -24,7 +24,7 @@ type Interface interface {
 	Send(ctx context.Context, result *ProcessResult, subject string) (*email.SendEmailResponse, error)
 	WriteToFile(result *ProcessResult, outputPath string) error
 	CreateArticle(ctx context.Context, rawURL, accountID string) (*CreateArticleResult, error)
-	GetArticles(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error)
+	GetArticlesMetadata(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error)
 	DeleteArticle(ctx context.Context, accountID, articleID string) (*DeleteArticleResult, error)
 	DeleteAllArticles(ctx context.Context, accountID string) (*DeleteArticleResult, error)
 	GetDBError() error
@@ -75,7 +75,7 @@ type CreateArticleResult struct {
 	EmailResp *email.SendEmailResponse
 }
 
-// GetArticlesResult holds the result of listing articles with pagination.
+// GetArticlesResult holds the result of listing articles with pagination (without content).
 type GetArticlesResult struct {
 	Articles []*model.Article
 	Page     int
@@ -370,13 +370,18 @@ func (s *Service) getMessage(_ *model.Article, _ *email.SendEmailResponse) strin
 	return "article sent to Kindle successfully"
 }
 
-// GetArticles retrieves articles for a given account with pagination.
+// GetArticlesMetadata retrieves article metadata for a given account with pagination.
 // page starts at 1, pageSize limits the number of articles returned.
-func (s *Service) GetArticles(ctx context.Context, accountID string, page, pageSize int) (*GetArticlesResult, error) {
+// Content field is excluded from returned articles.
+func (s *Service) GetArticlesMetadata(
+	ctx context.Context,
+	accountID string,
+	page, pageSize int,
+) (*GetArticlesResult, error) {
 	var articles []*model.Article
 	if s.repo != nil {
 		var err error
-		articles, err = s.repo.GetByAccount(ctx, accountID)
+		articles, err = s.repo.GetMetadataByAccount(ctx, accountID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get articles: %w", err)
 		}

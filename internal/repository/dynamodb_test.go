@@ -104,7 +104,7 @@ func TestDynamoDB_GetByAccountAndID(t *testing.T) {
 	assert.Equal(t, expected.ID, actual.ID)
 	assert.Equal(t, expected.URL, actual.URL)
 	assert.Equal(t, expected.Title, actual.Title)
-	assert.Equal(t, expected.Content, actual.Content)
+	assert.Equal(t, expected.Content, actual.Content, "content field should be included for GetByAccountAndID")
 }
 
 func TestDynamoDB_GetByAccountAndID_NotFound(t *testing.T) {
@@ -148,7 +148,7 @@ func TestDynamoDB_GetByAccountAndID_WrongAccount(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
-func TestDynamoDB_GetByAccount(t *testing.T) {
+func TestDynamoDB_GetMetadataByAccount(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
@@ -190,7 +190,7 @@ func TestDynamoDB_GetByAccount(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	retrieved, err := repo.GetByAccount(ctx, account)
+	retrieved, err := repo.GetMetadataByAccount(ctx, account)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Len(t, retrieved, 2)
@@ -198,6 +198,7 @@ func TestDynamoDB_GetByAccount(t *testing.T) {
 	accountIDs := make(map[string]bool)
 	for _, article := range retrieved {
 		accountIDs[article.ID] = true
+		assert.Empty(t, article.Content, "content field should be excluded")
 	}
 	assert.True(t, accountIDs["test-id-4"])
 	assert.True(t, accountIDs["test-id-5"])
@@ -212,7 +213,7 @@ func TestDynamoDB_GetByAccount_Empty(t *testing.T) {
 	repo := setupTestDynamoDB(t)
 	ctx := context.Background()
 
-	retrieved, err := repo.GetByAccount(ctx, "non-existent@example.com")
+	retrieved, err := repo.GetMetadataByAccount(ctx, "non-existent@example.com")
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Empty(t, retrieved)
@@ -326,12 +327,12 @@ func TestDynamoDB_DeleteByAccount(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, deleted)
 
-	retrieved, err := repo.GetByAccount(ctx, account)
+	retrieved, err := repo.GetMetadataByAccount(ctx, account)
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Empty(t, retrieved)
 
-	otherArticles, err := repo.GetByAccount(ctx, "other@example.com")
+	otherArticles, err := repo.GetMetadataByAccount(ctx, "other@example.com")
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Len(t, otherArticles, 1)
@@ -410,7 +411,7 @@ func setupTestDynamoDB(t *testing.T) *DynamoDB {
 
 	t.Cleanup(func() {
 		ctx := context.Background()
-		articles, err := repo.GetByAccount(ctx, testAccount)
+		articles, err := repo.GetMetadataByAccount(ctx, testAccount)
 		if err != nil {
 			return
 		}

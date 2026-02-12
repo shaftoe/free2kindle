@@ -15,14 +15,14 @@ import (
 )
 
 type MockService struct {
-	createFunc        func(context.Context, string, string) (*service.CreateArticleResult, error)
-	processFunc       func(context.Context, string) (*service.ProcessResult, error)
-	sendFunc          func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
-	writeFunc         func(*service.ProcessResult, string) error
-	getArticles       func(context.Context, string, int, int) (*service.GetArticlesResult, error)
-	deleteArticle     func(context.Context, string, string) (*service.DeleteArticleResult, error)
-	deleteAllArticles func(context.Context, string) (*service.DeleteArticleResult, error)
-	dbError           error
+	createFunc          func(context.Context, string, string) (*service.CreateArticleResult, error)
+	processFunc         func(context.Context, string) (*service.ProcessResult, error)
+	sendFunc            func(context.Context, *service.ProcessResult, string) (*email.SendEmailResponse, error)
+	writeFunc           func(*service.ProcessResult, string) error
+	getArticlesMetadata func(context.Context, string, int, int) (*service.GetArticlesResult, error)
+	deleteArticle       func(context.Context, string, string) (*service.DeleteArticleResult, error)
+	deleteAllArticles   func(context.Context, string) (*service.DeleteArticleResult, error)
+	dbError             error
 }
 
 func newMockService(
@@ -77,14 +77,14 @@ func (m *MockService) GetDBError() error {
 	return m.dbError
 }
 
-func (m *MockService) GetArticles(
+func (m *MockService) GetArticlesMetadata(
 	ctx context.Context,
 	accountID string,
 	page int,
 	pageSize int,
 ) (*service.GetArticlesResult, error) {
-	if m.getArticles != nil {
-		return m.getArticles(ctx, accountID, page, pageSize)
+	if m.getArticlesMetadata != nil {
+		return m.getArticlesMetadata(ctx, accountID, page, pageSize)
 	}
 	return &service.GetArticlesResult{
 		Articles: []*model.Article{},
@@ -330,7 +330,7 @@ func (e *serviceError) Error() string {
 func TestHandleGetArticlesSuccess(t *testing.T) {
 	cfg := &config.Config{}
 	svc := newMockService(nil)
-	svc.getArticles = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
+	svc.getArticlesMetadata = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
 		articles := []*model.Article{
 			{ID: "1", Title: "Article 1", URL: "https://example.com/1"},
 			{ID: "2", Title: "Article 2", URL: "https://example.com/2"},
@@ -379,7 +379,7 @@ func TestHandleGetArticlesSuccess(t *testing.T) {
 func TestHandleGetArticlesDefaultParams(t *testing.T) {
 	cfg := &config.Config{}
 	svc := newMockService(nil)
-	svc.getArticles = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
+	svc.getArticlesMetadata = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
 		return &service.GetArticlesResult{
 			Articles: []*model.Article{},
 			Page:     page,
@@ -415,7 +415,7 @@ func TestHandleGetArticlesDefaultParams(t *testing.T) {
 func TestHandleGetArticlesInvalidParams(t *testing.T) {
 	cfg := &config.Config{}
 	svc := newMockService(nil)
-	svc.getArticles = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
+	svc.getArticlesMetadata = func(_ context.Context, _ string, page, pageSize int) (*service.GetArticlesResult, error) {
 		return &service.GetArticlesResult{
 			Articles: []*model.Article{},
 			Page:     page,
@@ -470,7 +470,7 @@ func TestHandleGetArticlesInvalidParams(t *testing.T) {
 func TestHandleGetArticlesServiceError(t *testing.T) {
 	cfg := &config.Config{}
 	svc := newMockService(nil)
-	svc.getArticles = func(_ context.Context, _ string, _ int, _ int) (*service.GetArticlesResult, error) {
+	svc.getArticlesMetadata = func(_ context.Context, _ string, _ int, _ int) (*service.GetArticlesResult, error) {
 		return nil, &serviceError{msg: "database error"}
 	}
 	h := newHandlers(cfg, svc)

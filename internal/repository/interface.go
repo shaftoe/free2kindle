@@ -11,7 +11,7 @@ import (
 type Repository interface {
 	Store(ctx context.Context, article *model.Article) error
 	GetByAccountAndID(ctx context.Context, account, id string) (*model.Article, error)
-	GetByAccount(ctx context.Context, account string) ([]*model.Article, error)
+	GetMetadataByAccount(ctx context.Context, account string) ([]*model.Article, error)
 	DeleteByAccountAndID(ctx context.Context, account, id string) error
 	DeleteByAccount(ctx context.Context, account string) (int, error)
 }

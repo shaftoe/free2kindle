@@ -42,7 +42,15 @@ The application will be available at http://localhost:5173 (Vite) or http://loca
 
 ### GET /
 
-The home page fetches articles from the Go backend API and displays them as HTML.
+The home page fetches articles from the Go backend API and displays articles in a modern card-based layout.
+
+Each article card includes:
+- Thumbnail image with content type badge
+- Title and excerpt
+- Metadata (source, reading time, date added)
+- Tags (author, language)
+- Action buttons (favorite, archive, more options)
+- Delivery information (expandable details)
 
 Query parameters:
 - `page`: Page number (default: 1)

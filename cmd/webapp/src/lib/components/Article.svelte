@@ -14,7 +14,6 @@
     readingTimeMinutes,
     publishedAt,
     deliveryStatus,
-    contentType,
     language,
     sourceDomain,
     deliveredFrom,
@@ -22,101 +21,80 @@
     deliveredBy,
     deliveredEmailUUID,
   }: Article = $props();
+
+  const displaySource = $derived(siteName || sourceDomain);
 </script>
 
 <article class="article-card" data-article-id={id}>
-  <h2 class="article-title">
-    {#if title}
-      {title}
-    {:else}
-      Article {id}
+  <div class="article-content">
+    <h2 class="article-title">
+      <a href={url} rel="noopener noreferrer" target="_blank">{title}</a>
+    </h2>
+
+    <div class="article-image">
+      {#if imageUrl}
+        <img src={imageUrl} alt={title} loading="lazy" width="30%" />
+      {/if}
+    </div>
+
+    {#if excerpt}
+      <p class="article-excerpt">{excerpt}</p>
     {/if}
-  </h2>
 
-  {#if excerpt}
-    <p class="article-excerpt">{excerpt}</p>
-  {/if}
-
-  <table class="article-table">
-    <tbody>
-      <tr>
-        <th scope="row">ID</th>
-        <td>{id}</td>
-      </tr>
-      <tr>
-        <th scope="row">URL</th>
-        <td
-          ><a href={url} rel="noopener noreferrer" target="_blank">{url}</a></td
-        >
-      </tr>
-      {#if publishedAt}
-        <tr>
-          <th scope="row">Published</th>
-          <td
-            ><time datetime={publishedAt}
-              >{new Date(publishedAt).toLocaleDateString()}</time
-            ></td
-          >
-        </tr>
+    <div class="article-meta">
+      {#if displaySource}
+        <span class="article-source">{displaySource}</span>
       {/if}
-      <tr>
-        <th scope="row">Added</th>
-        <td
-          ><time datetime={createdAt}
-            >{new Date(createdAt).toLocaleDateString()}</time
-          ></td
-        >
-      </tr>
+
+      {#if readingTimeMinutes}
+        <span class="article-time">{readingTimeMinutes} min read</span>
+      {/if}
+
+      {#if createdAt}
+        <span class="article-date">
+          Added <time datetime={createdAt}>
+            {new Date(createdAt).toLocaleDateString()}
+          </time>
+        </span>
+      {/if}
+    </div>
+
+    <div class="article-tags">
       {#if author}
-        <tr>
-          <th scope="row">Author</th>
-          <td>{author}</td>
-        </tr>
-      {/if}
-      {#if siteName}
-        <tr>
-          <th scope="row">Source</th>
-          <td>{siteName}</td>
-        </tr>
-      {/if}
-      {#if sourceDomain}
-        <tr>
-          <th scope="row">Source domain</th>
-          <td>{sourceDomain}</td>
-        </tr>
+        <span class="tag">{author}</span>
       {/if}
       {#if language}
-        <tr>
-          <th scope="row">Language</th>
-          <td>{language}</td>
-        </tr>
+        <span class="tag">{language}</span>
       {/if}
-      {#if contentType}
-        <tr>
-          <th scope="row">Type</th>
-          <td>{contentType}</td>
-        </tr>
+    </div>
+  </div>
+
+  {#if wordCount || publishedAt || deliveryStatus}
+    <div class="article-details">
+      {#if publishedAt}
+        <span class="detail-item">
+          <span class="detail-label">Published</span>
+          <time datetime={publishedAt}
+            >{new Date(publishedAt).toLocaleDateString()}</time
+          >
+        </span>
       {/if}
+
       {#if wordCount}
-        <tr>
-          <th scope="row">Word count</th>
-          <td>{wordCount.toLocaleString()}</td>
-        </tr>
+        <span class="detail-item">
+          <span class="detail-label">Words</span>
+          {wordCount.toLocaleString()}
+        </span>
       {/if}
-      {#if readingTimeMinutes}
-        <tr>
-          <th scope="row">Reading time</th>
-          <td>{readingTimeMinutes} min</td>
-        </tr>
-      {/if}
+
       {#if deliveryStatus}
-        <tr>
-          <th scope="row">Delivery status</th>
-          <td>{deliveryStatus}</td>
-        </tr>
+        <span class="detail-item">
+          <span class="detail-label">Status</span>
+          <span class="status-{deliveryStatus}">{deliveryStatus}</span>
+        </span>
       {/if}
-    </tbody>
-  </table>
+    </div>
+  {/if}
 
   {#if deliveredFrom || deliveredTo || deliveredBy || deliveredEmailUUID}
     <details class="article-delivery">
@@ -151,8 +129,4 @@
       </table>
     </details>
   {/if}
-
-  <p class="article-link">
-    <a href={url} rel="noopener noreferrer" target="_blank">Read article →</a>
-  </p>
 </article>

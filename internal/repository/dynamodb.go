@@ -92,13 +92,38 @@ func (d *DynamoDB) GetByAccountAndID(ctx context.Context, account, id string) (*
 	return &article, nil
 }
 
-// GetByAccount implements Repository.GetByAccount.
-func (d *DynamoDB) GetByAccount(ctx context.Context, account string) ([]*model.Article, error) {
+// GetMetadataByAccount implements Repository.GetMetadataByAccount.
+// Returns articles with all metadata fields except content.
+func (d *DynamoDB) GetMetadataByAccount(ctx context.Context, account string) ([]*model.Article, error) {
 	resp, err := d.client.Query(ctx, &dynamodb.QueryInput{
 		TableName:              aws.String(d.tableName),
 		KeyConditionExpression: aws.String("#account = :account"),
+		ProjectionExpression: aws.String(
+			"#a, #i, #u, #c, #t, #au, #sn, #sd, #e, #iurl, #ct, #l, #err, #wc, #rt, #p, #dst, #df, #dt, #deu, #db",
+		),
 		ExpressionAttributeNames: map[string]string{
 			"#account": attributeNameAccount,
+			"#a":       "account",
+			"#i":       "id",
+			"#u":       "url",
+			"#c":       "createdAt",
+			"#t":       "title",
+			"#au":      "author",
+			"#sn":      "siteName",
+			"#sd":      "sourceDomain",
+			"#e":       "excerpt",
+			"#iurl":    "imageUrl",
+			"#ct":      "contentType",
+			"#l":       "language",
+			"#err":     "error",
+			"#wc":      "wordCount",
+			"#rt":      "readingTimeMinutes",
+			"#p":       "publishedAt",
+			"#dst":     "deliveryStatus",
+			"#df":      "deliveredFrom",
+			"#dt":      "deliveredTo",
+			"#deu":     "deliveredEmailUUID",
+			"#db":      "deliveredBy",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":account": &types.AttributeValueMemberS{Value: account},
@@ -138,7 +163,7 @@ func (d *DynamoDB) DeleteByAccountAndID(ctx context.Context, account, id string)
 
 // DeleteByAccount implements Repository.DeleteByAccount.
 func (d *DynamoDB) DeleteByAccount(ctx context.Context, account string) (int, error) {
-	articles, err := d.GetByAccount(ctx, account)
+	articles, err := d.GetMetadataByAccount(ctx, account)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get articles for deletion: %w", err)
 	}
