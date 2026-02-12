@@ -33,7 +33,7 @@ func NewRouter(cfg *config.Config) *chi.Mux {
 	)
 
 	r.Use(middleware.Recoverer)
-	r.Use(auth.NewUserIDMiddleware(cfg))
+	r.Use(auth.NewAccountIDMiddleware(cfg))
 	r.Use(requestIDMiddleware)
 	r.Use(loggingMiddleware)
 	r.Use(corsMiddleware)

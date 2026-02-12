@@ -188,6 +188,7 @@ Resources:
           Compress: true
           ForwardedValues:
             Headers:
+              - Authorization
               - User-Agent
             QueryString: true
             Cookies:
@@ -210,6 +211,7 @@ Resources:
             Compress: true
             ForwardedValues:
               Headers:
+                - Authorization
                 - User-Agent
               QueryString: true
               Cookies:

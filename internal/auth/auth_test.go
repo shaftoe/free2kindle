@@ -23,7 +23,7 @@ func TestNewMiddleware_SharedAPIKey(t *testing.T) {
 		APIKeySecret: "valid-key",
 	}
 
-	middleware := NewUserIDMiddleware(cfg)
+	middleware := NewAccountIDMiddleware(cfg)
 
 	if middleware == nil {
 		t.Fatal("expected middleware to not be nil")
@@ -37,7 +37,7 @@ func TestNewMiddleware_Auth0(t *testing.T) {
 		Auth0Audience: "test-audience",
 	}
 
-	middleware := NewUserIDMiddleware(cfg)
+	middleware := NewAccountIDMiddleware(cfg)
 
 	if middleware == nil {
 		t.Fatal("expected middleware to not be nil")
@@ -137,7 +137,7 @@ func TestNewMiddleware_DefaultBackend(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	middleware := NewUserIDMiddleware(cfg)
+	middleware := NewAccountIDMiddleware(cfg)
 
 	req := httptest.NewRequest("GET", "/test", http.NoBody)
 	req.Header.Set("Authorization", "Bearer valid-key")

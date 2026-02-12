@@ -30,7 +30,7 @@ const (
 
 func createTestRouterWithHandler(h *handlers, cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
-	r.Use(auth.NewUserIDMiddleware(cfg))
+	r.Use(auth.NewAccountIDMiddleware(cfg))
 	r.Use(requestIDMiddleware)
 	r.Use(corsMiddleware)
 	r.Use(jsonContentTypeMiddleware)
@@ -274,7 +274,7 @@ func TestArticleCreationFlow_Unauthenticated(t *testing.T) {
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/articles", func(r chi.Router) {
 			r.Use(auth.EnsureAutheticatedMiddleware)
-			r.Use(auth.NewUserIDMiddleware(cfg))
+			r.Use(auth.NewAccountIDMiddleware(cfg))
 			r.Post("/", h.handleCreateArticle)
 		})
 	})

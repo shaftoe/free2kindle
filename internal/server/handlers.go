@@ -108,7 +108,6 @@ func (h *handlers) handleGetArticles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addLogAttr(r.Context(), slog.String("account_id", accountID))
 	addLogAttr(r.Context(), slog.Int("page", page))
 	addLogAttr(r.Context(), slog.Int("page_size", pageSize))
 	addLogAttr(r.Context(), slog.Int("total", result.Total))

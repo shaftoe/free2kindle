@@ -74,7 +74,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			start     = time.Now()
-			userID    = auth.GetAccountID(r.Context())
+			accountID = auth.GetAccountID(r.Context())
 			level     = slog.LevelInfo
 			record    = slog.NewRecord(time.Now(), level, "request completed", 0)
 			requestID = getRequestIDFromContext(r.Context())
@@ -91,8 +91,8 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		if requestID != nil {
 			record.AddAttrs(slog.String("request_id", *requestID))
 		}
-		if userID != "" {
-			record.AddAttrs(slog.String("user_id", userID))
+		if accountID != "" {
+			record.AddAttrs(slog.String("account_id", accountID))
 		}
 
 		ctx := context.WithValue(r.Context(), logRecordKey, &logRecord{Record: &record})

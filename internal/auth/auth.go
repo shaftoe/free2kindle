@@ -27,14 +27,14 @@ const (
 type contextKey string
 
 const (
-	userIDKey    contextKey = "user_id"
+	accountIDKey contextKey = "account_id"
 	authErrorKey contextKey = "auth_error"
 )
 
-// NewUserIDMiddleware returns authentication middleware based on the configured auth backend.
-// The returned middleware ensures the userID is set in the context, adds authentication error
+// NewAccountIDMiddleware returns authentication middleware based on the configured auth backend.
+// The returned middleware ensures the accountID is set in the context, adds authentication error
 // to the context if any. To subsequently validate authentication use EnsureAutheticatedMiddleware.
-func NewUserIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
+func NewAccountIDMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	switch cfg.AuthBackend {
 	case constant.AuthBackendSharedAPIKey:
 		return sharedAPIKeyMiddleware(cfg.APIKeySecret)
@@ -68,7 +68,7 @@ func EnsureAutheticatedMiddleware(next http.Handler) http.Handler {
 
 // GetAccountID retrieves the authenticated account ID from the context.
 func GetAccountID(ctx context.Context) string {
-	accountID, _ := ctx.Value(userIDKey).(string)
+	accountID, _ := ctx.Value(accountIDKey).(string)
 	return accountID
 }
 
@@ -94,7 +94,7 @@ func sharedAPIKeyMiddleware(apiKeySecret string) func(http.Handler) http.Handler
 				handleAuthError(r.Context(), next, w, r, "invalid API key")
 				return
 			}
-			ctx := addUserIDToContext(r.Context(), adminAccountID)
+			ctx := addAccountIDToContext(r.Context(), adminAccountID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -145,14 +145,14 @@ func auth0Middleware(domain, audience string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := addUserIDToContext(r.Context(), validatedClaims.RegisteredClaims.Subject)
+			ctx := addAccountIDToContext(r.Context(), validatedClaims.RegisteredClaims.Subject)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func addUserIDToContext(ctx context.Context, userID string) context.Context {
-	return context.WithValue(ctx, userIDKey, userID)
+func addAccountIDToContext(ctx context.Context, accountID string) context.Context {
+	return context.WithValue(ctx, accountIDKey, accountID)
 }
 
 func handleAuthError(ctx context.Context, next http.Handler, w http.ResponseWriter, r *http.Request, msg string) {
