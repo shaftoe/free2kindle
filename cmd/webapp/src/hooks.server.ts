@@ -16,7 +16,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		} catch (error) {
 			event.locals.apiClient = null;
 			if (error instanceof ApiError) {
-				throw kitError(500, `ApiError: ${error.message}`);
+				throw kitError(error.status, `ApiError: ${error.message}`);
 			}
 			throw error;
 		}

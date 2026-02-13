@@ -84,13 +84,13 @@ export function createApiClient(apiKey: string, baseUrl?: string): ApiClient {
 	const resolvedBaseUrl = baseUrl || env.PUBLIC_API_URL;
 
 	if (!resolvedBaseUrl) {
-		throw new ApiError(400, 'PUBLIC_API_URL environment variable is not set');
+		throw new ApiError(500, 'PUBLIC_API_URL environment variable is not set');
 	}
 
 	try {
 		new URL(resolvedBaseUrl);
 	} catch {
-		throw new ApiError(400, `invalid base url: ${resolvedBaseUrl} is not a valid url`);
+		throw new ApiError(500, `invalid base url: ${resolvedBaseUrl} is not a valid url`);
 	}
 
 	return new ApiClient(apiKey, resolvedBaseUrl);
