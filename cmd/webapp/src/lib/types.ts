@@ -40,3 +40,7 @@ export interface CreateArticleResponse {
   message: string;
   delivery_status?: string;
 }
+
+import { ApiClient } from "$lib/services/apiClient";
+
+export const API_CLIENT_KEY = Symbol("apiClient");

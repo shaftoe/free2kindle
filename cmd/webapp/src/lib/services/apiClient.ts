@@ -1,4 +1,6 @@
 import { getToken } from "$lib/stores/token";
+import { getContext } from "svelte";
+import { API_CLIENT_KEY } from "$lib/types";
 
 export function joinUrl(baseUrl: string, path: string): string {
   return baseUrl.replace(/\/+$/, "") + "/" + path.replace(/^\/+/, "");
@@ -70,5 +72,13 @@ export class ApiClient {
 
     await this.handleResponse(response);
     return response.json();
+  }
+}
+
+export function getApiClient(): ApiClient | null {
+  try {
+    return getContext<ApiClient>(API_CLIENT_KEY);
+  } catch {
+    return null;
   }
 }
