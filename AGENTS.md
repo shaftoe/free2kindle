@@ -4,3 +4,4 @@
 - **ALWAYS** add new tests for any new functionality.
 - **NEVER** ignore linting errors via `//nolint` statements or similar tricks without prompting the user for permission.
 - prefer lowercase log and error messages
+- don't use any CSS for webapp development for now

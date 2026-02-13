@@ -33,8 +33,8 @@ export class ApiClient {
     return response;
   }
 
-  async get<T>(path: string): Promise<T> {
-    const response = await fetch(joinUrl(this.apiUrl, path), {
+  async get<T>(path: string, fetchFn: typeof fetch = fetch): Promise<T> {
+    const response = await fetchFn(joinUrl(this.apiUrl, path), {
       headers: this.getHeaders(),
     });
 
@@ -42,8 +42,8 @@ export class ApiClient {
     return response.json();
   }
 
-  async post<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(joinUrl(this.apiUrl, path), {
+  async post<T>(path: string, body: unknown, fetchFn: typeof fetch = fetch): Promise<T> {
+    const response = await fetchFn(joinUrl(this.apiUrl, path), {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(body),
@@ -53,8 +53,8 @@ export class ApiClient {
     return response.json();
   }
 
-  async put<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(joinUrl(this.apiUrl, path), {
+  async put<T>(path: string, body: unknown, fetchFn: typeof fetch = fetch): Promise<T> {
+    const response = await fetchFn(joinUrl(this.apiUrl, path), {
       method: "PUT",
       headers: this.getHeaders(),
       body: JSON.stringify(body),
@@ -64,8 +64,8 @@ export class ApiClient {
     return response.json();
   }
 
-  async delete<T>(path: string): Promise<T> {
-    const response = await fetch(joinUrl(this.apiUrl, path), {
+  async delete<T>(path: string, fetchFn: typeof fetch = fetch): Promise<T> {
+    const response = await fetchFn(joinUrl(this.apiUrl, path), {
       method: "DELETE",
       headers: this.getHeaders(),
     });

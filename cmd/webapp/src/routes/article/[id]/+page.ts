@@ -7,9 +7,11 @@ import type { Article } from "$lib/types";
 export async function load({
   parent,
   params,
+  fetch,
 }: {
   parent: () => Promise<{ apiUrl: string }>;
   params: { id: string };
+  fetch: typeof globalThis.fetch;
 }): Promise<{ article: Article }> {
   const token = getToken();
   
@@ -28,7 +30,7 @@ export async function load({
   const { apiUrl } = await parent();
 
   try {
-    const article = await fetchArticle(apiUrl, id);
+    const article = await fetchArticle(apiUrl, id, fetch);
     return { article };
   } catch (err) {
     if (err instanceof Error && err.message.includes("401")) {

@@ -7,9 +7,11 @@ import type { ArticlesResponse } from "$lib/types";
 export async function load({
   parent,
   url,
+  fetch,
 }: {
   parent: () => Promise<{ apiUrl: string }>;
   url: URL;
+  fetch: typeof globalThis.fetch;
 }): Promise<ArticlesResponse> {
   const token = getToken();
 
@@ -32,7 +34,7 @@ export async function load({
   const pageSize = parseInt(url.searchParams.get("page_size") || "20", 10);
 
   try {
-    return await fetchArticles(apiUrl, page, pageSize);
+    return await fetchArticles(apiUrl, page, pageSize, fetch);
   } catch (err) {
     if (err instanceof Error && err.message.includes("401")) {
       redirect(302, "/settings");
