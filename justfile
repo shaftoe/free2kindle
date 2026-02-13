@@ -16,8 +16,10 @@ run *ARGS: build-cli
 lint:
     golangci-lint run
 
+test: test-go test-webapp
+
 # Run tests (skip DynamoDB integration tests)
-test:
+test-go:
     go test ./... -short
 
 # Build Lambda binary for Linux
@@ -160,7 +162,13 @@ server-http:
 
 [working-directory('cmd/webapp')]
 server-web:
-    npm run dev
+    bun run dev --open
+
+[working-directory('cmd/webapp')]
+test-webapp:
+    npm run check
+    npm run lint
+    npm run test
 
 # Scan DynamoDB article table and print all records
 scan-table TABLE_NAME="savetoink-articles":
