@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 </script>
@@ -12,7 +13,11 @@
 		{#each data.articles as article (article.id)}
 			<li>
 				<article>
-					<h2>{article.title || article.url}</h2>
+					{#if article.title}
+						<h2><a href={resolve(`/articles/${article.id}`)}>{article.title}</a></h2>
+					{:else}
+						<h2><a href={resolve(`/articles/${article.id}`)}>{article.url}</a></h2>
+					{/if}
 					{#if article.excerpt}
 						<p>{article.excerpt}</p>
 					{/if}
