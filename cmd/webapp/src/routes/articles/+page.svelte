@@ -18,6 +18,9 @@
 					{:else}
 						<h2><a href={resolve(`/articles/${article.id}`)}>{article.url}</a></h2>
 					{/if}
+					{#if article.imageUrl}
+						<img src={article.imageUrl} alt={article.title} width="30%" />
+					{/if}
 					{#if article.excerpt}
 						<p>{article.excerpt}</p>
 					{/if}
