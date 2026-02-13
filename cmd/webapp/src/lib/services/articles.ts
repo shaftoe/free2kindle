@@ -1,20 +1,24 @@
-import { apiClient } from "$lib/stores/apiClient";
+import { ApiClient } from "./apiClient";
 import type { ArticlesResponse, Article, CreateArticleRequest, CreateArticleResponse } from "$lib/types";
 
 export async function fetchArticles(
+  apiUrl: string,
   page: number = 1,
   pageSize: number = 20,
 ): Promise<ArticlesResponse> {
-  return apiClient.get<ArticlesResponse>(
+  const client = new ApiClient(apiUrl);
+  return client.get<ArticlesResponse>(
     `/v1/articles?page=${page}&page_size=${pageSize}`,
   );
 }
 
 export async function fetchArticle(
+  apiUrl: string,
   id: string,
 ): Promise<Article> {
+  const client = new ApiClient(apiUrl);
   try {
-    return apiClient.get<Article>(`/v1/articles/${id}`);
+    return client.get<Article>(`/v1/articles/${id}`);
   } catch (err) {
     if (err instanceof Error && err.message.includes("404")) {
       throw new Error("Article not found");
@@ -24,8 +28,10 @@ export async function fetchArticle(
 }
 
 export async function createArticle(
+  apiUrl: string,
   url: string,
 ): Promise<CreateArticleResponse> {
+  const client = new ApiClient(apiUrl);
   const req: CreateArticleRequest = { url };
-  return apiClient.post<CreateArticleResponse>("/v1/articles", req);
+  return client.post<CreateArticleResponse>("/v1/articles", req);
 }
