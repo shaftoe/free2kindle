@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import BackNav from '$lib/components/BackNav.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 </script>
 
+<BackNav />
 <h1>articles</h1>
 
 {#if data.articles.length === 0}

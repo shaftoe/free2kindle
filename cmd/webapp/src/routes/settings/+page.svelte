@@ -1,8 +1,10 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import BackNav from '$lib/components/BackNav.svelte';
 	let { form }: PageProps = $props();
 </script>
 
+<BackNav />
 <h1>Settings</h1>
 <p>Enter your API key to access the article management system.</p>
 
