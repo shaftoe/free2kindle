@@ -1,4 +1,4 @@
-import { error as kitError, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, fetch }) => {
@@ -15,13 +15,17 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 			total: response.total,
 			page: response.page,
 			pageSize: response.pageSize,
-			hasMore: response.hasMore
+			hasMore: response.hasMore,
+			error: undefined
 		};
 	} catch (err) {
-		if (err instanceof Error) {
-			throw kitError(500, `failed to load articles: ${err.message}`);
-		} else {
-			throw kitError(500, 'failed to load articles');
-		}
+		return {
+			articles: [],
+			total: 0,
+			page: 1,
+			pageSize: 10,
+			hasMore: false,
+			error: err instanceof Error ? err.message : 'failed to load articles'
+		};
 	}
 };

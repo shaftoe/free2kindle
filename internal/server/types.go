@@ -17,7 +17,7 @@ type articleResponse struct {
 	Title          string `json:"title"`
 	URL            string `json:"url"`
 	Message        string `json:"message"`
-	DeliveryStatus string `json:"delivery_status,omitempty"`
+	DeliveryStatus string `json:"deliveryStatus,omitempty"`
 }
 
 type healthResponse struct {

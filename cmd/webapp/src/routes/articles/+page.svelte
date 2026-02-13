@@ -8,7 +8,9 @@
 <BackNav />
 <h1>articles</h1>
 
-{#if data.articles.length === 0}
+{#if data.error}
+	<p class="error">failed to load articles: {data.error}</p>
+{:else if data.articles.length === 0}
 	<p>no articles yet</p>
 {:else}
 	<ul>
