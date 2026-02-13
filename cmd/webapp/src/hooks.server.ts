@@ -1,5 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
-import { createApiClient } from '$lib/server/apiClient';
+import { error as kitError } from '@sveltejs/kit';
+import { createApiClient, ApiError } from '$lib/server/apiClient';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname !== '/settings') {
@@ -13,8 +14,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		try {
 			event.locals.apiClient = createApiClient(apiKey);
 		} catch (error) {
-			console.error('error creating api client:', error);
 			event.locals.apiClient = null;
+			if (error instanceof ApiError) {
+				throw kitError(500, `ApiError: ${error.message}`);
+			}
+			throw error;
 		}
 	}
 

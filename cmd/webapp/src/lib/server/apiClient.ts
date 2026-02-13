@@ -1,4 +1,4 @@
-import { PUBLIC_API_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import type {
 	Article,
 	CreateArticleRequest,
@@ -22,7 +22,7 @@ export class ApiError extends Error {
 export class ApiClient {
 	constructor(
 		private apiKey: string,
-		private baseUrl: string = PUBLIC_API_URL
+		private baseUrl: string
 	) {}
 
 	private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -81,7 +81,11 @@ export class ApiClient {
 }
 
 export function createApiClient(apiKey: string, baseUrl?: string): ApiClient {
-	const resolvedBaseUrl = baseUrl || PUBLIC_API_URL;
+	const resolvedBaseUrl = baseUrl || env.PUBLIC_API_URL;
+
+	if (!resolvedBaseUrl) {
+		throw new ApiError(400, 'PUBLIC_API_URL environment variable is not set');
+	}
 
 	try {
 		new URL(resolvedBaseUrl);

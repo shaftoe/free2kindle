@@ -2,12 +2,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createApiClient, ApiError } from './apiClient';
 import type { HealthResponse, CreateArticleResponse, ListArticlesResponse, Article } from './types';
 
+const mockPublicApiUrl = vi.hoisted(() => ({
+	value: 'http://localhost:8080' as string | undefined
+}));
+
+vi.mock('$env/dynamic/public', () => ({
+	env: {
+		get PUBLIC_API_URL() {
+			return mockPublicApiUrl.value as unknown as string;
+		}
+	}
+}));
+
+export function mockEnvVar(value: string | undefined) {
+	mockPublicApiUrl.value = value;
+}
+
 describe('ApiClient', () => {
 	let mockFetch: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
 		mockFetch = vi.fn();
 		global.fetch = mockFetch as unknown as typeof global.fetch;
+		mockEnvVar('http://localhost:8080');
 	});
 
 	describe('healthCheck', () => {
@@ -224,6 +241,49 @@ describe('ApiClient', () => {
 				expect(e).toBeInstanceOf(ApiError);
 				expect((e as ApiError).status).toBe(400);
 			}
+		});
+
+		it('should throw ApiError when PUBLIC_API_URL is not set', () => {
+			mockEnvVar(undefined);
+			expect(() => createApiClient('test-key')).toThrow(ApiError);
+		});
+
+		it('should throw ApiError with correct message when PUBLIC_API_URL is not set', () => {
+			mockEnvVar(undefined);
+			try {
+				createApiClient('test-key');
+			} catch (e) {
+				expect(e).toBeInstanceOf(ApiError);
+				expect((e as ApiError).status).toBe(400);
+				expect((e as ApiError).message).toBe('PUBLIC_API_URL environment variable is not set');
+			}
+		});
+
+		it('should throw ApiError when PUBLIC_API_URL is empty string', () => {
+			mockEnvVar('');
+			expect(() => createApiClient('test-key')).toThrow(ApiError);
+		});
+
+		it('should throw ApiError when PUBLIC_API_URL is invalid URL', () => {
+			mockEnvVar('not-a-url');
+			expect(() => createApiClient('test-key')).toThrow(ApiError);
+		});
+
+		it('should throw ApiError with correct message when PUBLIC_API_URL is invalid URL', () => {
+			mockEnvVar('invalid-url');
+			try {
+				createApiClient('test-key');
+			} catch (e) {
+				expect(e).toBeInstanceOf(ApiError);
+				expect((e as ApiError).status).toBe(400);
+				expect((e as ApiError).message).toBe('invalid base url: invalid-url is not a valid url');
+			}
+		});
+
+		it('should use PUBLIC_API_URL when baseUrl is not provided', () => {
+			mockEnvVar('https://api.example.com');
+			const client = createApiClient('test-key');
+			expect(client).toBeDefined();
 		});
 	});
 });
