@@ -35,7 +35,7 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.healthCheck();
+			const result = await client.healthCheck(mockFetch as unknown as typeof globalThis.fetch);
 
 			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/v1/health', {
 				headers: {
@@ -55,7 +55,9 @@ describe('ApiClient', () => {
 
 			const client = createApiClient('invalid-key', 'http://localhost:8080');
 
-			await expect(client.healthCheck()).rejects.toThrow(ApiError);
+			await expect(
+				client.healthCheck(mockFetch as unknown as typeof globalThis.fetch)
+			).rejects.toThrow(ApiError);
 		});
 	});
 
@@ -74,7 +76,10 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.createArticle({ url: 'https://example.com' });
+			const result = await client.createArticle(
+				{ url: 'https://example.com' },
+				mockFetch as unknown as typeof globalThis.fetch
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/v1/articles', {
 				method: 'POST',
@@ -104,7 +109,11 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.getArticles(1, 20);
+			const result = await client.getArticles(
+				mockFetch as unknown as typeof globalThis.fetch,
+				1,
+				20
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				'http://localhost:8080/v1/articles?page=1&page_size=20',
@@ -133,7 +142,7 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.getArticles();
+			const result = await client.getArticles(mockFetch as unknown as typeof globalThis.fetch);
 
 			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/v1/articles', {
 				headers: {
@@ -161,7 +170,10 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.getArticle('123');
+			const result = await client.getArticle(
+				'123',
+				mockFetch as unknown as typeof globalThis.fetch
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/v1/articles/123', {
 				headers: {
@@ -181,7 +193,10 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.deleteArticle('123');
+			const result = await client.deleteArticle(
+				'123',
+				mockFetch as unknown as typeof globalThis.fetch
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/v1/articles/123', {
 				method: 'DELETE',
@@ -202,7 +217,9 @@ describe('ApiClient', () => {
 			});
 
 			const client = createApiClient('test-key', 'http://localhost:8080');
-			const result = await client.deleteAllArticles();
+			const result = await client.deleteAllArticles(
+				mockFetch as unknown as typeof globalThis.fetch
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith('http://localhost:8080/v1/articles', {
 				method: 'DELETE',
@@ -239,7 +256,7 @@ describe('ApiClient', () => {
 				createApiClient('test-key', 'invalid-url');
 			} catch (e) {
 				expect(e).toBeInstanceOf(ApiError);
-				expect((e as ApiError).status).toBe(400);
+				expect((e as ApiError).status).toBe(500);
 			}
 		});
 
@@ -254,7 +271,7 @@ describe('ApiClient', () => {
 				createApiClient('test-key');
 			} catch (e) {
 				expect(e).toBeInstanceOf(ApiError);
-				expect((e as ApiError).status).toBe(400);
+				expect((e as ApiError).status).toBe(500);
 				expect((e as ApiError).message).toBe('PUBLIC_API_URL environment variable is not set');
 			}
 		});
@@ -275,7 +292,7 @@ describe('ApiClient', () => {
 				createApiClient('test-key');
 			} catch (e) {
 				expect(e).toBeInstanceOf(ApiError);
-				expect((e as ApiError).status).toBe(400);
+				expect((e as ApiError).status).toBe(500);
 				expect((e as ApiError).message).toBe('invalid base url: invalid-url is not a valid url');
 			}
 		});
