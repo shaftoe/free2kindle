@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, fetch, url }) => {
@@ -36,4 +36,26 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	}
 };
 
-export const actions: Actions = {};
+export const actions: Actions = {
+	delete: async ({ locals, fetch, request }) => {
+		const apiClient = locals.apiClient;
+
+		if (!apiClient) {
+			return fail(401, { error: 'api key is required' });
+		}
+
+		const formData = await request.formData();
+		const id = formData.get('id');
+
+		if (!id || typeof id !== 'string') {
+			return fail(400, { error: 'article id is required' });
+		}
+
+		try {
+			await apiClient.deleteArticle(id, fetch);
+			return { success: true };
+		} catch (err) {
+			return fail(500, { error: err instanceof Error ? err.message : 'failed to delete article' });
+		}
+	}
+};

@@ -20,7 +20,7 @@ describe('ArticleControls.svelte', () => {
 		await expect.element(deleteButton).toBeInTheDocument();
 	});
 
-	it('should render form with correct action', async () => {
+	it('should render form with correct action and hidden input', async () => {
 		const article: ArticleType = {
 			account: 'test-account',
 			id: 'test-id-123',
@@ -35,6 +35,10 @@ describe('ArticleControls.svelte', () => {
 		expect(form).toBeDefined();
 		expect(form?.getAttribute('method')).toBe('POST');
 		expect(form?.getAttribute('action')).toBe('?/delete');
+
+		const hiddenInput = container.querySelector('input[type="hidden"][name="id"]');
+		expect(hiddenInput).toBeDefined();
+		expect(hiddenInput?.getAttribute('value')).toBe('test-id-123');
 	});
 
 	it('should show confirmation dialog before submit', async () => {
