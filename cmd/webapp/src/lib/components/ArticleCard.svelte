@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import ArticleControls from './ArticleControls.svelte';
 	import type { Article } from '$lib/server/types';
 	let { article }: { article: Article } = $props();
 </script>
@@ -38,4 +39,5 @@
 	{#if article.error}
 		<p class="error">error: {article.error}</p>
 	{/if}
+	<ArticleControls {article} />
 </article>

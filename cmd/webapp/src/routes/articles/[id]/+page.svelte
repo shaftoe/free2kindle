@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ArticleControls from '$lib/components/ArticleControls.svelte';
 	import ArticleViewMeta from '$lib/components/ArticleViewMeta.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
@@ -20,3 +21,5 @@
 	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 	<a href={data.article.url} target="_blank" rel="noopener noreferrer">original article</a>
 </p>
+
+<ArticleControls article={data.article} />

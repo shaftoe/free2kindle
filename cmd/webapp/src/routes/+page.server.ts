@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const apiClient = locals.apiClient;
@@ -35,3 +35,5 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 		};
 	}
 };
+
+export const actions: Actions = {};

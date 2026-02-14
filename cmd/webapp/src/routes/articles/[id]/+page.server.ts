@@ -1,5 +1,5 @@
-import { error as kitError, redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { error as kitError, fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const apiClient = locals.apiClient;
@@ -20,6 +20,25 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			throw kitError(500, `failed to load article: ${err.message}`);
 		} else {
 			throw kitError(500, 'failed to load article');
+		}
+	}
+};
+
+export const actions: Actions = {
+	delete: async ({ locals, fetch, params }) => {
+		const apiClient = locals.apiClient;
+
+		if (!apiClient) {
+			return fail(401, { error: 'api key is required' });
+		}
+
+		const id = params.id;
+
+		try {
+			await apiClient.deleteArticle(id, fetch);
+			redirect(303, '/');
+		} catch (err) {
+			return fail(500, { error: err instanceof Error ? err.message : 'failed to delete article' });
 		}
 	}
 };
