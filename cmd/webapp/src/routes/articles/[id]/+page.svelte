@@ -1,10 +1,8 @@
 <script lang="ts">
-	import BackNav from '$lib/components/BackNav.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 </script>
 
-<BackNav href="/" />
 <header>
 	{#if data.article.title}
 		<h1>{data.article.title}</h1>

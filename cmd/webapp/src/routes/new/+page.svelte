@@ -1,10 +1,8 @@
 <script lang="ts">
-	import BackNav from '$lib/components/BackNav.svelte';
 	import type { PageProps } from './$types';
 	let { form }: PageProps = $props();
 </script>
 
-<BackNav href="/" />
 <h1>Add Article</h1>
 
 {#if form?.error}

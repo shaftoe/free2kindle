@@ -16,7 +16,7 @@ describe('/+page.svelte', () => {
 			}
 		});
 
-		const heading = page.getByRole('heading', { name: 'articles' });
+		const heading = page.getByRole('heading', { name: 'My List' });
 		await expect.element(heading).toBeInTheDocument();
 
 		const noArticles = page.getByText('no articles yet');
