@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let { page, has_more }: { page: number; has_more: boolean } = $props();
 
 	function navigateTo(newPage: number) {
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(`/?page=${newPage}`, { replaceState: true, noScroll: true });
+		goto(resolve(`/?page=${newPage}` as unknown as '/'), { replaceState: true, noScroll: true });
 	}
 </script>
 

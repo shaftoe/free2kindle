@@ -1,10 +1,10 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import Article from './Article.svelte';
+import ArticleCard from './ArticleCard.svelte';
 import type { Article as ArticleType } from '$lib/server/types';
 
-describe('Article.svelte', () => {
+describe('ArticleCard.svelte', () => {
 	it('should render article with all fields', async () => {
 		const article: ArticleType = {
 			account: 'test-account',
@@ -22,7 +22,7 @@ describe('Article.svelte', () => {
 			deliveryStatus: 'pending'
 		};
 
-		render(Article, { article });
+		render(ArticleCard, { article });
 
 		const titleLink = page.getByRole('link', { name: 'Test Article' });
 		await expect.element(titleLink).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('Article.svelte', () => {
 			createdAt: '2024-01-01T00:00:00Z'
 		};
 
-		render(Article, { article });
+		render(ArticleCard, { article });
 
 		const heading = page.getByRole('heading');
 		await expect.element(heading).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('Article.svelte', () => {
 			error: 'Failed to fetch content'
 		};
 
-		render(Article, { article });
+		render(ArticleCard, { article });
 
 		const error = page.getByText('error: Failed to fetch content');
 		await expect.element(error).toBeInTheDocument();
