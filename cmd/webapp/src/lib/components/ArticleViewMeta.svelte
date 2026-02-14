@@ -36,18 +36,3 @@
 		<p class="error">error: {article.error}</p>
 	{/if}
 </header>
-
-<hr />
-{#if article.content}
-	<div>
-		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-		{@html article.content}
-	</div>
-{:else}
-	<p>content not yet available</p>
-{/if}
-
-<p>
-	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-	<a href={article.url} target="_blank" rel="noopener noreferrer">original article</a>
-</p>
