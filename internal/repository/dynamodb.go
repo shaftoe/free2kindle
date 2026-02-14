@@ -158,7 +158,27 @@ func (d *DynamoDB) GetMetadataByAccount(
 		return []*model.Article{}, nil, 0, nil
 	}
 
-	resp, err := d.queryArticlesByAccount(ctx, account, pageSize)
+	offset := (page - 1) * pageSize
+	if offset >= total {
+		return []*model.Article{}, nil, total, nil
+	}
+
+	var exclusiveStartKey map[string]types.AttributeValue
+	var resp *dynamodb.QueryOutput
+
+	for i := 0; i < offset; i += pageSize {
+		skipSize := min(pageSize, offset-i)
+		resp, err = d.queryArticlesByAccount(ctx, account, skipSize, exclusiveStartKey)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("failed to query articles: %w", err)
+		}
+		exclusiveStartKey = resp.LastEvaluatedKey
+		if exclusiveStartKey == nil {
+			break
+		}
+	}
+
+	resp, err = d.queryArticlesByAccount(ctx, account, pageSize, exclusiveStartKey)
 	if err != nil {
 		return nil, nil, 0, fmt.Errorf("failed to query articles: %w", err)
 	}
@@ -175,8 +195,9 @@ func (d *DynamoDB) queryArticlesByAccount(
 	ctx context.Context,
 	account string,
 	pageSize int,
+	exclusiveStartKey map[string]types.AttributeValue,
 ) (*dynamodb.QueryOutput, error) {
-	resp, err := d.client.Query(ctx, &dynamodb.QueryInput{
+	queryInput := &dynamodb.QueryInput{
 		TableName:              aws.String(d.tableName),
 		IndexName:              aws.String(consts.DynamoDBGSIName),
 		KeyConditionExpression: aws.String("#account = :account"),
@@ -189,7 +210,13 @@ func (d *DynamoDB) queryArticlesByAccount(
 		},
 		ScanIndexForward: aws.Bool(false),
 		Limit:            aws.Int32(int32(pageSize)), //nolint:gosec // pageSize is validated to be <= 20
-	})
+	}
+
+	if exclusiveStartKey != nil {
+		queryInput.ExclusiveStartKey = exclusiveStartKey
+	}
+
+	resp, err := d.client.Query(ctx, queryInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query dynamodb: %w", err)
 	}

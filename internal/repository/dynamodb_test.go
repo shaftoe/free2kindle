@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -350,6 +351,246 @@ func TestDynamoDB_DeleteByAccount_Empty(t *testing.T) {
 	skipIfTableNotFound(t, err)
 	require.NoError(t, err)
 	assert.Equal(t, 0, deleted)
+}
+
+func TestDynamoDB_GetMetadataByAccount_Pagination_MultiplePages(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "pagination@example.com"
+	numArticles := 25
+
+	for i := 0; i < numArticles; i++ { //nolint:modernize // keep traditional loop to access loop variable
+		article := &model.Article{
+			Account:   account,
+			ID:        fmt.Sprintf("pagination-id-%03d", i),
+			URL:       fmt.Sprintf("https://example.com/pagination%d", i),
+			Title:     fmt.Sprintf("Article %d", i),
+			Content:   fmt.Sprintf("<p>Content %d</p>", i),
+			CreatedAt: time.Now(),
+		}
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	page1, _, total, err := repo.GetMetadataByAccount(ctx, account, 1, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 10, len(page1))
+	assert.Equal(t, numArticles, total)
+
+	page2, _, total, err := repo.GetMetadataByAccount(ctx, account, 2, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 10, len(page2))
+	assert.Equal(t, numArticles, total)
+
+	page3, _, total, err := repo.GetMetadataByAccount(ctx, account, 3, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 5, len(page3))
+	assert.Equal(t, numArticles, total)
+
+	allIDs := make(map[string]bool)
+	for _, article := range page1 {
+		allIDs[article.ID] = true
+	}
+	for _, article := range page2 {
+		assert.False(t, allIDs[article.ID], "page 2 should not contain articles from page 1")
+		allIDs[article.ID] = true
+	}
+	for _, article := range page3 {
+		assert.False(t, allIDs[article.ID], "page 3 should not contain articles from pages 1-2")
+		allIDs[article.ID] = true
+	}
+	assert.Len(t, allIDs, numArticles)
+}
+
+func TestDynamoDB_GetMetadataByAccount_Pagination_LastPage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "lastpage@example.com"
+	numArticles := 15
+
+	for i := 0; i < numArticles; i++ { //nolint:modernize // keep traditional loop to access loop variable
+		article := &model.Article{
+			Account:   account,
+			ID:        fmt.Sprintf("lastpage-id-%03d", i),
+			URL:       fmt.Sprintf("https://example.com/lastpage%d", i),
+			Title:     fmt.Sprintf("Article %d", i),
+			Content:   fmt.Sprintf("<p>Content %d</p>", i),
+			CreatedAt: time.Now(),
+		}
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	page1, lastKey1, total, err := repo.GetMetadataByAccount(ctx, account, 1, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 10, len(page1))
+	assert.NotNil(t, lastKey1, "lastEvaluatedKey should be non-nil when there are more results")
+	assert.Equal(t, numArticles, total)
+
+	page2, lastKey2, total, err := repo.GetMetadataByAccount(ctx, account, 2, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 5, len(page2))
+	assert.Nil(t, lastKey2, "lastEvaluatedKey should be nil on the last page")
+	assert.Equal(t, numArticles, total)
+}
+
+func TestDynamoDB_GetMetadataByAccount_Pagination_PageOutOfRange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "outofrange@example.com"
+	numArticles := 5
+
+	for i := 0; i < numArticles; i++ { //nolint:modernize // keep traditional loop to access loop variable
+		article := &model.Article{
+			Account:   account,
+			ID:        fmt.Sprintf("outofrange-id-%03d", i),
+			URL:       fmt.Sprintf("https://example.com/outofrange%d", i),
+			Title:     fmt.Sprintf("Article %d", i),
+			Content:   fmt.Sprintf("<p>Content %d</p>", i),
+			CreatedAt: time.Now(),
+		}
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	articles, lastKey, total, err := repo.GetMetadataByAccount(ctx, account, 10, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Empty(t, articles)
+	assert.Nil(t, lastKey)
+	assert.Equal(t, numArticles, total)
+}
+
+func TestDynamoDB_GetMetadataByAccount_Pagination_TotalCountAccuracy(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "totalcount@example.com"
+	numArticles := 12
+
+	for i := 0; i < numArticles; i++ { //nolint:modernize // keep traditional loop to access loop variable
+		article := &model.Article{
+			Account:   account,
+			ID:        fmt.Sprintf("totalcount-id-%03d", i),
+			URL:       fmt.Sprintf("https://example.com/totalcount%d", i),
+			Title:     fmt.Sprintf("Article %d", i),
+			Content:   fmt.Sprintf("<p>Content %d</p>", i),
+			CreatedAt: time.Now(),
+		}
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	page1, _, total1, err := repo.GetMetadataByAccount(ctx, account, 1, 5)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 5, len(page1))
+	assert.Equal(t, numArticles, total1)
+
+	page2, _, total2, err := repo.GetMetadataByAccount(ctx, account, 2, 5)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 5, len(page2))
+	assert.Equal(t, numArticles, total2)
+
+	page3, _, total3, err := repo.GetMetadataByAccount(ctx, account, 3, 5)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(page3))
+	assert.Equal(t, numArticles, total3)
+
+	assert.Equal(t, total1, total2)
+	assert.Equal(t, total2, total3)
+}
+
+func TestDynamoDB_GetMetadataByAccount_Pagination_LargePageSize(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "largepagesize@example.com"
+	numArticles := 15
+
+	for i := 0; i < numArticles; i++ { //nolint:modernize // keep traditional loop to access loop variable
+		article := &model.Article{
+			Account:   account,
+			ID:        fmt.Sprintf("largepagesize-id-%03d", i),
+			URL:       fmt.Sprintf("https://example.com/largepagesize%d", i),
+			Title:     fmt.Sprintf("Article %d", i),
+			Content:   fmt.Sprintf("<p>Content %d</p>", i),
+			CreatedAt: time.Now(),
+		}
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	articles, _, total, err := repo.GetMetadataByAccount(ctx, account, 1, 100)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, numArticles, len(articles))
+	assert.Equal(t, numArticles, total)
+}
+
+func TestDynamoDB_GetMetadataByAccount_Pagination_InvalidPageDefaults(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "invalidpage@example.com"
+
+	for i := 0; i < 5; i++ { //nolint:modernize // keep traditional loop to access loop variable
+		article := &model.Article{
+			Account:   account,
+			ID:        fmt.Sprintf("invalidpage-id-%03d", i),
+			URL:       fmt.Sprintf("https://example.com/invalidpage%d", i),
+			Title:     fmt.Sprintf("Article %d", i),
+			Content:   fmt.Sprintf("<p>Content %d</p>", i),
+			CreatedAt: time.Now(),
+		}
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	articles, _, _, err := repo.GetMetadataByAccount(ctx, account, 0, 10)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Len(t, articles, 5)
 }
 
 func TestDynamoDB_UpdateArticle(t *testing.T) {
