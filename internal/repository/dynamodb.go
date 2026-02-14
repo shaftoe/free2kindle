@@ -41,7 +41,7 @@ func NewDynamoDB(awsConfig *aws.Config, tableName string) *DynamoDB {
 
 // Store saves an article to DynamoDB.
 func (d *DynamoDB) Store(ctx context.Context, article *model.Article) error {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	if article.Account == "" {
 		return errors.New("account field is required")

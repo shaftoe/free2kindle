@@ -49,7 +49,7 @@ func TestGenerate_WithMetadata(t *testing.T) {
 		ReadingTimeMinutes: 5,
 		PublishedAt:        &publishedAt,
 		ContentType:        "article",
-		CreatedAt:          time.Now(),
+		CreatedAt:          time.Now().UTC(),
 	}
 
 	data, err := gen.Generate(article)

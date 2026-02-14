@@ -232,7 +232,7 @@ func (s *Service) CreateArticle(ctx context.Context, rawURL, accountID string) (
 		Account:   accountID,
 		ID:        articleID,
 		URL:       cleanURL,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 	articlesChan <- article
 

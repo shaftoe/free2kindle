@@ -109,7 +109,7 @@ func (e *Extractor) buildArticle(result *trafilatura.ExtractResult, urlStr strin
 		ImageURL:           result.Metadata.Image,
 		PublishedAt:        toTimePtr(result.Metadata.Date),
 		URL:                urlStr,
-		CreatedAt:          time.Now(),
+		CreatedAt:          time.Now().UTC(),
 		WordCount:          wordCount,
 		ReadingTimeMinutes: (wordCount + consts.WordsPerMinute - 1) / consts.WordsPerMinute,
 		SourceDomain:       result.Metadata.Hostname,

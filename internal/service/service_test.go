@@ -233,7 +233,7 @@ func TestGetArticle(t *testing.T) {
 		Title:     "Test Article",
 		URL:       "https://example.com/test",
 		Content:   "<p>Test content</p>",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	mockRepo := &MockRepository{articles: []*model.Article{article}}

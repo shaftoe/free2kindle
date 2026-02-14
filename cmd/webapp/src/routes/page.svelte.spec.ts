@@ -18,9 +18,6 @@ describe('/+page.svelte', () => {
 
 		const heading = page.getByRole('heading', { name: 'My List' });
 		await expect.element(heading).toBeInTheDocument();
-
-		const noArticles = page.getByText('no articles yet');
-		await expect.element(noArticles).toBeInTheDocument();
 	});
 
 	it('should render next button when more articles exist', async () => {

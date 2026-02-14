@@ -5,13 +5,11 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<h1>My List</h1>
+<h1>My List (<span>{data.total} articles)</span></h1>
 
 {#if data.error}
 	<p class="error">failed to load articles: {data.error}</p>
-{:else if data.articles.length === 0}
-	<p>no articles yet</p>
-{:else}
+{:else if data.articles.length > 0}
 	<ul>
 		{#each data.articles as article (article.id)}
 			<li>

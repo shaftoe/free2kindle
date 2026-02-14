@@ -47,7 +47,7 @@ func TestDynamoDB_Store(t *testing.T) {
 		Title:     "Test Article",
 		Content:   "<p>Test content</p>",
 		SiteName:  "Example Site",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, article)
@@ -68,7 +68,7 @@ func TestDynamoDB_Store_RequiresAccount(t *testing.T) {
 		URL:       "https://example.com/test",
 		Title:     "Test Article",
 		Content:   "<p>Test content</p>",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, article)
@@ -91,7 +91,7 @@ func TestDynamoDB_GetByAccountAndID(t *testing.T) {
 		Title:     "Test Article 2",
 		Content:   "<p>Test content 2</p>",
 		SiteName:  "Example Site",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, expected)
@@ -136,7 +136,7 @@ func TestDynamoDB_GetByAccountAndID_WrongAccount(t *testing.T) {
 		URL:       "https://example.com/test3",
 		Title:     "Test Article 3",
 		Content:   "<p>Test content 3</p>",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, article)
@@ -165,7 +165,7 @@ func TestDynamoDB_GetMetadataByAccount(t *testing.T) {
 			URL:       "https://example.com/test4",
 			Title:     "Test Article 4",
 			Content:   "<p>Test content 4</p>",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 		{
 			Account:   account,
@@ -173,7 +173,7 @@ func TestDynamoDB_GetMetadataByAccount(t *testing.T) {
 			URL:       "https://example.com/test5",
 			Title:     "Test Article 5",
 			Content:   "<p>Test content 5</p>",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 		{
 			Account:   "other@example.com",
@@ -181,7 +181,7 @@ func TestDynamoDB_GetMetadataByAccount(t *testing.T) {
 			URL:       "https://example.com/test6",
 			Title:     "Test Article 6",
 			Content:   "<p>Test content 6</p>",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 	}
 
@@ -234,7 +234,7 @@ func TestDynamoDB_DeleteByAccountAndID(t *testing.T) {
 		URL:       "https://example.com/test7",
 		Title:     "Test Article 7",
 		Content:   "<p>Test content 7</p>",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, article)
@@ -265,7 +265,7 @@ func TestDynamoDB_DeleteByAccountAndID_WrongAccount(t *testing.T) {
 		URL:       "https://example.com/test8",
 		Title:     "Test Article 8",
 		Content:   "<p>Test content 8</p>",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, article)
@@ -297,7 +297,7 @@ func TestDynamoDB_DeleteByAccount(t *testing.T) {
 			URL:       "https://example.com/test10",
 			Title:     "Test Article 10",
 			Content:   "<p>Test content 10</p>",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 		{
 			Account:   account,
@@ -305,7 +305,7 @@ func TestDynamoDB_DeleteByAccount(t *testing.T) {
 			URL:       "https://example.com/test11",
 			Title:     "Test Article 11",
 			Content:   "<p>Test content 11</p>",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 		{
 			Account:   "other@example.com",
@@ -313,7 +313,7 @@ func TestDynamoDB_DeleteByAccount(t *testing.T) {
 			URL:       "https://example.com/test12",
 			Title:     "Test Article 12",
 			Content:   "<p>Test content 12</p>",
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		},
 	}
 
@@ -371,7 +371,7 @@ func TestDynamoDB_GetMetadataByAccount_Pagination_MultiplePages(t *testing.T) {
 			URL:       fmt.Sprintf("https://example.com/pagination%d", i),
 			Title:     fmt.Sprintf("Article %d", i),
 			Content:   fmt.Sprintf("<p>Content %d</p>", i),
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		}
 		err := repo.Store(ctx, article)
 		skipIfTableNotFound(t, err)
@@ -429,7 +429,7 @@ func TestDynamoDB_GetMetadataByAccount_Pagination_LastPage(t *testing.T) {
 			URL:       fmt.Sprintf("https://example.com/lastpage%d", i),
 			Title:     fmt.Sprintf("Article %d", i),
 			Content:   fmt.Sprintf("<p>Content %d</p>", i),
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		}
 		err := repo.Store(ctx, article)
 		skipIfTableNotFound(t, err)
@@ -469,7 +469,7 @@ func TestDynamoDB_GetMetadataByAccount_Pagination_PageOutOfRange(t *testing.T) {
 			URL:       fmt.Sprintf("https://example.com/outofrange%d", i),
 			Title:     fmt.Sprintf("Article %d", i),
 			Content:   fmt.Sprintf("<p>Content %d</p>", i),
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		}
 		err := repo.Store(ctx, article)
 		skipIfTableNotFound(t, err)
@@ -502,7 +502,7 @@ func TestDynamoDB_GetMetadataByAccount_Pagination_TotalCountAccuracy(t *testing.
 			URL:       fmt.Sprintf("https://example.com/totalcount%d", i),
 			Title:     fmt.Sprintf("Article %d", i),
 			Content:   fmt.Sprintf("<p>Content %d</p>", i),
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		}
 		err := repo.Store(ctx, article)
 		skipIfTableNotFound(t, err)
@@ -549,7 +549,7 @@ func TestDynamoDB_GetMetadataByAccount_Pagination_LargePageSize(t *testing.T) {
 			URL:       fmt.Sprintf("https://example.com/largepagesize%d", i),
 			Title:     fmt.Sprintf("Article %d", i),
 			Content:   fmt.Sprintf("<p>Content %d</p>", i),
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		}
 		err := repo.Store(ctx, article)
 		skipIfTableNotFound(t, err)
@@ -580,7 +580,7 @@ func TestDynamoDB_GetMetadataByAccount_Pagination_InvalidPageDefaults(t *testing
 			URL:       fmt.Sprintf("https://example.com/invalidpage%d", i),
 			Title:     fmt.Sprintf("Article %d", i),
 			Content:   fmt.Sprintf("<p>Content %d</p>", i),
-			CreatedAt: time.Now(),
+			CreatedAt: time.Now().UTC(),
 		}
 		err := repo.Store(ctx, article)
 		skipIfTableNotFound(t, err)
@@ -607,7 +607,7 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 		URL:       "https://example.com/test9",
 		Title:     "Test Article 9",
 		Content:   "<p>Test content 9</p>",
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := repo.Store(ctx, original)
@@ -638,6 +638,139 @@ func TestDynamoDB_UpdateArticle(t *testing.T) {
 	assert.Equal(t, "Updated Article 9", retrieved.Title)
 	assert.Equal(t, consts.StatusDelivered, retrieved.DeliveryStatus)
 	assert.Equal(t, "sender@example.com", *retrieved.DeliveredFrom)
+}
+
+func TestDynamoDB_Store_NormalizesToUTC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	localTime := time.Date(2024, 2, 14, 10, 0, 0, 0, time.FixedZone("EST", -4*3600))
+	article := &model.Article{
+		Account:   testAccount,
+		ID:        "utc-test-id",
+		URL:       "https://example.com/utc-test",
+		Title:     "UTC Test Article",
+		Content:   "<p>Test content</p>",
+		CreatedAt: localTime,
+	}
+
+	err := repo.Store(ctx, article)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+
+	retrieved, err := repo.GetByAccountAndID(ctx, testAccount, "utc-test-id")
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+
+	assert.True(t, retrieved.CreatedAt.UTC().Equal(localTime.UTC()), "timestamp should be stored in UTC")
+}
+
+func TestDynamoDB_GetMetadataByAccount_SortsByCreatedAt(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	account := "sort-test@example.com"
+	now := time.Now().UTC()
+	articles := []*model.Article{
+		{
+			Account:   account,
+			ID:        "sort-id-1",
+			URL:       "https://example.com/sort1",
+			Title:     "Article 1",
+			Content:   "<p>Content 1</p>",
+			CreatedAt: now.Add(-4 * time.Hour),
+		},
+		{
+			Account:   account,
+			ID:        "sort-id-2",
+			URL:       "https://example.com/sort2",
+			Title:     "Article 2",
+			Content:   "<p>Content 2</p>",
+			CreatedAt: now.Add(-3 * time.Hour),
+		},
+		{
+			Account:   account,
+			ID:        "sort-id-3",
+			URL:       "https://example.com/sort3",
+			Title:     "Article 3",
+			Content:   "<p>Content 3</p>",
+			CreatedAt: now.Add(-2 * time.Hour),
+		},
+		{
+			Account:   account,
+			ID:        "sort-id-4",
+			URL:       "https://example.com/sort4",
+			Title:     "Article 4",
+			Content:   "<p>Content 4</p>",
+			CreatedAt: now.Add(-1 * time.Hour),
+		},
+		{
+			Account:   account,
+			ID:        "sort-id-5",
+			URL:       "https://example.com/sort5",
+			Title:     "Article 5",
+			Content:   "<p>Content 5</p>",
+			CreatedAt: now,
+		},
+	}
+
+	for _, article := range articles {
+		err := repo.Store(ctx, article)
+		skipIfTableNotFound(t, err)
+		require.NoError(t, err)
+	}
+
+	retrieved, _, _, err := repo.GetMetadataByAccount(ctx, account, 1, 20)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+	assert.Len(t, retrieved, 5)
+
+	for i := 0; i < len(retrieved)-1; i++ {
+		assert.True(t, retrieved[i].CreatedAt.After(retrieved[i+1].CreatedAt),
+			"article %d (%s) should be newer than article %d (%s)",
+			i, retrieved[i].CreatedAt, i+1, retrieved[i+1].CreatedAt)
+	}
+
+	assert.Equal(t, "Article 5", retrieved[0].Title, "first article should be newest")
+	assert.Equal(t, "Article 1", retrieved[4].Title, "last article should be oldest")
+}
+
+func TestDynamoDB_Store_PreservesUTC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo := setupTestDynamoDB(t)
+	ctx := context.Background()
+
+	utcTime := time.Date(2024, 2, 14, 14, 0, 0, 0, time.UTC)
+	article := &model.Article{
+		Account:   testAccount,
+		ID:        "utc-preserve-test",
+		URL:       "https://example.com/utc-preserve",
+		Title:     "UTC Preserve Test",
+		Content:   "<p>Test content</p>",
+		CreatedAt: utcTime,
+	}
+
+	err := repo.Store(ctx, article)
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+
+	retrieved, err := repo.GetByAccountAndID(ctx, testAccount, "utc-preserve-test")
+	skipIfTableNotFound(t, err)
+	require.NoError(t, err)
+
+	assert.True(t, retrieved.CreatedAt.Equal(utcTime), "UTC timestamp should be preserved exactly")
+	assert.Equal(t, time.UTC, retrieved.CreatedAt.Location(), "timestamp location should be UTC")
 }
 
 func stringPtr(s string) *string {
