@@ -140,8 +140,8 @@ test-get-article *ID:
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $SAVETOINK_API_KEY"
 
-test-get-articles:
-    curl -X GET http://localhost:8080/v1/articles \
+test-get-articles *PAGE="1":
+    curl -X GET http://localhost:8080/v1/articles?page={{ PAGE }} \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $SAVETOINK_API_KEY"
 

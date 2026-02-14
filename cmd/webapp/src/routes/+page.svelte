@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Article from '$lib/components/Article.svelte';
+	import Navigator from '$lib/components/Navigator.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 </script>
@@ -21,3 +22,7 @@
 {/if}
 
 <p>total: {data.total}</p>
+
+{#if !data.error && data.articles.length > 0}
+	<Navigator page={data.page} has_more={data.has_more} />
+{/if}

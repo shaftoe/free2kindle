@@ -10,8 +10,8 @@ describe('/+page.svelte', () => {
 				articles: [],
 				total: 0,
 				page: 1,
-				pageSize: 10,
-				hasMore: false,
+				page_size: 10,
+				has_more: false,
 				error: undefined
 			}
 		});
@@ -21,5 +21,53 @@ describe('/+page.svelte', () => {
 
 		const noArticles = page.getByText('no articles yet');
 		await expect.element(noArticles).toBeInTheDocument();
+	});
+
+	it('should render next button when more articles exist', async () => {
+		render(Page, {
+			data: {
+				articles: [
+					{
+						account: 'test-account',
+						id: '1',
+						url: 'https://example.com',
+						createdAt: '2024-01-01T00:00:00Z',
+						title: 'Test Article'
+					}
+				],
+				total: 25,
+				page: 1,
+				page_size: 10,
+				has_more: true,
+				error: undefined
+			}
+		});
+
+		const nextButton = page.getByRole('button', { name: 'Next' });
+		await expect.element(nextButton).toBeInTheDocument();
+	});
+
+	it('should render prev button when not on first page', async () => {
+		render(Page, {
+			data: {
+				articles: [
+					{
+						account: 'test-account',
+						id: '1',
+						url: 'https://example.com',
+						createdAt: '2024-01-01T00:00:00Z',
+						title: 'Test Article'
+					}
+				],
+				total: 25,
+				page: 2,
+				page_size: 10,
+				has_more: false,
+				error: undefined
+			}
+		});
+
+		const prevButton = page.getByRole('button', { name: 'Previous' });
+		await expect.element(prevButton).toBeInTheDocument();
 	});
 });

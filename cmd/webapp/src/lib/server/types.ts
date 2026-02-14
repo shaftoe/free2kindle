@@ -39,9 +39,9 @@ export interface CreateArticleResponse {
 export interface ListArticlesResponse {
 	articles: Article[];
 	page: number;
-	pageSize: number;
+	page_size: number;
 	total: number;
-	hasMore: boolean;
+	has_more: boolean;
 }
 
 export interface DeleteArticleResponse {

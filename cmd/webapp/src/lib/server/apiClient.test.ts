@@ -98,9 +98,9 @@ describe('ApiClient', () => {
 			const mockResponse: ListArticlesResponse = {
 				articles: [],
 				page: 1,
-				pageSize: 20,
+				page_size: 20,
 				total: 0,
-				hasMore: false
+				has_more: false
 			};
 
 			mockFetch.mockResolvedValue({
@@ -131,9 +131,9 @@ describe('ApiClient', () => {
 			const mockResponse: ListArticlesResponse = {
 				articles: [],
 				page: 1,
-				pageSize: 20,
+				page_size: 20,
 				total: 0,
-				hasMore: false
+				has_more: false
 			};
 
 			mockFetch.mockResolvedValue({
