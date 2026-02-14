@@ -13,7 +13,7 @@ export const actions: Actions = {
 		cookies.set('api_key', apiKey.trim(), {
 			path: '/',
 			httpOnly: true,
-			secure: false,
+			secure: import.meta.env.PROD,
 			sameSite: 'lax',
 			maxAge: 60 * 60 * 24 * 365
 		});
