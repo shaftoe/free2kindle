@@ -10,10 +10,14 @@
 	<p class="error">{form.error}</p>
 {/if}
 
-<form method="POST">
+<form method="POST" action="?/save">
 	<label>
 		API Key
 		<input type="password" name="apiKey" required autocomplete="current-password" />
 	</label>
 	<button type="submit">Save</button>
+</form>
+
+<form method="POST" action="?/clean">
+	<button type="submit">Clean</button>
 </form>

@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	default: async ({ cookies, request }) => {
+	save: async ({ cookies, request }) => {
 		const data = await request.formData();
 		const apiKey = data.get('apiKey');
 
@@ -19,5 +19,9 @@ export const actions: Actions = {
 		});
 
 		redirect(303, '/');
+	},
+	clean: async ({ cookies }) => {
+		cookies.delete('api_key', { path: '/' });
+		redirect(303, '/settings');
 	}
 };
