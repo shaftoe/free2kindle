@@ -1,12 +1,9 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { requireApiKey } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
-	const apiClient = locals.apiClient;
-
-	if (!apiClient) {
-		redirect(303, '/settings');
-	}
+	const apiClient = requireApiKey(locals);
 
 	const id = params.id;
 
@@ -18,11 +15,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 
 export const actions: Actions = {
 	delete: async ({ locals, fetch, params }) => {
-		const apiClient = locals.apiClient;
-
-		if (!apiClient) {
-			throw fail(401, { error: 'api key is required' });
-		}
+		const apiClient = requireApiKey(locals);
 
 		const id = params.id;
 
