@@ -4,7 +4,7 @@
 	let { form }: PageProps = $props();
 </script>
 
-<BackNav href="/articles" />
+<BackNav href="/" />
 <h1>Add Article</h1>
 
 {#if form?.error}

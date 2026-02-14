@@ -13,10 +13,10 @@ describe('BackNav.svelte', () => {
 	});
 
 	it('should render back link with custom href', async () => {
-		render(BackNav, { href: '/articles' });
+		render(BackNav, { href: '/settings' });
 
 		const link = page.getByRole('link', { name: '← Back' });
 		await expect.element(link).toBeInTheDocument();
-		await expect.element(link).toHaveAttribute('href', '/articles');
+		await expect.element(link).toHaveAttribute('href', '/settings');
 	});
 });

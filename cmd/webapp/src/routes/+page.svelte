@@ -1,11 +1,57 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import type { PageData } from './$types';
+	let { data }: { data: PageData } = $props();
 </script>
 
-<nav>
+<h1>My List</h1>
+
+{#if data.error}
+	<p class="error">failed to load articles: {data.error}</p>
+{:else if data.articles.length === 0}
+	<p>no articles yet</p>
+{:else}
 	<ul>
-		<li><a href={resolve('/articles')}>My List</a></li>
-		<li><a href={resolve('/new')}>Save new article</a></li>
-		<li><a href={resolve('/settings')}>Settings</a></li>
+		{#each data.articles as article (article.id)}
+			<li>
+				<article>
+					{#if article.title}
+						<h2><a href={resolve(`/articles/${article.id}`)}>{article.title}</a></h2>
+					{:else}
+						<h2><a href={resolve(`/articles/${article.id}`)}>{article.url}</a></h2>
+					{/if}
+					{#if article.imageUrl}
+						<img src={article.imageUrl} alt={article.title} width="30%" />
+					{/if}
+					{#if article.excerpt}
+						<p>{article.excerpt}</p>
+					{/if}
+					<p>
+						Original link: <a href={article.url} target="_blank" rel="external">{article.url}</a>
+					</p>
+					{#if article.author}
+						<p>by {article.author}</p>
+					{/if}
+					{#if article.siteName}
+						<p>source: {article.siteName}</p>
+					{/if}
+					<p>added: {new Date(article.createdAt).toLocaleDateString()}</p>
+					{#if article.wordCount}
+						<p>{article.wordCount} words</p>
+					{/if}
+					{#if article.readingTimeMinutes}
+						<p>{article.readingTimeMinutes} min read</p>
+					{/if}
+					{#if article.deliveryStatus}
+						<p>status: {article.deliveryStatus}</p>
+					{/if}
+					{#if article.error}
+						<p class="error">error: {article.error}</p>
+					{/if}
+				</article>
+			</li>
+		{/each}
 	</ul>
-</nav>
+{/if}
+
+<p>total: {data.total}</p>

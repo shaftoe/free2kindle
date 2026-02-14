@@ -4,7 +4,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
-<BackNav href="/articles" />
+<BackNav href="/" />
 <header>
 	{#if data.article.title}
 		<h1>{data.article.title}</h1>
