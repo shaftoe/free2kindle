@@ -1,11 +1,11 @@
 <script lang="ts">
 	import ArticleControls from '$lib/components/ArticleControls.svelte';
-	import ArticleViewMeta from '$lib/components/ArticleViewMeta.svelte';
+	import ArticleMeta from '$lib/components/ArticleMeta.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 </script>
 
-<ArticleViewMeta article={data.article} />
+<ArticleMeta article={data.article} mode="header" />
 
 <hr />
 {#if data.article.content}
