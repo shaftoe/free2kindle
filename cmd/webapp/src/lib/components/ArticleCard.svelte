@@ -21,7 +21,6 @@
 	<p>
 		Original link: <a href={article.url} target="_blank" rel="external">{article.url}</a>
 	</p>
-	<p>added: {new Date(article.createdAt).toLocaleDateString()}</p>
 	<ArticleMeta {article} />
 	<ArticleControls {article} />
 </article>

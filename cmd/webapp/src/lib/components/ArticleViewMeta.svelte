@@ -11,7 +11,5 @@
 		<h1>article</h1>
 	{/if}
 
-	<p>added: {new Date(article.createdAt).toLocaleDateString()}</p>
-
 	<ArticleMeta {article} />
 </header>

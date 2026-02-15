@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireApiKey } from '$lib/server/auth';
 
@@ -15,7 +15,7 @@ export const actions: Actions = {
 		const url = data.get('url');
 
 		if (!url || typeof url !== 'string' || url.trim() === '') {
-			return { error: 'url is required' };
+			return fail(400, { error: 'url is required' });
 		}
 
 		await apiClient.createArticle({ url: url.trim() }, fetch);

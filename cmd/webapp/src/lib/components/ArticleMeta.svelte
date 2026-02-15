@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDate } from '$lib/utils/date';
 	import type { Article } from '$lib/server/types';
 	let { article }: { article: Article } = $props();
 </script>
@@ -25,4 +26,8 @@
 
 {#if article.error}
 	<p class="error">error: {article.error}</p>
+{/if}
+
+{#if article.createdAt}
+	<p>added: {formatDate(article.createdAt)}</p>
 {/if}

@@ -6,7 +6,6 @@ declare global {
 	namespace App {
 		interface Locals {
 			apiClient: ApiClient | null;
-			health?: { status: 'healthy' | 'unhealthy'; error?: string };
 		}
 
 		interface PageData {
